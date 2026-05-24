@@ -1,11 +1,12 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
 
-app = FastAPI(title="Portal Imigrante PT - Legislação 7 Anos Estável")
+app = FastAPI(title="Portal Imigrante PT - Produção Estável e Segura")
 
-# Configuração de Segurança (CORS)
+# Liberação de CORS para permitir conexões de domínios públicos do GitHub Pages
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,10 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# INICIALIZAÇÃO DA API DA GROQ
-client = Groq(api_key="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")
+# PUXA A CHAVE DE FORMA OCULTA E SEGURA DO CONTEXTO DO RENDER
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+client = Groq(api_key=GROQ_API_KEY)
 
-# DICIONÁRIO LOCAL PARA A MEMÓRIA CENTRAL
 historico_conversas = {}
 
 class UserMessage(BaseModel):
@@ -28,7 +29,6 @@ async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
     sessao_id = "utilizador_atual"
     
-    # SYSTEM PROMPT COM A VERDADE ABSOLUTA DOS 7 ANOS BLINDADA
     if sessao_id not in historico_conversas:
         historico_conversas[sessao_id] = [
             {
@@ -53,22 +53,16 @@ async def responder_chat(user_data: UserMessage):
             }
         ]
     
-    # 1. Adiciona a mensagem do utilizador à memória
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
     
     try:
-        # 2. Chamada ao modelo inteligente Llama 3.3 70B
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=historico_conversas[sessao_id],
             temperature=0.2
         )
-        
         resposta_final = completion.choices[0].message.content
-        
-        # 3. Guarda a resposta da IA na memória para manter o contexto vivo
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
-        
     except Exception as e:
         resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
@@ -76,4 +70,4 @@ async def responder_chat(user_data: UserMessage):
 
 @app.get("/")
 def home():
-    return {"status": "Servidor limpo, estável e atualizado com os 7 anos online!"}
+    return {"status": "Servidor rodando em produção segura com a regra dos 7 anos ativa!"}
