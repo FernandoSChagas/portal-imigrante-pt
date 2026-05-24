@@ -1,27 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // ELEMENTOS DO CHAT
     const inputChat = document.querySelector(".chat-input-area input");
     const btnEnviar = document.querySelector(".btn-enviar");
     const chatWindow = document.querySelector(".chat-window");
 
-    // ELEMENTOS DOS GUIAS DINÂMICOS
     const areaGuiaDinamico = document.getElementById("area-guia-dinamico");
     const corpoTextoGuia = document.getElementById("corpo-texto-guia");
     const btnFecharGuia = document.getElementById("btn-fechar-guia");
 
-    // ELEMENTOS DA CALCULADORA
     const inputAlojamento = document.getElementById("calc-alojamento");
     const inputAlimentacao = document.getElementById("calc-alimentacao");
     const inputTransportes = document.getElementById("calc-transportes");
     const inputExtras = document.getElementById("calc-extras");
     const txtTotalCusto = document.getElementById("total-custo");
 
-    // ELEMENTOS DO SISTEMA DE BUSCA DE PORTAIS
     const searchInput = document.getElementById("search-service-input");
     const categorySelect = document.getElementById("filter-category-select");
     const servicesGridContainer = document.getElementById("services-grid-container");
 
-    // BASE DE DADOS CANAIS OFICIAIS
     const dadosServicos = [
         {
             nome: "PORTAL DAS FINANÇAS (AUTORIDADE TRIBUTÁRIA)",
@@ -44,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
             categoria: "documentos",
             categoriaTexto: "Segurança Social & NISS",
             endereco: "Serviços de Atendimento da Segurança Social / NISS na Hora",
-            url: "https://www.seg-social.pt/consultas/ss_direta/",
+            url: "https://www.seg-social.pt",
             icone: "🤝"
         },
         {
@@ -57,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     ];
 
-    // CONTEÚDOS DOS TEXTOS DOS CARDS EMBALADOS NA CLASSE CORRETA
     const conteudosGuias = {
         nif: `
             <div class="guia-texto-container">
@@ -175,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
 
         try {
+            // CONEXÃO COM O TEU SERVIDOR DO RENDER (LINHA 138)
             const response = await fetch("https://portal-imigrante-pt.onrender.com/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -187,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
             const elementoTemp = document.getElementById("status-ia-temporario");
             if (elementoTemp) elementoTemp.remove();
-            adicionarMensagem("Assistente", "Lamento, erro ao conectar com o terminal Python.", "system");
+            adicionarMensagem("Assistente", "Lamento, erro ao conectar com o servidor inteligência.", "system");
         }
     }
 
