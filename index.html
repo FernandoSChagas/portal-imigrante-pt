@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Imigrante PT - ImigranteAI</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">
+            🤖 IMIGRANTE<span class="logo-highlight">AI</span>
+        </div>
+        <nav class="nav-links">
+            <a href="#chat" class="active">Assistente</a>
+            <a href="#guias">Guias</a>
+            <a href="#utilidades">Utilidades</a>
+        </nav>
+    </header>
+
+    <main class="main-container">
+        
+        <section class="chat-section" id="chat">
+            <h2 class="section-title">🤖 Assistente Virtual</h2>
+            <div class="chat-wrapper light-effect">
+                <div class="chat-window">
+                    <div class="message system">
+                        <p><strong>Assistente:</strong> Olá! Sou o IMIGRANTE AI, o assistente oficial do Portal Imigrante PT. Como posso ajudar na sua transição para Portugal hoje?</p>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" placeholder="Ex: Como pedir equivalência de diploma em Guimarães?">
+                    <button class="btn-enviar">Enviar</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="guia-conteudo-section light-effect" id="area-guia-dinamico" style="display: none;">
+            <button id="btn-fechar-guia" class="btn-fechar">← Voltar aos Guias</button>
+            <div id="corpo-texto-guia"></div>
+        </section>
+
+        <section class="guias-section" id="guias">
+            <h2 class="section-title">📄 Guias de Sobrevivência</h2>
+            <div class="guias-grid">
+                <div class="guia-card light-effect" id="card-nif">
+                    <div class="card-icon">📄</div>
+                    <h3>NIF & NISS</h3>
+                    <p>O roteiro completo para a sua identificação fiscal e segurança social.</p>
+                </div>
+                <div class="guia-card light-effect" id="card-saude">
+                    <div class="card-icon">🏥</div>
+                    <h3>Saúde (SNS)</h3>
+                    <p>Como obter o Número de Utente e inscrição no Centro de Saúde.</p>
+                </div>
+                <div class="guia-card light-effect" id="card-aima">
+                    <div class="card-icon">🌐</div>
+                    <h3>AIMA / Vistos</h3>
+                    <p>As novas regras e fluxos de regularização válidos para 2026.</p>
+                </div>
+                <div class="guia-card light-effect" id="card-equivalencias">
+                    <div class="card-icon">🎓</div>
+                    <h3>Equivalências</h3>
+                    <p>Como validar diplomas e histórico escolar em instituições portuguesas.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="utilidades-section" id="utilidades">
+            <h2 class="section-title">🛠️ Utilidades Rápidas</h2>
+            
+            <div class="utilidades-container">
+                
+                <div class="util-card-calculator light-effect">
+                    <div class="calc-header">
+                        <span class="util-icon">🧮</span>
+                        <div>
+                            <h3>Simulador de Custo de Vida Personalizado</h3>
+                            <p>Introduza os valores que estima gastar para calcular o seu orçamento mensal.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="calc-body">
+                        <div class="calc-inputs">
+                            <div class="input-group">
+                                <label for="calc-alojamento">Alojamento / Renda (€):</label>
+                                <input type="number" id="calc-alojamento" value="0" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="calc-alimentacao">Alimentação / Supermercado (€):</label>
+                                <input type="number" id="calc-alimentacao" value="0" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="calc-transportes">Transportes / Combustível (€):</label>
+                                <input type="number" id="calc-transportes" value="0" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="calc-extras">Contas (Luz, Água, Internet) (€):</label>
+                                <input type="number" id="calc-extras" value="0" min="0">
+                            </div>
+                        </div>
+
+                        <div class="calc-result">
+                            <h4>Total Estimado</h4>
+                            <div class="result-value"><span id="total-custo">0</span>€<span class="per-month">/mês</span></div>
+                            <p class="result-notice">O total é atualizado automaticamente ao alterar qualquer valor acima.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="services-search-container">
+                    <div class="services-title-area">
+                        <h3>GUIA DE PORTAIS OFICIAIS</h3>
+                        <p class="services-subtitle">• CANAIS DO GOVERNO DE PORTUGAL</p>
+                    </div>
+
+                    <div class="search-filter-bar">
+                        <div class="search-input-wrapper">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="search-service-input" placeholder="Procurar por Finanças, AIMA, Segurança Social, SNS...">
+                        </div>
+                        <select id="filter-category-select">
+                            <option value="todos">TODOS OS SERVIÇOS OFICIAIS</option>
+                            <option value="documentos">DOCUMENTAÇÃO & IMIGRAÇÃO</option>
+                            <option value="saude-fiscal">SAÚDE & FISCALIDADE</option>
+                        </select>
+                    </div>
+
+                    <div class="services-list-cards" id="services-grid-container"></div>
+                </div>
+                
+            </div>
+        </section>
+
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
