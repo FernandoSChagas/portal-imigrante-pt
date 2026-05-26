@@ -6,9 +6,7 @@
     <title>Portal Imigrante PT - Notícias & Atualizações Portugal</title>
     <link rel="stylesheet" href="css/hub.css">
     <style>
-        /* =====================================================================
-           CORREÇÃO CIRÚRGICA DE RESPONSIVIDADE PARA O BOTÃO NÃO SUMIR NO TELEMÓVEL
-           ===================================================================== */
+        /* Correção de responsividade para o botão não sumir no telemóvel */
         @media (max-width: 768px) {
             .navbar {
                 padding: 0 15px !important;
@@ -20,31 +18,11 @@
                 padding-top: 12px !important;
                 padding-bottom: 12px !important;
             }
-
-            .logo {
-                font-size: 1.1rem !important;
-                text-align: center;
-            }
-
-            .nav-links {
-                width: 100%;
-                justify-content: center !important;
-                gap: 12px !important;
-            }
-
-            .nav-links a {
-                margin-left: 0 !important;
-                font-size: 0.8rem !important;
-            }
-
-            .nav-links a.nav-btn-ia {
-                padding: 6px 12px !important;
-            }
-
-            /* Compensa a altura extra da barra no telemóvel para não cobrir os widgets */
-            .main-container {
-                padding-top: 120px !important;
-            }
+            .logo { font-size: 1.1rem !important; text-align: center; }
+            .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; }
+            .nav-links a { margin-left: 0 !important; font-size: 0.8rem !important; }
+            .nav-links a.nav-btn-ia { padding: 6px 12px !important; }
+            .main-container { padding-top: 120px !important; }
         }
     </style>
 </head>
@@ -70,7 +48,7 @@
                 </div>
             </div>
             <div class="widget-card">
-                <span class="widget-icon">☁️</span>
+                <span class="widget-icon">☀️</span>
                 <div>
                     <h4 id="titulo-clima">Clima Local</h4>
                     <p id="info-clima">A detetar localização...</p>
@@ -109,16 +87,14 @@
             }
         }
 
-        // 2. CONSOME AS NOTÍCIAS REAIS DO TEU BACK-END EM PYTHON
+        // 2. NOTÍCIAS DO RENDER
         async function carregarNoticiasVivas() {
             const grid = document.getElementById("newsGrid");
             try {
-                const res = await fetch(`${SERVIDOR_URL}/noticias`);
+                const res = await fetch(`${SERVIDOR_URL}/noticias?nocache=${Date.now()}`);
                 const data = await res.json();
-                
                 if (data.noticias && data.noticias.length > 0) {
                     grid.innerHTML = ""; 
-                    
                     data.noticias.forEach(noticia => {
                         grid.innerHTML += `
                             <article class="news-card">
@@ -131,17 +107,18 @@
                     });
                 }
             } catch (error) {
-                console.log("Servidor em standby. Mantendo feed estrutural.");
+                console.log("Mantendo feed estrutural.");
             }
         }
 
-        // 3. MOTOR DE CLIMA AUTOMÁTICO BASEADO NO IP DO UTILIZADOR
+        // 3. MOTOR DE CLIMA CALIBRADO
         async function carregarClimaDinamico() {
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
             
             try {
-                const resIp = await fetch("https://ip-api.com/json/?fields=status,city,lat,lon");
+                // Adicionado timestamp para rebentar com a cache do navegador
+                const resIp = await fetch(`https://ip-api.com/json/?fields=status,city,lat,lon&nocache=${Date.now()}`);
                 const dataIp = await resIp.json();
                 
                 if (dataIp.status === "success") {
@@ -149,17 +126,19 @@
                     const lat = dataIp.lat;
                     const lon = dataIp.lon;
                     
-                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&nocache=${Date.now()}`);
                     const dataWeather = await resWeather.json();
                     
                     if (dataWeather.current_weather) {
                         const temp = Math.round(dataWeather.current_weather.temperature);
                         const code = dataWeather.current_weather.weathercode;
                         
-                        let estadoCeu = "Limpo";
-                        if (code > 0 && code <= 3) estadoCeu = "Parcialmente Nublado";
-                        if (code > 3 && code <= 48) estadoCeu = "Nevoeiro";
-                        if (code > 48) estadoCeu = "Chuva / Aguaceiros";
+                        // Tabela de códigos Open-Meteo expandida para o Verão/Sol
+                        let estadoCeu = "Limpo / Sol";
+                        if (code === 0) estadoCeu = "Céu Limpo ☀️";
+                        else if (code >= 1 && code <= 3) estadoCeu = "Pouco Nublado 🌤️";
+                        else if (code >= 45 && code <= 48) estadoCeu = "Nevoeiro 🌫️";
+                        else if (code >= 51) estadoCeu = "Chuva 🌧️";
 
                         campoTitulo.innerText = `Clima em ${cidade}`;
                         campoTexto.innerText = `${temp}°C (${estadoCeu})`;
@@ -167,11 +146,11 @@
                     }
                 }
             } catch (error) {
-                console.log("Erro ao detetar clima dinâmico.");
+                console.log("Erro no clima dinâmico.");
             }
             
             campoTitulo.innerText = "Clima no Norte";
-            campoTexto.innerText = "Guimarães: 18°C (Nublado)";
+            campoTexto.innerText = "Guimarães: 29°C (Céu Limpo ☀️)";
         }
 
         buscarEuro();
