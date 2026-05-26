@@ -16,9 +16,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Puxa as chaves guardadas nas variáveis de ambiente do Render
+# Chaves de API configuradas diretamente no servidor
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
-TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "") # Configura esta chave no Render para ativar a busca ao vivo
+# A tua chave Tavily ativa para buscas reais na internet portuguesa
+TAVILY_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -30,33 +31,17 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# ENDPOINT: MOTOR DE NOTÍCIAS EM TEMPO REAL PARA O HUB
+# ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (SIC, DN, AIMA)
 # =====================================================================
 @app.get("/api/noticias")
 async def obter_noticias_tempo_real():
-    """Pesquisa na internet pelas regras, avisos e notícias mais recentes de imigração em Portugal"""
-    if not TAVILY_API_KEY:
-        # Se não houver chave Tavily configurada, retorna uma lista padrão para o feed não ficar vazio
-        return {
-            "noticias": [
-                {
-                    "titulo": "Avisos Recentes AIMA 2026",
-                    "resumo": "Consulta os novos canais digitais oficiais para o agendamento de manifestações de interesse e regularização de vistos diretamente no portal.",
-                    "url": "https://aima.gov.pt"
-                },
-                {
-                    "titulo": "Contagem de Tempo de Residência (7 Anos)",
-                    "resumo": "As regras de nacionalidade vigentes consolidam os prazos legais de residência para cidadãos da CPLP e União Europeia.",
-                    "url": "https://diariodarepublica.pt"
-                }
-            ]
-        }
-        
+    """Pesquisa na internet pelas notícias de imigração e atualizações em portais como SIC e DN"""
     try:
         url = "https://api.tavily.com/search"
+        # Query refinada para capturar novidades da SIC Notícias, Diário de Notícias e legislação geral
         payload = {
             "api_key": TAVILY_API_KEY,
-            "query": "noticias AIMA leis imigração Portugal avisos recentes 2026",
+            "query": "noticias imigração Portugal 2026 site:sicnoticias.pt OR site:dn.pt OR leis AIMA",
             "search_depth": "advanced",
             "max_results": 3
         }
@@ -66,16 +51,42 @@ async def obter_noticias_tempo_real():
             
             noticias_formatadas = []
             for item in resultados:
+                # Cria uma TAG automática e dinâmica baseada na origem do link
+                site_url = item.get("url", "").lower()
+                tag = "Portugal"
+                if "sicnoticias" in site_url:
+                    tag = "SIC Notícias"
+                elif "dn.pt" in site_url:
+                    tag = "DN Portugal"
+                elif "aima" in site_url:
+                    tag = "AIMA"
+
                 noticias_formatadas.append({
                     "titulo": item.get("title", "Atualização Legal Importante"),
                     "resumo": item.get("content", "Verifica os detalhes completos no artigo original do portal.")[:160] + "...",
                     "url": item.get("url", "#")
                 })
-            return {"noticias": noticias_formatadas}
+            
+            if noticias_formatadas:
+                return {"noticias": noticias_formatadas}
     except Exception:
         pass
         
-    return {"noticias": []}
+    # Backup estável de segurança caso a API falhe ou estoure o limite gratuito
+    return {
+        "noticias": [
+            {
+                "titulo": "Atualizações em Portais Oficiais 2026",
+                "resumo": "Consulta os novos canais digitais para o agendamento de manifestações de interesse e regularização de vistos no país.",
+                "url": "https://aima.gov.pt"
+            },
+            {
+                "titulo": "Contagem de Tempo de Residência (7 Anos)",
+                "resumo": "As regras de nacionalidade vigentes consolidam os prazos legais de residência para cidadãos da CPLP e da União Europeia.",
+                "url": "https://diariodarepublica.pt"
+            }
+        ]
+    }
 
 # =====================================================================
 # ENDPOINT DO CHAT: ASSISTENTE IA COM MEMÓRIA HUMANA
@@ -108,7 +119,7 @@ async def responder_chat(user_data: UserMessage):
                     "REGRAS ESTRITAS DE FORMATO:\n"
                     "- Responde à pergunta logo na primeira frase.\n"
                     "- O limite máximo absoluto de cada resposta é de 2 parágrafos curtos.\n"
-                    "- Em internacionais listas, usa unicamente hifens (-) e no máximo 3 a 4 pontos."
+                    "- Em listas, usa unicamente hifens (-) e no máximo 3 a 4 pontos."
                 )
             }
         ]
