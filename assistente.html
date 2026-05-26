@@ -4,7 +4,258 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imigrante AI - Assistente Virtual</title>
-    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* =====================================================================
+           ESTILO STARTUP TECH / DARK LAB (DIRETO NO ARQUIVO PARA EVITAR CACHE)
+           ===================================================================== */
+        :root {
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --border-color: #21262d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --teal-primary: #008080;
+            --teal-glow: #00a3a3;
+            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRA DE NAVEGAÇÃO SUPERIOR */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background-color: rgba(22, 27, 34, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5%;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .logo-highlight {
+            color: var(--teal-glow);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 25px;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--teal-glow);
+        }
+
+        .nav-links a.nav-btn-ia {
+            background-color: var(--teal-primary);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(0, 128, 128, 0.3);
+        }
+
+        /* ESTRUTURA CENTRAL DA CAIXA DE IA */
+        .chat-wrapper-container {
+            flex: 1;
+            padding-top: 90px;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at top, #161b22 0%, #0d1117 100%);
+        }
+
+        .chat-container {
+            width: 92%;
+            max-width: 750px;
+            background-color: rgba(22, 27, 34, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 130px);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            transition: border-color 0.3s;
+        }
+
+        .chat-container:hover {
+            border-color: rgba(0, 163, 163, 0.4);
+        }
+
+        /* CABEÇALHO DO CHAT */
+        .chat-header {
+            padding: 20px;
+            background-color: rgba(22, 27, 34, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .chat-header h2 {
+            color: #fff;
+            font-size: 1.4rem;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-header h2::after {
+            content: " •";
+            color: var(--teal-glow);
+        }
+
+        .chat-header p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* CAIXA INTERNA DE HISTÓRICO */
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background-color: rgba(13, 17, 23, 0.4);
+        }
+
+        /* BALÕES DE MENSAGENS ESTILO MODERN CHAT */
+        .message {
+            max-width: 85%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--teal-primary);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 128, 128, 0.2);
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* ELEMENTOS INTERNOS DO TEXTO DA IA */
+        .bot-message p {
+            margin-bottom: 10px;
+        }
+        .bot-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ÁREA DE ENTRADA DE TEXTO (INPUT) */
+        .input-area {
+            display: flex;
+            padding: 18px;
+            background-color: rgba(22, 27, 34, 0.9);
+            border-top: 1px solid var(--border-color);
+            gap: 12px;
+        }
+
+        .input-area input {
+            flex: 1;
+            background-color: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 16px;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: var(--teal-primary);
+            box-shadow: 0 0 8px rgba(0, 128, 128, 0.2);
+        }
+
+        .input-area button {
+            background-color: var(--teal-primary);
+            color: #fff;
+            border: none;
+            padding: 0 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .input-area button:hover {
+            background-color: var(--teal-glow);
+        }
+
+        .input-area button:active {
+            transform: scale(0.98);
+        }
+
+        /* ANIMAÇÃO DE APARECIMENTO */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* AJUSTES PARA TELEMÓVEL */
+        @media (max-width: 768px) {
+            .navbar { padding: 0 15px; }
+            .nav-links a { margin-left: 15px; font-size: 0.85rem; }
+            .chat-wrapper-container { padding-top: 70px; padding-bottom: 0; }
+            .chat-container {
+                width: 100%;
+                height: calc(100vh - 70px);
+                border-radius: 0;
+                border: none;
+            }
+            .message { max-width: 90%; }
+        }
+    </style>
 </head>
 <body>
 
@@ -13,7 +264,7 @@
         <div class="nav-links">
             <a href="index.html">Notícias ao Vivo</a>
             <a href="#">Guias Regionais</a>
-            <a href="assistente.html" class="nav-btn-ia active">Assistente IA 🤖</a>
+            <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
         </div>
     </nav>
 
