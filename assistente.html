@@ -5,59 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imigrante AI - Assistente Virtual</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Navbar unificada do ecossistema */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 70px;
-            background-color: rgba(22, 27, 34, 0.95);
-            border-bottom: 1px solid #21262d;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 5%;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .logo {
-            font-size: 1.3rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: #c9d1d9;
-        }
-        .logo-highlight {
-            color: #00a3a3;
-        }
-        .nav-links {
-            display: flex;
-            align-items: center;
-        }
-        .nav-links a {
-            color: #8b949e;
-            text-decoration: none;
-            margin-left: 25px;
-            font-size: 0.95rem;
-            transition: color 0.3s;
-        }
-        .nav-links a:hover {
-            color: #00a3a3;
-        }
-        .nav-links a.nav-btn-ia {
-            background-color: #008080;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-        }
-        body {
-            padding-top: 80px;
-            background-color: #0d1117;
-        }
-    </style>
 </head>
 <body>
 
@@ -66,22 +13,24 @@
         <div class="nav-links">
             <a href="index.html">Notícias ao Vivo</a>
             <a href="#">Guias Regionais</a>
-            <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
+            <a href="assistente.html" class="nav-btn-ia active">Assistente IA 🤖</a>
         </div>
     </nav>
 
-    <div class="chat-container">
-        <div class="chat-header">
-            <h2>Imigrante AI</h2>
-            <p>O teu conselheiro virtual para Portugal</p>
-        </div>
-        
-        <div class="chat-box" id="chatBox">
+    <div class="chat-wrapper-container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>Imigrante AI</h2>
+                <p>O teu conselheiro virtual para Portugal</p>
             </div>
-        
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="Pergunta-me sobre NIF, NISS, AIMA, voos..." autocomplete="off">
-            <button onclick="enviarMensagem()">Enviar</button>
+            
+            <div class="chat-box" id="chatBox">
+                </div>
+            
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Pergunta-me sobre NIF, NISS, AIMA..." autocomplete="off">
+                <button onclick="enviarMensagem()">Enviar</button>
+            </div>
         </div>
     </div>
 
