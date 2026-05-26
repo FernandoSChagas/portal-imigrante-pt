@@ -30,8 +30,8 @@
             <div class="widget-card">
                 <span class="widget-icon">☁️</span>
                 <div>
-                    <h4>Clima no Norte</h4>
-                    <p>Guimarães: 18°C (Parcialmente Nublado)</p>
+                    <h4 id="titulo-clima">Clima Local</h4>
+                    <p id="info-clima">A detetar localização...</p>
                 </div>
             </div>
         </section>
@@ -47,27 +47,12 @@
                     <p>O organismo atualizou a plataforma digital para acelerar os processos pendentes de regularização...</p>
                     <a href="#" class="read-more">Ler notícia original →</a>
                 </article>
-
-                <article class="news-card">
-                    <div class="news-tag">Legislação</div>
-                    <h3>Diário da República publica ajustamentos na Lei de Nacionalidade</h3>
-                    <p>Entraram em vigor os novos regulamentos que consolidam a contagem do tempo de residência de 7 anos para a CPLP...</p>
-                    <a href="#" class="read-more">Ler notícia original →</a>
-                </article>
-
-                <article class="news-card">
-                    <div class="news-tag">Greve</div>
-                    <h3>Alerta: Perturbações previstas nos aeroportos de Lisboa e Porto</h3>
-                    <p>Sindicatos anunciam paralisações parciais no controlo de bagagens para o próximo fim de semana...</p>
-                    <a href="#" class="read-more">Ler notícia original →</a>
-                </article>
             </div>
         </section>
 
     </main>
 
     <script>
-        // URL oficial do teu back-end hospedado no Render
         const SERVIDOR_URL = "https://portal-imigrante-pt.onrender.com/api";
 
         // 1. ATUALIZA A COTAÇÃO DO EURO
@@ -90,7 +75,7 @@
                 const data = await res.json();
                 
                 if (data.noticias && data.noticias.length > 0) {
-                    grid.innerHTML = ""; // Limpa os cards estáticos de exemplo
+                    grid.innerHTML = ""; 
                     
                     data.noticias.forEach(noticia => {
                         grid.innerHTML += `
@@ -104,13 +89,58 @@
                     });
                 }
             } catch (error) {
-                console.log("Servidor em standby. Mantendo notícias de segurança estrutural no feed.");
+                console.log("Servidor em standby. Mantendo feed estrutural.");
             }
         }
 
-        // Executa as cargas automáticas ao abrir o ecrã
+        // 3. MOTOR DE CLIMA AUTOMÁTICO BASEADO NO IP DO UTILIZADOR
+        async function carregarClimaDinamico() {
+            const campoTexto = document.getElementById("info-clima");
+            const campoTitulo = document.getElementById("titulo-clima");
+            
+            try {
+                // Passo A: Deteta a cidade e coordenadas através do IP
+                const resIp = await fetch("https://ip-api.com/json/?fields=status,city,lat,lon");
+                const dataIp = await resIp.json();
+                
+                if (dataIp.status === "success") {
+                    const cidade = dataIp.city;
+                    const lat = dataIp.lat;
+                    const lon = dataIp.lon;
+                    
+                    // Passo B: Consulta a API meteorológica global com as coordenadas encontradas
+                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                    const dataWeather = await resWeather.json();
+                    
+                    if (dataWeather.current_weather) {
+                        const temp = Math.round(dataWeather.current_weather.temperature);
+                        const code = dataWeather.current_weather.weathercode;
+                        
+                        // Traduz simplificadamente o código do céu
+                        let estadoCeu = "Limpo";
+                        if (code > 0 && code <= 3) estadoCeu = "Parcialmente Nublado";
+                        if (code > 3 && code <= 48) estadoCeu = "Nevoeiro";
+                        if (code > 48) estadoCeu = "Chuva / Aguaceiros";
+
+                        // Atualiza os dados no ecrã do utilizador
+                        campoTitulo.innerText = `Clima em ${cidade}`;
+                        campoTexto.innerText = `${temp}°C (${estadoCeu})`;
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log("Erro ao detetar clima dinâmico.");
+            }
+            
+            // Backup padrão caso as APIs de IP falhem (Mostra Guimarães)
+            campoTitulo.innerText = "Clima no Norte";
+            campoTexto.innerText = "Guimarães: 18°C (Nublado)";
+        }
+
+        // Executa todas as automações vivas ao abrir a página
         buscarEuro();
         carregarNoticiasVivas();
+        carregarClimaDinamico();
     </script>
 </body>
 </html>
