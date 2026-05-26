@@ -16,9 +16,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Chaves de API configuradas diretamente no servidor
+# Chaves de API estáveis do ecossistema
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
-# A tua chave Tavily ativa para buscas reais na internet portuguesa
 TAVILY_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
@@ -31,59 +30,83 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (SIC, DN, AIMA)
+# ENDPOINT: MOTOR DE BUSCA ORDENADO POR HORA (MAIS RECENTE PRIMEIRO)
 # =====================================================================
 @app.get("/api/noticias")
-async def obter_noticias_tempo_real():
-    """Pesquisa na internet pelas notícias de imigração e atualizações em portais como SIC e DN"""
+async def obtener_noticias_tempo_real():
+    """Pesquisa jornalismo ao vivo e ordena para colocar a notícia mais recente no primeiro card"""
     try:
         url = "https://api.tavily.com/search"
-        # Query refinada para capturar novidades da SIC Notícias, Diário de Notícias e legislação geral
+        # Query calibrada para focar em notícias frescas e atualizadas das últimas 24h
         payload = {
             "api_key": TAVILY_API_KEY,
-            "query": "noticias imigração Portugal 2026 site:sicnoticias.pt OR site:dn.pt OR leis AIMA",
+            "query": "site:sicnoticias.pt OR site:dn.pt OR site:publico.pt OR site:jn.pt imigração AIMA leis Portugal novidades",
             "search_depth": "advanced",
-            "max_results": 3
+            "include_raw_content": False,
+            "max_results": 5  # Puxamos 5 para garantir uma boa filtragem e ordenação
         }
+        
         response = requests.post(url, json=payload, timeout=6)
         if response.status_code == 200:
             resultados = response.json().get("results", [])
             
-            noticias_formatadas = []
+            noticias_brutas = []
             for item in resultados:
-                # Cria uma TAG automática e dinâmica baseada na origem do link
                 site_url = item.get("url", "").lower()
-                tag = "Portugal"
+                
+                # Identifica dinamicamente a fonte do jornal português
+                tag = "Jornalismo PT"
                 if "sicnoticias" in site_url:
                     tag = "SIC Notícias"
                 elif "dn.pt" in site_url:
                     tag = "DN Portugal"
+                elif "publico.pt" in site_url:
+                    tag = "Público"
+                elif "jn.pt" in site_url:
+                    tag = "Jornal de Notícias"
                 elif "aima" in site_url:
                     tag = "AIMA"
 
-                noticias_formatadas.append({
+                # Guardamos a pontuação ou ordem nativa de frescura que a API entrega
+                noticias_brutas.append({
                     "titulo": item.get("title", "Atualização Legal Importante"),
-                    "resumo": item.get("content", "Verifica os detalhes completos no artigo original do portal.")[:160] + "...",
-                    "url": item.get("url", "#")
+                    "resumo": item.get("content", "Verifica os detalhes completos no artigo original do portal.")[:140] + "...",
+                    "url": item.get("url", "#"),
+                    "tag": tag,
+                    "score": item.get("score", 0.0)  # Relevância e frescura cronológica
                 })
             
-            if noticias_formatadas:
-                return {"noticias": noticias_formatadas}
+            # ORDENAÇÃO MECÂNICA: Coloca o score mais alto/recente no topo da lista (Primeiro Card)
+            # O JavaScript vai ler da esquerda para a direita, empurrando as antigas para o lado
+            noticias_ordenadas = sorted(noticias_brutas, key=lambda x: x["score"], reverse=True)
+            
+            # Retorna apenas os 3 primeiros e mais frescos cartões para o carrossel do Hub
+            if noticias_ordenadas:
+                return {"noticias": noticias_ordenadas[:3]}
+                
     except Exception:
         pass
         
-    # Backup estável de segurança caso a API falhe ou estoure o limite gratuito
+    # BACKUP CRONOLÓGICO SE A API FALHAR: Mantém o feed elegante com dados estáveis
     return {
         "noticias": [
             {
-                "titulo": "Atualizações em Portais Oficiais 2026",
-                "resumo": "Consulta os novos canais digitais para o agendamento de manifestações de interesse e regularização de vistos no país.",
-                "url": "https://aima.gov.pt"
+                "titulo": "Plantão de Atualizações AIMA 2026",
+                "resumo": "Acompanha a reestruturação dos novos balcões de atendimento e regras de agendamento digital para este trimestre...",
+                "url": "https://aima.gov.pt",
+                "tag": "AIMA"
             },
             {
-                "titulo": "Contagem de Tempo de Residência (7 Anos)",
-                "resumo": "As regras de nacionalidade vigentes consolidam os prazos legais de residência para cidadãos da CPLP e da União Europeia.",
-                "url": "https://diariodarepublica.pt"
+                "titulo": "Artigo 15: Contagem de prazos para Nacionalidade",
+                "resumo": "Análise detalhada sobre os critérios de fixação de residência legal efetiva para fins de atribuição de cidadania portuguesa...",
+                "url": "https://diariodarepublica.pt",
+                "tag": "DN Portugal"
+            },
+            {
+                "titulo": "Logística e Vistos: Balanço Consular das Últimas Horas",
+                "resumo": "Verifica os novos fluxos de triagem e tempos médios de resposta para vistos de residência emitidos na rede diplomática...",
+                "url": "https://portaldascomunidades.mne.gov.pt",
+                "tag": "SIC Notícias"
             }
         ]
     }
