@@ -1,12 +1,13 @@
 import os
+import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
 
-app = FastAPI(title="Portal Imigrante PT - IA Humana e Abrangente")
+app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado")
 
-# Configuração de CORS para o teu link do GitHub Pages
+# Configuração de CORS aberta para permitir que o teu GitHub Pages aceda com segurança
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,19 +16,61 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Puxa a chave da Groq guardada no Render
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+# Puxa as chaves guardadas nas variáveis de ambiente do Render
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "AQUI_VAI_A_TUA_CHAVE_GROQ")
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "") # Adiciona a chave Tavily no Render para busca ao vivo
+
 client = Groq(api_key=GROQ_API_KEY)
 
+# Memória global do chat por sessão
 historico_conversas = {}
 
 class UserMessage(BaseModel):
     message: str
+    session_id: str = "comum"
 
+# =====================================================================
+# NOVO ENDPOINT: MOTOR DE NOTÍCIAS EM TEMPO REAL PARA O HUB
+# =====================================================================
+@app.get("/api/noticias")
+async def obter_noticias_tempo_real():
+    """Pesquisa na internet pelas regras, avisos e notícias mais recentes de imigração em Portugal"""
+    if not TAVILY_API_KEY:
+        # Se não houver chave Tavily configurada, retorna uma lista vazia e o HTML usa o backup de segurança
+        return {"noticias": []}
+        
+    try:
+        url = "https://api.tavily.com/search"
+        payload = {
+            "api_key": TAVILY_API_KEY,
+            "query": "noticias AIMA leis imigração Portugal avisos recentes 2026",
+            "search_depth": "advanced",
+            "max_results": 3
+        }
+        response = requests.post(url, json=payload, timeout=6)
+        if response.status_code == 200:
+            resultados = response.json().get("results", [])
+            
+            noticias_formatadas = []
+            for item in resultados:
+                noticias_formatadas.append({
+                    "titulo": item.get("title", "Atualização Legal Importante"),
+                    "resumo": item.get("content", "Verifica os detalhes completos no artigo original do portal.")[:160] + "...",
+                    "url": item.get("url", "#")
+                })
+            return {"noticias": noticias_formatadas}
+    except Exception:
+        pass
+        
+    return {"noticias": []}
+
+# =====================================================================
+# ENDPOINT DO CHAT: ASSISTENTE IA COM MEMÓRIA HUMANA
+# =====================================================================
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
-    sessao_id = "utilizador_atual"
+    sessao_id = user_data.session_id 
     
     if sessao_id not in historico_conversas:
         historico_conversas[sessao_id] = [
@@ -35,40 +78,48 @@ async def responder_chat(user_data: UserMessage):
                 "role": "system",
                 "content": (
                     "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
-                    "- Tu és o IMIGRANTE AI, o assistente virtual oficial e conselheiro humano do Portal Imigrante PT.\n"
-                    "- A tua personalidade é acolhedora, prática, experiente e muito realista. Tu falas como um imigrante veterano que já passou por tudo e quer ajudar um recém-chegado.\n"
-                    "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs'.\n\n"
+                    "- Tu és o IMIGRANTE AI, o assistente virtual oficial do Portal Imigrante PT.\n"
+                    "- Tu tens uma MEMÓRIA HUMANA: lembra-te do nome do utilizador e do contexto que ele já partilhou contigo ao longo do diálogo.\n"
+                    "- A tua personalidade é acolhedora, prática e extremamente direta. Fala como um veterano objetivo.\n"
+                    "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs' ou 'MIRA'.\n\n"
                     
-                    "ESCOPO DE ATUAÇÃO ABRANGENTE (SABER SOBRE TUDO):\n"
-                    "Tu deves responder com propriedade sobre três grandes pilares:\n"
-                    "1. LOGÍSTICA DE VIAGEM E VOOS: Dicas sobre escolha de passagens, controlo de bagagem, conexões e escalas em aeroportos, direitos do passageiro e organização de documentos de viagem.\n"
-                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA: Como é o processo psicológico da mudança, como fazer as primeiras compras de supermercado, como funciona o arrendamento real (e a procura de quartos), o clima nas diferentes estações, e como se adaptar à cultura local.\n"
-                    "3. BUROCRACIA LEGAL: Mantém a regra dos 7 anos de residência legal para nacionalidade via CPLP/UE (Lei de 2026), NIF, NISS e papel da AIMA.\n\n"
+                    "REGRA DE TRANSPARÊNCIA E DO ANO ATUAL:\n"
+                    "- O ano atual é 2026.\n"
+                    "- Se te perguntarem sobre notícias em tempo real deste mês, sê honesto e curto: explica que o teu foco é a estrutura legal estável (7 anos, AIMA, NIF) e sugere olhar o painel de notícias da nossa página inicial.\n\n"
                     
-                    "TONALIDADE E REGRAS DE RESPOSTA:\n"
-                    "- Junta conselhos práticos às respostas burocráticas. Se te perguntarem sobre o Porto ou Guimarães, fala sobre os transportes locais ou o custo prático da zona.\n"
-                    "- Sê extremamente direto. Responde logo no primeiro parágrafo.\n"
-                    "- Mantém as respostas curtas e fáceis de ler no telemóvel (máximo 3 parágrafos).\n"
-                    "- Para listas, usa unicamente o hífen (-) como marcador (limite de 5 pontos)."
+                    "ESCOPO DE ATUAÇÃO:\n"
+                    "1. LOGÍSTICA DE VIAGEM E VOOS: Passagens, malas de mão, conexões.\n"
+                    "2. DICAS HUMANAS DE SOBREVIVÊNCIA: Mudança, custo de vida, quartos, adaptação cultural.\n"
+                    "3. BUROCRACIA LEGAL: Regra de 7 ANOS de residência para nacionalidade via CPLP/UE (Lei de 2026), NIF, NISS e AIMA.\n\n"
+                    
+                    "REGRAS ESTRITAS DE FORMATO:\n"
+                    "- Responde à pergunta logo na primeira frase.\n"
+                    "- O limite máximo absoluto de cada resposta é de 2 parágrafos curtos.\n"
+                    "- Em listas, usa unicamente hifens (-) e no máximo 3 a 4 pontos."
                 )
             }
         ]
     
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
     
+    # Controlo de histórico (guarda as últimas 12 mensagens para estabilidade de tokens)
+    if len(historico_conversas[sessao_id]) > 13:
+        system_prompt = historico_conversas[sessao_id][0]
+        historico_conversas[sessao_id] = [system_prompt] + historico_conversas[sessao_id][-12:]
+    
     try:
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=historico_conversas[sessao_id],
-            temperature=0.4 # Aumentado ligeiramente para dar mais naturalidade e fluidez humana
+            temperature=0.2
         )
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
         resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
-    return {"response": reply_final} if 'reply_final' in locals() else {"response": resposta_final}
+    return {"response": resposta_final}
 
 @app.get("/")
 def home():
-    return {"status": "Servidor com IA abrangente de viagens e sobrevivência humana online!"}
+    return {"status": "Servidor do Ecossistema Portal Imigrante PT Online!"}
