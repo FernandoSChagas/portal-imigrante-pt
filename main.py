@@ -1,5 +1,6 @@
 import os
 import requests
+import xml.etree.ElementTree as ET
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -18,8 +19,6 @@ app.add_middleware(
 
 # Chaves de API estáveis do ecossistema
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
-TAVILY_API_KEY = "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"
-
 client = Groq(api_key=GROQ_API_KEY)
 
 # Memória global do chat por sessão
@@ -30,68 +29,65 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# ENDPOINT: MOTOR DE BUSCA ORDENADO POR HORA (MAIS RECENTE PRIMEIRO)
+# ENDPOINT: MOTOR RSS EM TEMPO REAL ABSOLUTO (SIC, JN, PÚBLICO)
 # =====================================================================
 @app.get("/api/noticias")
-async def obtener_noticias_tempo_real():
-    """Pesquisa jornalismo ao vivo e ordena para colocar a notícia mais recente no primeiro card"""
-    try:
-        url = "https://api.tavily.com/search"
-        # Query calibrada para focar em notícias frescas e atualizadas das últimas 24h
-        payload = {
-            "api_key": TAVILY_API_KEY,
-            "query": "site:sicnoticias.pt OR site:dn.pt OR site:publico.pt OR site:jn.pt imigração AIMA leis Portugal novidades",
-            "search_depth": "advanced",
-            "include_raw_content": False,
-            "max_results": 5  # Puxamos 5 para garantir uma boa filtragem e ordenação
-        }
-        
-        response = requests.post(url, json=payload, timeout=6)
-        if response.status_code == 200:
-            resultados = response.json().get("results", [])
-            
-            noticias_brutas = []
-            for item in resultados:
-                site_url = item.get("url", "").lower()
-                
-                # Identifica dinamicamente a fonte do jornal português
-                tag = "Jornalismo PT"
-                if "sicnoticias" in site_url:
-                    tag = "SIC Notícias"
-                elif "dn.pt" in site_url:
-                    tag = "DN Portugal"
-                elif "publico.pt" in site_url:
-                    tag = "Público"
-                elif "jn.pt" in site_url:
-                    tag = "Jornal de Notícias"
-                elif "aima" in site_url:
-                    tag = "AIMA"
+async def obter_noticias_tempo_real():
+    """Lê diretamente os feeds RSS dos jornais portugueses em tempo real"""
+    
+    # Lista de feeds RSS oficiais de Portugal
+    feeds_rss = {
+        "SIC Notícias": "https://sicnoticias.pt/rss",
+        "Jornal de Notícias": "https://www.jn.pt/rss.xml",
+        "Público": "https://www.publico.pt/rss"
+    }
+    
+    noticias_detetadas = []
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
-                # Guardamos a pontuação ou ordem nativa de frescura que a API entrega
-                noticias_brutas.append({
-                    "titulo": item.get("title", "Atualização Legal Importante"),
-                    "resumo": item.get("content", "Verifica os detalhes completos no artigo original do portal.")[:140] + "...",
-                    "url": item.get("url", "#"),
-                    "tag": tag,
-                    "score": item.get("score", 0.0)  # Relevância e frescura cronológica
-                })
-            
-            # ORDENAÇÃO MECÂNICA: Coloca o score mais alto/recente no topo da lista (Primeiro Card)
-            # O JavaScript vai ler da esquerda para a direita, empurrando as antigas para o lado
-            noticias_ordenadas = sorted(noticias_brutas, key=lambda x: x["score"], reverse=True)
-            
-            # Retorna apenas os 3 primeiros e mais frescos cartões para o carrossel do Hub
-            if noticias_ordenadas:
-                return {"noticias": noticias_ordenadas[:3]}
+    # Palavras-chave para capturar apenas o que interessa ao teu público
+    termos_busca = ["imigra", "visto", "aima", "brasil", "estrangeir", "sef", "cplp", "nacionalidade", "residenc"]
+
+    for fonte, url in feeds_rss.items():
+        try:
+            response = requests.get(url, headers=headers, timeout=4)
+            if response.status_code == 200:
+                root = ET.fromstring(response.content)
                 
-    except Exception:
-        pass
+                # Varre os artigos dentro do XML do feed
+                for item in root.findall(".//item"):
+                    titulo = item.find("title").text if item.find("title") is not None else ""
+                    link = item.find("link").text if item.find("link") is not None else "#"
+                    resumo = item.find("description").text if item.find("description") is not None else ""
+                    
+                    # Limpa tags HTML básicas que possam vir no resumo do RSS
+                    if resumo:
+                        resumo = resumo.split("<")[0].strip()
+
+                    texto_para_validar = (titulo + " " + resumo).lower()
+                    
+                    # Filtro inteligente: Verifica se o artigo fala de imigração ou temas ligados
+                    if any(termo in texto_para_validar for termo in termos_busca):
+                        noticias_detetadas.append({
+                            "titulo": titulo,
+                            "resumo": resumo[:140] + "..." if len(resumo) > 140 else resumo,
+                            "url": link,
+                            "tag": fonte
+                        })
+        except Exception:
+            continue # Se um jornal estiver fora do ar, pula para o seguinte sem travar o site
+
+    # Se encontrarmos notícias reais nos feeds oficiais, entregamos de imediato
+    if noticias_detetadas:
+        # Nota: Os feeds RSS já vêm naturalmente ordenados por ordem de publicação (as mais novas no topo)
+        # Retornamos as 3 primeiras mais frescas encontradas na rede
+        return {"noticias": noticias_detetadas[:3]}
         
-    # BACKUP CRONOLÓGICO SE A API FALHAR: Mantém o feed elegante com dados estáveis
+    # BACKUP SE OS FEEDS FALHAREM COMPLETAMENTE (Garante que a tela nunca fica vazia)
     return {
         "noticias": [
             {
-                "titulo": "Plantão de Atualizações AIMA 2026",
+                "titulo": "Plantão de Atualizações AIMA",
                 "resumo": "Acompanha a reestruturação dos novos balcões de atendimento e regras de agendamento digital para este trimestre...",
                 "url": "https://aima.gov.pt",
                 "tag": "AIMA"
