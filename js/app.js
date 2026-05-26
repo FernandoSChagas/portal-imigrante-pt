@@ -1,5 +1,5 @@
 // =====================================================================
-// GESTÃO DE SESSÃO DO UTILIZADOR (Memória Humana)
+// SESSÃO DE UTILIZADOR (Memória)
 // =====================================================================
 if (!localStorage.getItem("chat_session_id")) {
     const randomId = "sess_" + Math.random().toString(36).substring(2, 9);
@@ -7,22 +7,28 @@ if (!localStorage.getItem("chat_session_id")) {
 }
 const session_id = localStorage.getItem("chat_session_id");
 
-// URL oficial do teu back-end hospedado no Render
 const API_URL = "https://portal-imigrante-pt.onrender.com/api/chat";
 
-// Inicializa o chat assim que a página assistente.html estiver carregada
+// Inicialização automática do ecrã
 document.addEventListener("DOMContentLoaded", () => {
-    const chatBox = document.getElementById("chat-box");
+    const chatBox = document.getElementById("chatBox");
     if (chatBox) {
         renderizarHistoricoLocal();
+        
+        // Ativa o clique do Enter no campo de texto de forma segura
+        const userInput = document.getElementById("userInput");
+        if (userInput) {
+            userInput.addEventListener("keypress", (event) => {
+                if (event.key === "Enter") {
+                    enviarMensagem();
+                }
+            });
+        }
     }
 });
 
-// =====================================================================
-// LÓGICA DO FLUXO DE MENSAGENS
-// =====================================================================
 function renderizarHistoricoLocal() {
-    const chatBox = document.getElementById("chat-box");
+    const chatBox = document.getElementById("chatBox");
     if (!chatBox) return;
 
     const historico = JSON.parse(localStorage.getItem("chat_history")) || [];
@@ -37,11 +43,10 @@ function renderizarHistoricoLocal() {
 }
 
 function appendMessage(sender, text) {
-    const chatBox = document.getElementById("chat-box");
+    const chatBox = document.getElementById("chatBox");
     if (!chatBox) return;
     
     const div = document.createElement("div");
-    // Garante compatibilidade com as classes CSS (user-message / bot-message / msg)
     div.classList.add("message", sender === "user" ? "user-message" : "bot-message");
     div.innerText = text;
     chatBox.appendChild(div);
@@ -49,17 +54,14 @@ function appendMessage(sender, text) {
 }
 
 async function enviarMensagem() {
-    const input = document.getElementById("user-input");
+    const input = document.getElementById("userInput");
     if (!input || !input.value.trim()) return;
     
     const texto = input.value.trim();
     appendMessage("user", texto);
     input.value = "";
     
-    // Grava a pergunta no histórico local
     salvarNoHistoricoLocal("user", texto);
-    
-    // Feedback visual de carregamento
     appendMessage("bot", "A consultar o servidor...");
     
     try {
@@ -70,8 +72,7 @@ async function enviarMensagem() {
         });
         const data = await response.json();
         
-        // Remove a mensagem temporária de "A consultar..."
-        const chatBox = document.getElementById("chat-box");
+        const chatBox = document.getElementById("chatBox");
         if (chatBox && chatBox.lastChild) {
             chatBox.removeChild(chatBox.lastChild);
         }
@@ -79,24 +80,17 @@ async function enviarMensagem() {
         appendMessage("bot", data.response);
         salvarNoHistoricoLocal("bot", data.response);
     } catch (error) {
-        const chatBox = document.getElementById("chat-box");
+        const chatBox = document.getElementById("chatBox");
         if (chatBox && chatBox.lastChild) {
             chatBox.removeChild(chatBox.lastChild);
         }
-        appendMessage("bot", "[Erro de conexão]: Não consegui alcançar o servidor. Tenta novamente.");
-    }
-}
-
-// Permite enviar a mensagem pressionando a tecla Enter
-function verificarTecla(event) {
-    if (event.key === "Enter") {
-        enviarMensagem();
+        appendMessage("bot", "[Erro de conexão]: Servidor em standby. Tenta novamente em alguns instantes.");
     }
 }
 
 function salvarNoHistoricoLocal(sender, text) {
     let historico = JSON.parse(localStorage.getItem("chat_history")) || [];
     historico.push({ sender, text });
-    if (historico.length > 20) historico.shift(); // Evita sobrecarregar o navegador
+    if (historico.length > 20) historico.shift();
     localStorage.setItem("chat_history", JSON.stringify(historico));
 }
