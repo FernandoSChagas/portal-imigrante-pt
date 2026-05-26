@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hub Central - Notícias & Atualizações Portugal</title>
+    <title>Portal Imigrante PT - Notícias & Atualizações Portugal</title>
     <link rel="stylesheet" href="css/hub.css">
 </head>
 <body>
 
     <nav class="navbar">
-    <div class="logo">PORTAL<span class="logo-highlight">IMIGRANTE PT</span></div>
-    <div class="nav-links">
-        <a href="#" class="active">Notícias ao Vivo</a>
-        <a href="#">Guias Regionais</a>
-        <a href="https://fernandoschagas.github.io/portal-imigrante-pt/" class="nav-btn-ia">Assistente IA 🤖</a>
-    </div>
-</nav>
+        <div class="logo">PORTAL<span class="logo-highlight">IMIGRANTE PT</span></div>
+        <div class="nav-links">
+            <a href="#" class="active">Notícias ao Vivo</a>
+            <a href="#">Guias Regionais</a>
+            <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
+        </div>
+    </nav>
 
     <main class="main-container">
         
@@ -67,7 +67,10 @@
     </main>
 
     <script>
-        // Pequena automação local para simular a cotação real do Euro
+        // URL oficial do teu back-end hospedado no Render
+        const SERVIDOR_URL = "https://portal-imigrante-pt.onrender.com/api";
+
+        // 1. ATUALIZA A COTAÇÃO DO EURO
         async function buscarEuro() {
             try {
                 const res = await fetch("https://open.er-api.com/v6/latest/EUR");
@@ -75,10 +78,39 @@
                 const brl = data.rates.BRL;
                 document.getElementById("cotacao-euro").innerText = `1 EUR = R$ ${brl.toFixed(2)}`;
             } catch (e) {
-                document.getElementById("cotacao-euro").innerText = "1 EUR = R$ 5.95 (Estimado)";
+                document.getElementById("cotacao-euro").innerText = "1 EUR = R$ 5.83";
             }
         }
+
+        // 2. CONSOME AS NOTÍCIAS REAIS DO TEU BACK-END EM PYTHON
+        async function carregarNoticiasVivas() {
+            const grid = document.getElementById("newsGrid");
+            try {
+                const res = await fetch(`${SERVIDOR_URL}/noticias`);
+                const data = await res.json();
+                
+                if (data.noticias && data.noticias.length > 0) {
+                    grid.innerHTML = ""; // Limpa os cards estáticos de exemplo
+                    
+                    data.noticias.forEach(noticia => {
+                        grid.innerHTML += `
+                            <article class="news-card">
+                                <div class="news-tag">Ao Vivo</div>
+                                <h3>${noticia.titulo}</h3>
+                                <p>${noticia.resumo}</p>
+                                <a href="${noticia.url}" target="_blank" class="read-more">Ler notícia original →</a>
+                            </article>
+                        `;
+                    });
+                }
+            } catch (error) {
+                console.log("Servidor em standby. Mantendo notícias de segurança estrutural no feed.");
+            }
+        }
+
+        // Executa as cargas automáticas ao abrir o ecrã
         buscarEuro();
+        carregarNoticiasVivas();
     </script>
 </body>
 </html>
