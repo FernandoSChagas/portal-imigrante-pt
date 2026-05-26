@@ -6,7 +6,66 @@
     <title>Portal Imigrante PT - Notícias & Atualizações Portugal</title>
     <link rel="stylesheet" href="css/hub.css">
     <style>
-        /* Correção de responsividade para o botão não sumir no telemóvel */
+        /* =====================================================================
+           ESTILOS DO CARROSSEL DE NOTÍCIAS E RESPONSIVIDADE
+           ===================================================================== */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow: hidden;
+            padding: 10px 40px;
+        }
+
+        .news-carousel-track {
+            display: flex;
+            gap: 20px;
+            transition: transform 0.4s ease-in-out;
+            width: 100%;
+        }
+
+        /* Garante exatamente 3 cards visíveis no PC */
+        .news-card-carousel {
+            flex: 0 0 calc(33.333% - 14px);
+            background-color: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
+            transition: border-color 0.3s;
+        }
+
+        .news-card-carousel:hover {
+            border-color: #00a3a3;
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 128, 128, 0.7);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .carousel-btn:hover { background-color: #00a3a3; }
+        .btn-left { left: 0; }
+        .btn-right { right: 0; }
+
         @media (max-width: 768px) {
             .navbar {
                 padding: 0 15px !important;
@@ -22,7 +81,11 @@
             .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; }
             .nav-links a { margin-left: 0 !important; font-size: 0.8rem !important; }
             .nav-links a.nav-btn-ia { padding: 6px 12px !important; }
-            .main-container { padding-top: 120px !important; }
+            .main-container { padding-top: 130px !important; }
+            
+            /* No telemóvel mostra 1 card de cada vez para não amassar */
+            .news-card-carousel { flex: 0 0 100% !important; }
+            .carousel-container { padding: 10px 35px; }
         }
     </style>
 </head>
@@ -57,16 +120,21 @@
         </section>
 
         <section class="news-section">
-            <h2>📰 Últimas Atualizações e Avisos Legais</h2>
-            <p class="section-subtitle">Notícias automáticas recolhidas dos portais oficiais de Portugal.</p>
+            <h2>📰 Plantão de Notícias do Dia</h2>
+            <p class="section-subtitle">Destaques atualizados de hoje da SIC Notícias, DN e portais de ajuda ao imigrante.</p>
             
-            <div class="news-grid" id="newsGrid">
-                <article class="news-card">
-                    <div class="news-tag">AIMA</div>
-                    <h3>Novos prazos para validação de manifestações de interesse</h3>
-                    <p>O organismo atualizou a plataforma digital para acelerar os processos pendentes de regularização...</p>
-                    <a href="#" class="read-more">Ler notícia original →</a>
-                </article>
+            <div class="carousel-container">
+                <button class="carousel-btn btn-left" onclick="moverCarrossel(-1)">❮</button>
+                <div class="news-carousel-track" id="newsGrid">
+                    <article class="news-card-carousel">
+                        <div>
+                            <div class="news-tag">AIMA</div>
+                            <h3>A carregar notícias do dia...</h3>
+                            <p>O motor de busca está a varrer os portais de jornalismo portugueses para trazer as novidades das últimas 24 horas...</p>
+                        </div>
+                    </article>
+                </div>
+                <button class="carousel-btn btn-right" onclick="moverCarrossel(1)">❯</button>
             </div>
         </section>
 
@@ -74,81 +142,86 @@
 
     <script>
         const SERVIDOR_URL = "https://portal-imigrante-pt.onrender.com/api";
+        let posicaoAtual = 0;
 
-        // 1. ATUALIZA A COTAÇÃO DO EURO
+        // 1. CÂMBIO DO EURO DO DIA
         async function buscarEuro() {
             try {
                 const res = await fetch("https://open.er-api.com/v6/latest/EUR");
                 const data = await res.json();
-                const brl = data.rates.BRL;
-                document.getElementById("cotacao-euro").innerText = `1 EUR = R$ ${brl.toFixed(2)}`;
+                document.getElementById("cotacao-euro").innerText = `1 EUR = R$ ${data.rates.BRL.toFixed(2)}`;
             } catch (e) {
                 document.getElementById("cotacao-euro").innerText = "1 EUR = R$ 5.83";
             }
         }
 
-        // 2. NOTÍCIAS DO RENDER
+        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA
         async function carregarNoticiasVivas() {
             const grid = document.getElementById("newsGrid");
             try {
                 const res = await fetch(`${SERVIDOR_URL}/noticias?nocache=${Date.now()}`);
                 const data = await res.json();
+                
                 if (data.noticias && data.noticias.length > 0) {
                     grid.innerHTML = ""; 
                     data.noticias.forEach(noticia => {
+                        const fonte = noticia.tag || "Ao Vivo";
                         grid.innerHTML += `
-                            <article class="news-card">
-                                <div class="news-tag">Ao Vivo</div>
-                                <h3>${noticia.titulo}</h3>
-                                <p>${noticia.resumo}</p>
-                                <a href="${noticia.url}" target="_blank" class="read-more">Ler notícia original →</a>
+                            <article class="news-card-carousel">
+                                <div>
+                                    <div class="news-tag">${fonte}</div>
+                                    <h3 style="font-size:1.05rem; margin: 10px 0; color:#fff;">${noticia.titulo}</h3>
+                                    <p style="font-size:0.85rem; color:#8b949e; line-height:1.4;">${noticia.resumo}</p>
+                                </div>
+                                <a href="${noticia.url}" target="_blank" class="read-more" style="margin-top:15px; display:inline-block; font-size:0.85rem; color:#00a3a3; text-decoration:none;">Ler artigo completo →</a>
                             </article>
                         `;
                     });
                 }
             } catch (error) {
-                console.log("Mantendo feed estrutural.");
+                console.log("Erro ao carregar plantão de notícias.");
             }
         }
 
-        // 3. MOTOR DE CLIMA CALIBRADO
+        // CONTROLADOR DO CARROSSEL
+        function moverCarrossel(direcao) {
+            const track = document.getElementById("newsGrid");
+            const cards = document.querySelectorAll(".news-card-carousel");
+            if (cards.length <= 3 && window.innerWidth > 768) return; // Não roda no PC se tiver só 3 cards
+            
+            const maxPos = cards.length - (window.innerWidth <= 768 ? 1 : 3);
+            posicaoAtual += direcao;
+            
+            if (posicaoAtual < 0) posicaoAtual = 0;
+            if (posicaoAtual > maxPos) posicaoAtual = maxPos;
+            
+            const larguraCard = cards[0].clientWidth + 20;
+            track.style.transform = `translateX(-${posicaoAtual * larguraCard}px)`;
+        }
+
+        // 3. CLIMA POR IP REAL AO VIVO
         async function carregarClimaDinamico() {
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
-            
             try {
-                // Adicionado timestamp para rebentar com a cache do navegador
                 const resIp = await fetch(`https://ip-api.com/json/?fields=status,city,lat,lon&nocache=${Date.now()}`);
                 const dataIp = await resIp.json();
-                
                 if (dataIp.status === "success") {
-                    const cidade = dataIp.city;
-                    const lat = dataIp.lat;
-                    const lon = dataIp.lon;
-                    
-                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&nocache=${Date.now()}`);
+                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.lat}&longitude=${dataIp.lon}&current_weather=true&nocache=${Date.now()}`);
                     const dataWeather = await resWeather.json();
-                    
                     if (dataWeather.current_weather) {
                         const temp = Math.round(dataWeather.current_weather.temperature);
                         const code = dataWeather.current_weather.weathercode;
-                        
-                        // Tabela de códigos Open-Meteo expandida para o Verão/Sol
-                        let estadoCeu = "Limpo / Sol";
-                        if (code === 0) estadoCeu = "Céu Limpo ☀️";
-                        else if (code >= 1 && code <= 3) estadoCeu = "Pouco Nublado 🌤️";
+                        let estadoCeu = "Céu Limpo ☀️";
+                        if (code >= 1 && code <= 3) estadoCeu = "Pouco Nublado 🌤️";
                         else if (code >= 45 && code <= 48) estadoCeu = "Nevoeiro 🌫️";
                         else if (code >= 51) estadoCeu = "Chuva 🌧️";
-
-                        campoTitulo.innerText = `Clima em ${cidade}`;
+                        campoTitulo.innerText = `Clima em ${dataIp.city}`;
                         campoTexto.innerText = `${temp}°C (${estadoCeu})`;
                         return;
                     }
                 }
-            } catch (error) {
-                console.log("Erro no clima dinâmico.");
-            }
-            
+            } catch (error) {}
             campoTitulo.innerText = "Clima no Norte";
             campoTexto.innerText = "Guimarães: 29°C (Céu Limpo ☀️)";
         }
