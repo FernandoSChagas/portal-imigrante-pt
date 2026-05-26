@@ -17,8 +17,8 @@ app.add_middleware(
 )
 
 # Puxa as chaves guardadas nas variáveis de ambiente do Render
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "AQUI_VAI_A_TUA_CHAVE_GROQ")
-TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "") # Adiciona a chave Tavily no Render para busca ao vivo
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "") # Configura esta chave no Render para ativar a busca ao vivo
 
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -116,7 +116,7 @@ async def responder_chat(user_data: UserMessage):
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problem no motor inteligente. Detalhe: {str(e)}"
 
     return {"response": resposta_final}
 
