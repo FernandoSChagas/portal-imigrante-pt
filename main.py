@@ -30,14 +30,27 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# NOVO ENDPOINT: MOTOR DE NOTÍCIAS EM TEMPO REAL PARA O HUB
+# ENDPOINT: MOTOR DE NOTÍCIAS EM TEMPO REAL PARA O HUB
 # =====================================================================
 @app.get("/api/noticias")
 async def obter_noticias_tempo_real():
     """Pesquisa na internet pelas regras, avisos e notícias mais recentes de imigração em Portugal"""
     if not TAVILY_API_KEY:
-        # Se não houver chave Tavily configurada, retorna uma lista vazia e o HTML usa o backup de segurança
-        return {"noticias": []}
+        # Se não houver chave Tavily configurada, retorna uma lista padrão para o feed não ficar vazio
+        return {
+            "noticias": [
+                {
+                    "titulo": "Avisos Recentes AIMA 2026",
+                    "resumo": "Consulta os novos canais digitais oficiais para o agendamento de manifestações de interesse e regularização de vistos diretamente no portal.",
+                    "url": "https://aima.gov.pt"
+                },
+                {
+                    "titulo": "Contagem de Tempo de Residência (7 Anos)",
+                    "resumo": "As regras de nacionalidade vigentes consolidam os prazos legais de residência para cidadãos da CPLP e União Europeia.",
+                    "url": "https://diariodarepublica.pt"
+                }
+            ]
+        }
         
     try:
         url = "https://api.tavily.com/search"
@@ -95,14 +108,13 @@ async def responder_chat(user_data: UserMessage):
                     "REGRAS ESTRITAS DE FORMATO:\n"
                     "- Responde à pergunta logo na primeira frase.\n"
                     "- O limite máximo absoluto de cada resposta é de 2 parágrafos curtos.\n"
-                    "- Em listas, usa unicamente hifens (-) e no máximo 3 a 4 pontos."
+                    "- Em internacionais listas, usa unicamente hifens (-) e no máximo 3 a 4 pontos."
                 )
             }
         ]
     
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
     
-    # Controlo de histórico (guarda as últimas 12 mensagens para estabilidade de tokens)
     if len(historico_conversas[sessao_id]) > 13:
         system_prompt = historico_conversas[sessao_id][0]
         historico_conversas[sessao_id] = [system_prompt] + historico_conversas[sessao_id][-12:]
@@ -116,7 +128,7 @@ async def responder_chat(user_data: UserMessage):
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        resposta_final = f"[Erro de Conexão]: Ocorreu um problem no motor inteligente. Detalhe: {str(e)}"
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
     return {"response": resposta_final}
 
