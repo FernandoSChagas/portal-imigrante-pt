@@ -6,7 +6,7 @@
     <title>Imigrante AI - Assistente Virtual</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Injeção da Navbar Premium sem quebrar o layout do chat original */
+        /* Navbar unificada do ecossistema */
         .navbar {
             position: fixed;
             top: 0;
@@ -53,7 +53,6 @@
             border-radius: 6px;
             font-weight: 600;
         }
-        /* Alinhamento do chat para não ficar escondido debaixo da navbar */
         body {
             padding-top: 80px;
             background-color: #0d1117;
@@ -85,15 +84,6 @@
             <button onclick="enviarMensagem()">Enviar</button>
         </div>
     </div>
-
-    <script>
-        // Garante que o input responde à tecla Enter de forma nativa
-        document.getElementById("userInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                enviarMensagem();
-            }
-        });
-    </script>
 
     <script src="js/app.js"></script>
 </body>
