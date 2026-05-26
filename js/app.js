@@ -1,210 +1,102 @@
+// =====================================================================
+// GESTÃO DE SESSÃO DO UTILIZADOR (Memória Humana)
+// =====================================================================
+if (!localStorage.getItem("chat_session_id")) {
+    const randomId = "sess_" + Math.random().toString(36).substring(2, 9);
+    localStorage.setItem("chat_session_id", randomId);
+}
+const session_id = localStorage.getItem("chat_session_id");
+
+// URL oficial do teu back-end hospedado no Render
+const API_URL = "https://portal-imigrante-pt.onrender.com/api/chat";
+
+// Inicializa o chat assim que a página assistente.html estiver carregada
 document.addEventListener("DOMContentLoaded", () => {
-    const inputChat = document.querySelector(".chat-input-area input");
-    const btnEnviar = document.querySelector(".btn-enviar");
-    const chatWindow = document.querySelector(".chat-window");
-
-    const areaGuiaDinamico = document.getElementById("area-guia-dinamico");
-    const corpoTextoGuia = document.getElementById("corpo-texto-guia");
-    const btnFecharGuia = document.getElementById("btn-fechar-guia");
-
-    const inputAlojamento = document.getElementById("calc-alojamento");
-    const inputAlimentacao = document.getElementById("calc-alimentacao");
-    const inputTransportes = document.getElementById("calc-transportes");
-    const inputExtras = document.getElementById("calc-extras");
-    const txtTotalCusto = document.getElementById("total-custo");
-
-    const searchInput = document.getElementById("search-service-input");
-    const categorySelect = document.getElementById("filter-category-select");
-    const servicesGridContainer = document.getElementById("services-grid-container");
-
-    const dadosServicos = [
-        {
-            nome: "PORTAL DAS FINANÇAS (AUTORIDADE TRIBUTÁRIA)",
-            categoria: "saude-fiscal",
-            categoriaTexto: "Finanças & Fiscalidade",
-            endereco: "Serviços de Finanças Locais e Atendimento e-Balcão",
-            url: "https://www.portaldasfinancas.gov.pt",
-            icone: "⚖️"
-        },
-        {
-            nome: "AIMA - AGÊNCIA PARA A INTEGRAÇÃO, MIGRAÇÕES E ASILO",
-            categoria: "documentos",
-            categoriaTexto: "Documentação & Vistos",
-            endereco: "Lojas AIMA e Postos de Atendimento Oficial",
-            url: "https://aima.gov.pt",
-            icone: "🌐"
-        },
-        {
-            nome: "SEGURANÇA SOCIAL DIRETA",
-            categoria: "documentos",
-            categoriaTexto: "Segurança Social & NISS",
-            endereco: "Serviços de Atendimento da Segurança Social / NISS na Hora",
-            url: "https://www.seg-social.pt",
-            icone: "🤝"
-        },
-        {
-            nome: "PORTAL DO UTENTE SNS (SERVIÇO NACIONAL DE SAÚDE)",
-            categoria: "saude-fiscal",
-            categoriaTexto: "Saúde Pública",
-            endereco: "Centros de Saúde Locais / Unidades de Saúde Familiar (USF)",
-            url: "https://www.sns.gov.pt",
-            icone: "🏥"
-        }
-    ];
-
-    const conteudosGuias = {
-        nif: `
-            <div class="guia-texto-container">
-                <h3>Como obter o NIF e o NISS</h3>
-                <p>O NIF e o NISS são os pilares essenciais para trabalhar e viver legalmente em Portugal.</p>
-                <ul>
-                    <li><strong>NIF:</strong> Solicita-se num balcão das Finanças ou Loja do Cidadão portando o passaporte válido.</li>
-                    <li><strong>NISS:</strong> Pode ser obtido online através do serviço "NISS na Hora" no portal da Segurança Social.</li>
-                </ul>
-            </div>
-        `,
-        saude: `
-            <div class="guia-texto-container">
-                <h3>Acesso ao Serviço Nacional de Saúde (SNS)</h3>
-                <p>Para ter acesso a consultas e assistência médica pública, deve registar-se no Centro de Saúde da sua área de residência.</p>
-                <ul>
-                    <li>Leve o seu passaporte, NIF e o seu comprovativo de morada oficial da Junta de Freguesia.</li>
-                </ul>
-            </div>
-        `,
-        aima: `
-            <div class="guia-texto-container">
-                <h3>AIMA e Fluxos de Regularização (2026)</h3>
-                <p>A Agência para a Integração, Migrações e Asilo (AIMA) superintende os vistos e as autorizações de residência.</p>
-                <p>Com as regras correntes vigentes para o ano de 2026, os processos dependem obrigatoriamente de agendamentos e canais de entrada eletrónicos controlados na plataforma oficial.</p>
-            </div>
-        `,
-        equivalencias: `
-            <div class="guia-texto-container">
-                <h3>Validação e Equivalência de Diplomas</h3>
-                <p>O processo para conferir validade jurídica aos seus estudos realizados fora de Portugal divide-se em duas frentes:</p>
-                <ul>
-                    <li><strong>Ensino Secundário:</strong> Tratado presencialmente num agrupamento de escolas secundárias públicas da sua área de morada.</li>
-                    <li><strong>Ensino Superior:</strong> Deve ser submetido digitalmente através do portal nacional da DGES.</li>
-                </ul>
-            </div>
-        `
-    };
-
-    function renderizarServicos(dadosFiltrados) {
-        servicesGridContainer.innerHTML = "";
-        if (dadosFiltrados.length === 0) {
-            servicesGridContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">Nenhum portal oficial encontrado.</p>`;
-            return;
-        }
-        dadosFiltrados.forEach(item => {
-            servicesGridContainer.innerHTML += `
-                <div class="service-item-card">
-                    <div class="card-top-header">
-                        <div class="card-avatar-box">${item.icone}</div>
-                        <div class="card-headline-box">
-                            <h4>${item.nome}</h4>
-                            <div class="card-tag-category">• ${item.categoriaTexto}</div>
-                        </div>
-                    </div>
-                    <div class="card-address-panel">
-                        <div class="address-label">Atendimento / Âmbito</div>
-                        <div class="address-value">${item.endereco}</div>
-                    </div>
-                    <a href="${item.url}" target="_blank" class="btn-visit-website">🌐 Ir para o Site Oficial</a>
-                </div>
-            `;
-        });
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+        renderizarHistoricoLocal();
     }
-
-    function filtrarServicos() {
-        const termoBusca = searchInput.value.toLowerCase().trim();
-        const categoriaSelecionada = categorySelect.value;
-        const resultado = dadosServicos.filter(item => {
-            const bateTexto = item.nome.toLowerCase().includes(termoBusca);
-            const bateCategoria = (categoriaSelecionada === "todos") || (item.categoria === categoriaSelecionada);
-            return bateTexto && bateCategoria;
-        });
-        renderizarServicos(resultado);
-    }
-
-    searchInput.addEventListener("input", filtrarServicos);
-    categorySelect.addEventListener("change", filtrarServicos);
-    renderizarServicos(dadosServicos);
-
-    function calcularCustoVida() {
-        const alojamento = parseFloat(inputAlojamento.value) || 0;
-        const alimentacao = parseFloat(inputAlimentacao.value) || 0;
-        const transportes = parseFloat(inputTransportes.value) || 0;
-        const extras = parseFloat(inputExtras.value) || 0;
-        txtTotalCusto.textContent = Math.round(alojamento + alimentacao + transportes + extras);
-    }
-
-    inputAlojamento.addEventListener("input", calcularCustoVida);
-    inputAlimentacao.addEventListener("input", calcularCustoVida);
-    inputTransportes.addEventListener("input", calcularCustoVida);
-    inputExtras.addEventListener("input", calcularCustoVida);
-    calcularCustoVida();
-
-    function adicionarMensagem(autor, texto, tipo) {
-        const divMensagem = document.createElement("div");
-        divMensagem.className = `message ${tipo}`;
-        divMensagem.innerHTML = `<p><strong>${autor}:</strong> ${texto}</p>`;
-        chatWindow.appendChild(divMensagem);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    async function enviarMensagem() {
-        const mensagemUtilizador = inputChat.value.trim();
-        if (mensagemUtilizador === "") return;
-
-        adicionarMensagem("Tu", mensagemUtilizador, "user");
-        inputChat.value = "";
-
-        const indicadorPensar = document.createElement("div");
-        indicadorPensar.className = "message system";
-        indicadorPensar.id = "status-ia-temporario";
-        indicadorPensar.innerHTML = `<p><strong>Assistente:</strong> A consultar bases legais...</p>`;
-        chatWindow.appendChild(indicadorPensar);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-
-        try {
-            // CONEXÃO COM O TEU SERVIDOR DO RENDER (LINHA 138)
-            const response = await fetch("https://portal-imigrante-pt.onrender.com/api/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: mensagemUtilizador })
-            });
-            const elementoTemp = document.getElementById("status-ia-temporario");
-            if (elementoTemp) elementoTemp.remove();
-            const dados = await response.json();
-            adicionarMensagem("Assistente", dados.response, "system");
-        } catch (error) {
-            const elementoTemp = document.getElementById("status-ia-temporario");
-            if (elementoTemp) elementoTemp.remove();
-            adicionarMensagem("Assistente", "Lamento, erro ao conectar com o servidor inteligência.", "system");
-        }
-    }
-
-    function abrirGuia(chave) {
-        const conteudo = conteudosGuias[chave];
-        if (conteudo) {
-            corpoTextoGuia.innerHTML = conteudo;
-            areaGuiaDinamico.style.display = "block";
-            areaGuiaDinamico.scrollIntoView({ behavior: "smooth" });
-        }
-    }
-
-    document.getElementById("card-nif").addEventListener("click", () => abrirGuia("nif"));
-    document.getElementById("card-saude").addEventListener("click", () => abrirGuia("saude"));
-    document.getElementById("card-aima").addEventListener("click", () => abrirGuia("aima"));
-    document.getElementById("card-equivalencias").addEventListener("click", () => abrirGuia("equivalencias"));
-
-    btnFecharGuia.addEventListener("click", () => {
-        areaGuiaDinamico.style.display = "none";
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-    btnEnviar.addEventListener("click", enviarMensagem);
-    inputChat.addEventListener("keypress", (e) => { if (e.key === "Enter") enviarMensagem(); });
 });
+
+// =====================================================================
+// LÓGICA DO FLUXO DE MENSAGENS
+// =====================================================================
+function renderizarHistoricoLocal() {
+    const chatBox = document.getElementById("chat-box");
+    if (!chatBox) return;
+
+    const historico = JSON.parse(localStorage.getItem("chat_history")) || [];
+    chatBox.innerHTML = "";
+    
+    if (historico.length === 0) {
+        appendMessage("bot", "Olá! Sou o Imigrante AI. Como posso ajudar com a tua jornada, voos ou burocracia hoje?");
+        return;
+    }
+    
+    historico.forEach(msg => appendMessage(msg.sender, msg.text));
+}
+
+function appendMessage(sender, text) {
+    const chatBox = document.getElementById("chat-box");
+    if (!chatBox) return;
+    
+    const div = document.createElement("div");
+    // Garante compatibilidade com as classes CSS (user-message / bot-message / msg)
+    div.classList.add("message", sender === "user" ? "user-message" : "bot-message");
+    div.innerText = text;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function enviarMensagem() {
+    const input = document.getElementById("user-input");
+    if (!input || !input.value.trim()) return;
+    
+    const texto = input.value.trim();
+    appendMessage("user", texto);
+    input.value = "";
+    
+    // Grava a pergunta no histórico local
+    salvarNoHistoricoLocal("user", texto);
+    
+    // Feedback visual de carregamento
+    appendMessage("bot", "A consultar o servidor...");
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: texto, session_id: session_id })
+        });
+        const data = await response.json();
+        
+        // Remove a mensagem temporária de "A consultar..."
+        const chatBox = document.getElementById("chat-box");
+        if (chatBox && chatBox.lastChild) {
+            chatBox.removeChild(chatBox.lastChild);
+        }
+        
+        appendMessage("bot", data.response);
+        salvarNoHistoricoLocal("bot", data.response);
+    } catch (error) {
+        const chatBox = document.getElementById("chat-box");
+        if (chatBox && chatBox.lastChild) {
+            chatBox.removeChild(chatBox.lastChild);
+        }
+        appendMessage("bot", "[Erro de conexão]: Não consegui alcançar o servidor. Tenta novamente.");
+    }
+}
+
+// Permite enviar a mensagem pressionando a tecla Enter
+function verificarTecla(event) {
+    if (event.key === "Enter") {
+        enviarMensagem();
+    }
+}
+
+function salvarNoHistoricoLocal(sender, text) {
+    let historico = JSON.parse(localStorage.getItem("chat_history")) || [];
+    historico.push({ sender, text });
+    if (historico.length > 20) historico.shift(); // Evita sobrecarregar o navegador
+    localStorage.setItem("chat_history", JSON.stringify(historico));
+}
