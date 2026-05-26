@@ -6,7 +6,7 @@
     <title>Imigrante AI - Assistente Virtual</title>
     <style>
         /* =====================================================================
-           ESTILO STARTUP TECH / DARK LAB (DIRETO NO ARQUIVO PARA EVITAR CACHE)
+           ESTILO PREMIUM DARK COM CORREÇÃO DE RESPONSIVIDADE (MOBILE READY)
            ===================================================================== */
         :root {
             --bg-dark: #0d1117;
@@ -35,7 +35,7 @@
             flex-direction: column;
         }
 
-        /* BARRA DE NAVEGAÇÃO SUPERIOR */
+        /* BARRA DE NAVEGAÇÃO SUPERIOR - FLEXÍVEL PARA MOBILE */
         .navbar {
             position: fixed;
             top: 0;
@@ -49,7 +49,7 @@
             align-items: center;
             padding: 0 5%;
             z-index: 1000;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         }
 
         .logo {
@@ -86,10 +86,46 @@
             padding: 8px 16px;
             border-radius: 6px;
             font-weight: 600;
-            box-shadow: 0 0 10px rgba(0, 128, 128, 0.3);
         }
 
-        /* ESTRUTURA CENTRAL DA CAIXA DE IA */
+        /* CONFIGURAÇÃO PARA TELEMÓVEIS (MOBILE FIX) */
+        @media (max-width: 768px) {
+            .navbar {
+                height: auto;
+                padding: 12px 15px !important;
+                flex-direction: column !important;
+                gap: 10px;
+            }
+
+            .logo {
+                font-size: 1.1rem !important;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: center !important;
+                gap: 15px !important;
+            }
+
+            .nav-links a {
+                margin-left: 0 !important;
+                font-size: 0.8rem !important;
+            }
+
+            .chat-wrapper-container {
+                padding-top: 125px !important; /* Mais espaço para a navbar maior no telemóvel */
+            }
+            
+            .chat-container {
+                height: calc(100vh - 140px) !important;
+                width: 100% !important;
+                border-radius: 0 !important;
+                border-left: none;
+                border-right: none;
+            }
+        }
+
+        /* ESTRUTURA CENTRAL DO CHAT */
         .chat-wrapper-container {
             flex: 1;
             padding-top: 90px;
@@ -112,57 +148,35 @@
             overflow: hidden;
             backdrop-filter: blur(10px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-            transition: border-color 0.3s;
         }
 
-        .chat-container:hover {
-            border-color: rgba(0, 163, 163, 0.4);
-        }
-
-        /* CABEÇALHO DO CHAT */
         .chat-header {
-            padding: 20px;
+            padding: 15px;
             background-color: rgba(22, 27, 34, 0.9);
             border-bottom: 1px solid var(--border-color);
             text-align: center;
         }
 
-        .chat-header h2 {
-            color: #fff;
-            font-size: 1.4rem;
-            letter-spacing: 0.5px;
-        }
+        .chat-header h2 { color: #fff; font-size: 1.2rem; }
+        .chat-header p { color: var(--text-muted); font-size: 0.8rem; }
 
-        .chat-header h2::after {
-            content: " •";
-            color: var(--teal-glow);
-        }
-
-        .chat-header p {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-top: 4px;
-        }
-
-        /* CAIXA INTERNA DE HISTÓRICO */
         .chat-box {
             flex: 1;
             overflow-y: auto;
-            padding: 25px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 15px;
             background-color: rgba(13, 17, 23, 0.4);
         }
 
-        /* BALÕES DE MENSAGENS ESTILO MODERN CHAT */
+        /* BALÕES DE MENSAGENS */
         .message {
             max-width: 85%;
-            padding: 14px 18px;
+            padding: 12px 16px;
             border-radius: 12px;
             font-size: 0.95rem;
-            line-height: 1.5;
-            word-wrap: break-word;
+            line-height: 1.4;
             animation: fadeIn 0.3s ease-in-out;
         }
 
@@ -171,7 +185,6 @@
             background-color: var(--teal-primary);
             color: #fff;
             border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0, 128, 128, 0.2);
         }
 
         .bot-message {
@@ -182,21 +195,13 @@
             border-bottom-left-radius: 4px;
         }
 
-        /* ELEMENTOS INTERNOS DO TEXTO DA IA */
-        .bot-message p {
-            margin-bottom: 10px;
-        }
-        .bot-message p:last-child {
-            margin-bottom: 0;
-        }
-
-        /* ÁREA DE ENTRADA DE TEXTO (INPUT) */
+        /* ÁREA DE INPUT */
         .input-area {
             display: flex;
-            padding: 18px;
+            padding: 15px;
             background-color: rgba(22, 27, 34, 0.9);
             border-top: 1px solid var(--border-color);
-            gap: 12px;
+            gap: 10px;
         }
 
         .input-area input {
@@ -204,56 +209,24 @@
             background-color: #0d1117;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 14px 16px;
+            padding: 12px;
             color: #fff;
             font-size: 0.95rem;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        .input-area input:focus {
-            outline: none;
-            border-color: var(--teal-primary);
-            box-shadow: 0 0 8px rgba(0, 128, 128, 0.2);
         }
 
         .input-area button {
             background-color: var(--teal-primary);
             color: #fff;
             border: none;
-            padding: 0 24px;
+            padding: 0 20px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 700;
-            font-size: 0.95rem;
-            transition: background 0.2s, transform 0.1s;
         }
 
-        .input-area button:hover {
-            background-color: var(--teal-glow);
-        }
-
-        .input-area button:active {
-            transform: scale(0.98);
-        }
-
-        /* ANIMAÇÃO DE APARECIMENTO */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* AJUSTES PARA TELEMÓVEL */
-        @media (max-width: 768px) {
-            .navbar { padding: 0 15px; }
-            .nav-links a { margin-left: 15px; font-size: 0.85rem; }
-            .chat-wrapper-container { padding-top: 70px; padding-bottom: 0; }
-            .chat-container {
-                width: 100%;
-                height: calc(100vh - 70px);
-                border-radius: 0;
-                border: none;
-            }
-            .message { max-width: 90%; }
         }
     </style>
 </head>
@@ -279,7 +252,7 @@
                 </div>
             
             <div class="input-area">
-                <input type="text" id="userInput" placeholder="Pergunta-me sobre NIF, NISS, AIMA..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="Pergunta-me algo..." autocomplete="off">
                 <button onclick="enviarMensagem()">Enviar</button>
             </div>
         </div>
