@@ -5,6 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Imigrante PT - Notícias & Atualizações Portugal</title>
     <link rel="stylesheet" href="css/hub.css">
+    <style>
+        /* =====================================================================
+           CORREÇÃO CIRÚRGICA DE RESPONSIVIDADE PARA O BOTÃO NÃO SUMIR NO TELEMÓVEL
+           ===================================================================== */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 15px !important;
+                height: auto !important;
+                min-height: 70px;
+                flex-direction: column !important;
+                justify-content: center !important;
+                gap: 10px;
+                padding-top: 12px !important;
+                padding-bottom: 12px !important;
+            }
+
+            .logo {
+                font-size: 1.1rem !important;
+                text-align: center;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: center !important;
+                gap: 12px !important;
+            }
+
+            .nav-links a {
+                margin-left: 0 !important;
+                font-size: 0.8rem !important;
+            }
+
+            .nav-links a.nav-btn-ia {
+                padding: 6px 12px !important;
+            }
+
+            /* Compensa a altura extra da barra no telemóvel para não cobrir os widgets */
+            .main-container {
+                padding-top: 120px !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -99,7 +141,6 @@
             const campoTitulo = document.getElementById("titulo-clima");
             
             try {
-                // Passo A: Deteta a cidade e coordenadas através do IP
                 const resIp = await fetch("https://ip-api.com/json/?fields=status,city,lat,lon");
                 const dataIp = await resIp.json();
                 
@@ -108,7 +149,6 @@
                     const lat = dataIp.lat;
                     const lon = dataIp.lon;
                     
-                    // Passo B: Consulta a API meteorológica global com as coordenadas encontradas
                     const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                     const dataWeather = await resWeather.json();
                     
@@ -116,13 +156,11 @@
                         const temp = Math.round(dataWeather.current_weather.temperature);
                         const code = dataWeather.current_weather.weathercode;
                         
-                        // Traduz simplificadamente o código do céu
                         let estadoCeu = "Limpo";
                         if (code > 0 && code <= 3) estadoCeu = "Parcialmente Nublado";
                         if (code > 3 && code <= 48) estadoCeu = "Nevoeiro";
                         if (code > 48) estadoCeu = "Chuva / Aguaceiros";
 
-                        // Atualiza os dados no ecrã do utilizador
                         campoTitulo.innerText = `Clima em ${cidade}`;
                         campoTexto.innerText = `${temp}°C (${estadoCeu})`;
                         return;
@@ -132,12 +170,10 @@
                 console.log("Erro ao detetar clima dinâmico.");
             }
             
-            // Backup padrão caso as APIs de IP falhem (Mostra Guimarães)
             campoTitulo.innerText = "Clima no Norte";
             campoTexto.innerText = "Guimarães: 18°C (Nublado)";
         }
 
-        // Executa todas as automações vivas ao abrir a página
         buscarEuro();
         carregarNoticiasVivas();
         carregarClimaDinamico();
