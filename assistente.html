@@ -6,7 +6,7 @@
     <title>Imigrante AI - Assistente Virtual</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Ajuste rápido para garantir que a navbar do hub se integra bem no ecrã do chat */
+        /* Injeção da Navbar Premium sem quebrar o layout do chat original */
         .navbar {
             position: fixed;
             top: 0;
@@ -53,8 +53,10 @@
             border-radius: 6px;
             font-weight: 600;
         }
-        .chat-container {
-            margin-top: 40px;
+        /* Alinhamento do chat para não ficar escondido debaixo da navbar */
+        body {
+            padding-top: 80px;
+            background-color: #0d1117;
         }
     </style>
 </head>
@@ -75,14 +77,23 @@
             <p>O teu conselheiro virtual para Portugal</p>
         </div>
         
-        <div class="chat-box" id="chat-box">
+        <div class="chat-box" id="chatBox">
             </div>
         
         <div class="input-area">
-            <input type="text" id="user-input" placeholder="Pergunta-me sobre NIF, NISS, AIMA, voos..." onkeypress="verificarTecla(event)">
+            <input type="text" id="userInput" placeholder="Pergunta-me sobre NIF, NISS, AIMA, voos..." autocomplete="off">
             <button onclick="enviarMensagem()">Enviar</button>
         </div>
     </div>
+
+    <script>
+        // Garante que o input responde à tecla Enter de forma nativa
+        document.getElementById("userInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                enviarMensagem();
+            }
+        });
+    </script>
 
     <script src="js/app.js"></script>
 </body>
