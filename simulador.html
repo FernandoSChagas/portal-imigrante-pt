@@ -152,7 +152,6 @@
         .footer-credits { border-top: 1px solid rgba(255, 255, 255, 0.03); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-family: monospace; font-size: 0.75rem; color: #485264; }
         .trademark { color: #00e5ff; font-weight: bold; }
 
-        /* MODAIS DE SUPORTE */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(4, 8, 18, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 20px; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-window { background-color: #161b22; border: 2px solid #30363d; border-radius: 12px; max-width: 700px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.7); transform: translateY(-20px); transition: transform 0.3s ease; }
@@ -219,7 +218,7 @@
                     </div>
                 </div>
 
-                <button class="btn-calc" onclick="mostrarCapturaLeads()">Calcular Orçamento de Partida</button>
+                <button class="btn-calc" id="btnPrimeiroPasso" onclick="mostrarCapturaLeads()">Calcular Orçamento de Partida</button>
             </div>
 
             <div id="leadForm" class="lead-section">
@@ -241,7 +240,7 @@
                     <input type="text" id="leadWhatsapp" class="input-custom" placeholder="Ex: +351 912 345 678">
                 </div>
 
-                <button class="btn-calc" onclick="executarCalculoFinal()">Desbloquear Resultados do Simulador</button>
+                <button class="btn-calc" id="btnSegundoPasso" onclick="executarCalculoFinal()">Desbloquear Resultados do Simulador</button>
             </div>
 
             <div class="results-area" id="resArea">
@@ -288,8 +287,7 @@
                 <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
             </div>
             <div class="modal-body">
-                <p>A sua privacidade é importante para nós. O Portal Imigrante PT armazena de forma estritamente segura os dados coletados no simulador apenas para fins de envio do orçamento e comunicação interna sobre relocalização internacional.</p>
-                <p>Esta política é efetiva a partir de Maio de 2026.</p>
+                <p>A sua privacidade é importante para nós. O Portal Imigrante PT armazena de forma estritamente segura os dados coletados no simulador apenas para fins de envio do orçamento.</p>
             </div>
         </div>
     </div>
@@ -301,44 +299,41 @@
                 <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Ao realizar a simulação, concorda em fornecer dados reais de contacto para processamento interno e concorda que as estimativas geradas seguem as taxas médias do ano corrente de 2026.</p>
+                <p>Ao realizar a simulação, concorda em fornecer dados reais de contacto para processamento interno.</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Transição suave: Esconde o botão e abre os campos do Lead
         function mostrarCapturaLeads() {
-            document.getElementById("setupForm").style.opacity = "0.5";
-            // Bloqueia interações nas opções para forçar o foco no lead
+            document.getElementById("setupForm").style.opacity = "0.4";
             document.getElementById("perfil").disabled = true;
             document.getElementById("regiao").disabled = true;
             document.getElementById("meses").disabled = true;
+            document.getElementById("btnPrimeiroPasso").disabled = true;
             
             document.getElementById("leadForm").style.display = "block";
             document.getElementById("leadForm").scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Faz o envio conjunto completo para a tua API no Render
-        async function ejecutarCalculoFinal() {
+        async function executarCalculoFinal() {
             const nome = document.getElementById("leadNome").value.trim();
             const email = document.getElementById("leadEmail").value.trim();
             const whatsapp = document.getElementById("leadWhatsapp").value.trim() || "Não informado";
 
             if (!nome || !email || !email.includes("@")) {
-                alert("Por favor, introduza um Nome e um E-mail válido para desbloquear os cálculos do simulador.");
+                alert("Por favor, introduza um Nome e um E-mail válido para desbloquear os resultados.");
                 return;
             }
 
+            const btnSegundo = document.getElementById("btnSegundoPasso");
             const resArea = document.getElementById("resArea");
             const iaBox = document.getElementById("iaInsight");
             
-            // Esconde o bloco de lead após validação e carrega a área final
-            document.getElementById("leadForm").style.display = "none";
-            document.getElementById("setupForm").style.display = "none";
-            resArea.style.display = "block";
-            iaBox.innerText = "Sincronizando com o motor inteligente, guardando os teux dados e convertendo moedas...";
-
+            btnSegundo.disabled = true;
+            btnSegundo.innerText = "A carregar resultados...";
+            
+            // Cria exatamente as chaves em letras minúsculas correspondentes ao Pydantic
             const payload = {
                 perfil: document.getElementById("perfil").value,
                 regiao: document.getElementById("regiao").value,
@@ -356,20 +351,30 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error("Erro na resposta da API.");
+                    const errorData = await response.json();
+                    console.error("Erro do Servidor:", errorData);
+                    throw new Error("Erro na comunicação com o backend.");
                 }
 
                 const data = await response.json();
                 
+                // Esconde as etapas de formulário e liberta o ecrã final limpo
+                document.getElementById("leadForm").style.display = "none";
+                document.getElementById("setupForm").style.display = "none";
+                
+                resArea.style.display = "block";
                 document.getElementById("totalEuro").innerText = `€ ${data.total_euro.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`;
                 document.getElementById("totalReal").innerText = `R$ ${data.total_real.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`;
                 iaBox.innerText = data.insight_ia;
+                
             } catch (error) {
-                iaBox.innerText = "Ocorreu um erro ao processar o cálculo estruturado. Recarregue a página e tente novamente.";
+                console.error(error);
+                alert("Ocorreu um problema ao conectar com o motor inteligente. Por favor tente novamente.");
+                btnSegundo.disabled = false;
+                btnSegundo.innerText = "Desbloquear Resultados do Simulador";
             }
         }
 
-        // CONTROLE DOS MODAIS DE SUPORTE
         function openModal(modalId) { document.getElementById(modalId).classList.add('active'); document.body.style.overflow = 'hidden'; }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); document.body.style.overflow = ''; }
         function closeModalOnOverlay(event) { if (event.target.classList.contains('modal-overlay')) { event.target.classList.remove('active'); document.body.style.overflow = ''; } }
