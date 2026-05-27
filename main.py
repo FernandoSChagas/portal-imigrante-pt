@@ -1,205 +1,210 @@
 import os
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import requests
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from groq import Groq
-from tavily import TavilyClient
 
-app = Flask(__name__)
-# Permite que o teu site no GitHub Pages comunique com o servidor Render sem bloqueios de segurança
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado")
+
+# Configuração de CORS aberta para permitir que o teu GitHub Pages aceda com segurança
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Chaves de API estáveis do ecossistema obtidas das variáveis de ambiente do Render
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+TAVILY_API_KEY = "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"
+
+client = Groq(api_key=GROQ_API_KEY)
+
+# Memórias globais do servidor
+historico_conversas = {}
+
+# Modelos de Dados Pydantic para validação das rotas POST
+class UserMessage(BaseModel):
+    message: str
+    session_id: str = "comum"
+
+class RegionRequest(BaseModel):
+    regiao: str
 
 # =====================================================================
-# INICIALIZAÇÃO DAS APIS (VARIÁVEIS DE AMBIENTE DO RENDER)
+# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML)
 # =====================================================================
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
-
-if not GROQ_API_KEY or not TAVILY_API_KEY:
-    print("⚠️ AVISO: Certifica-te de que as chaves GROQ_API_KEY e TAVILY_API_KEY estão configuradas no Render!")
-
-groq_client = Groq(api_key=GROQ_API_KEY)
-tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
-
-# Memória temporária em servidor para o Assistente Virtual
-historico_sessoes = {}
-
-# =====================================================================
-# 1. ROTA: PLANTÃO DE NOTÍCIAS AO VIVO (INDEX.HTML)
-# =====================================================================
-@app.route('/api/noticias', methods=['GET'])
-def obter_noticias_vivas():
+@app.get("/api/noticias")
+async def obtener_noticias_tempo_real():
+    """Pesquisa em tempo real por todo o universo de imigração, vistos e viagens nas últimas 24h"""
     try:
-        # Varredura focada no nicho de imigração em Portugal nas últimas 24 horas
-        busca = tavily_client.search(
-            query="imigração Portugal vistos AIMA autorização residência novidades",
-            search_depth="basic",
-            time_range="day",
-            max_results=5
+        url = "https://api.tavily.com/search"
+        query_global = (
+            "imigração Portugal AIMA vistos passaporte autorização de residência "
+            "leis voos viagens cartão cidadão Polícia Federal Consulado hoje últimas notícias"
         )
         
-        noticias_formatadas = []
-        for item in busca.get('results', []):
-            # Tenta identificar uma tag limpa com base no título ou URL
-            titulo_lower = item.get('title', '').lower()
-            tag = "Atualidade"
-            if "aima" in titulo_lower: tag = "AIMA"
-            elif "visto" in titulo_lower: tag = "Vistos"
-            elif "governo" in titulo_lower or "lei" in titulo_lower: tag = "Legislação"
-            
-            noticias_formatadas.append({
-                "titulo": item.get('title', 'Notícia de Última Hora'),
-                "resumo": item.get('content', '')[:150] + "...",
-                "url": item.get('url', '#'),
-                "tag": tag
-            })
-            
-        # Fallback caso a internet esteja muito parada no dia e o Tavily retorne vazio
-        if not noticias_formatadas:
-            noticias_formatadas = [
-                {
-                    "titulo": "AIMA reforça atendimento digital para agendamentos de vistos",
-                    "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes de manifestações de interesse antigas...",
-                    "url": "https://www.aima.gov.pt",
-                    "tag": "AIMA"
-                },
-                {
-                    "titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho",
-                    "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...",
-                    "url": "https://www.diariodenoticias.pt",
-                    "tag": "Vistos"
-                }
-            ]
-            
-        return jsonify({"noticias": noticias_formatadas}), 200
+        payload = {
+            "api_key": TAVILY_API_KEY,
+            "query": query_global,
+            "search_depth": "advanced",
+            "time_range": "day",
+            "max_results": 8
+        }
         
-    except Exception as e:
-        print(f"Erro na rota de notícias: {e}")
-        return jsonify({"erro": "Não foi possível carregar o plantão.", "noticias": []}), 500
+        response = requests.post(url, json=payload, timeout=6)
+        if response.status_code == 200:
+            resultados = response.json().get("results", [])
+            noticias_brutas = []
+            
+            for item in resultados:
+                site_url = item.get("url", "").lower()
+                titulo = item.get("title", "")
+                
+                tag = "Atualidade"
+                if "sicnoticias" in site_url: tag = "SIC Notícias"
+                elif "dn.pt" in site_url or "dn-pt" in site_url: tag = "DN Portugal"
+                elif "publico" in site_url: tag = "Público"
+                elif "jn.pt" in site_url: tag = "Jornal de Notícias"
+                elif "aima" in site_url: tag = "AIMA Oficial"
+                elif "g1" in site_url or "globo" in site_url: tag = "G1 Brasil"
+                elif "rtp" in site_url: tag = "RTP Notícias"
+                elif "observador" in site_url: tag = "Observador"
+                
+                noticias_brutas.append({
+                    "titulo": titulo,
+                    "resumo": item.get("content", "Aceda à cobertura de última hora diretamente no portal de notícias.")[:135] + "...",
+                    "url": item.get("url", "#"),
+                    "tag": tag
+                })
+            
+            if noticias_brutas:
+                return {"noticias": noticias_brutas[:5]}
+    except Exception:
+        pass
+        
+    return {
+        "noticias": [
+            {"titulo": "Plantão Consular: Emissão de Passaportes", "resumo": "Acompanha os fluxos de triagem e prazos para vistos de residência...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"},
+            {"titulo": "Reestruturação de Agendamentos AIMA", "resumo": "Novas diretivas para validação de processos pendentes e renovações...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"}
+        ]
+    }
 
 # =====================================================================
-# 2. ROTA: ASSISTENTE VIRTUAL COM MEMÓRIA (ASSISTENTE.HTML)
+# 2. ENDPOINT: ASSISTENTE VIRTUAL IA COM MEMÓRIA (ASSISTENTE.HTML)
 # =====================================================================
-@app.route('/api/chat', methods=['POST'])
-def processar_chat_ia():
-    dados = request.get_json() or {}
-    mensagem_utilizador = dados.get('message', '').strip()
-    session_id = dados.get('session_id', 'sessao_geral')
-
-    if not mensagem_utilizador:
-        return jsonify({"response": "Por favor, escreve uma mensagem válida."}), 400
-
-    # Inicializa o histórico da sessão do utilizador se não existir
-    if session_id not in historico_sessoes:
-        historico_sessoes[session_id] = [
+@app.post("/api/chat")
+async def responder_chat(user_data: UserMessage):
+    mensagem_utilizador = user_data.message
+    sessao_id = user_data.session_id 
+    
+    if sessao_id not in historico_conversas:
+        historico_conversas[sessao_id] = [
             {
                 "role": "system",
                 "content": (
-                    "Atue como o Imigrante AI, o assistente oficial do Portal Imigrante PT. "
-                    "Seu objetivo é ajudar imigrantes com dúvidas de imigração, burocracias (NIF, NISS, "
-                    "Vistos, AIMA, regras de nacionalidade de 7 anos) e dicas práticas de viagem e adaptação. "
-                    "Seja sempre extremamente acolhedor, prático, direto e use o português corrente de Portugal "
-                    "ou uma linguagem clara e acessível. Nunca invente leis; avise para consultar canais oficiais se necessário."
+                    "Tu és o IMIGRANTE AI, o assistente virtual oficial do Portal Imigrante PT. "
+                    "Tu tens uma MEMÓRIA HUMANA: lembra-te do contexto do diálogo. "
+                    "A tua personalidade é acolhedora, prática e extremamente direta. "
+                    "PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs' ou 'MIRA'. "
+                    "O ano atual é 2026. Foca em burocracia legal (7 anos de residência, AIMA, NIF), "
+                    "logística de voos e sobrevivência inicial. Responde curto, máximo 2 parágrafos."
                 )
             }
         ]
-
-    # Adiciona a mensagem atual do utilizador à memória da sessão
-    historico_sessoes[session_id].append({"role": "user", "content": mensagem_utilizador})
-
-    # Mantém apenas as últimas 12 mensagens para evitar estouro de memória do servidor
-    if len(historico_sessoes[session_id]) > 13:
-        historico_sessoes[session_id] = [historico_sessoes[session_id][0]] + historico_sessoes[session_id][-12:]
-
-    try:
-        completion = groq_client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=historico_sessoes[session_id],
-            temperature=0.6,
-            max_tokens=800
-        )
-        
-        resposta_ia = completion.choices[0].message.content
-        # Adiciona a resposta da IA à memória para a próxima pergunta saber o contexto
-        historico_sessoes[session_id].append({"role": "assistant", "content": resposta_ia})
-        
-        return jsonify({"response": resposta_ia}), 200
-
-    except Exception as e:
-        print(f"Erro no motor Groq Chat: {e}")
-        return jsonify({"response": "[Erro Interno]: O motor de inteligência falhou a responder. Tente novamente."}), 500
-
-# =====================================================================
-# 3. NOVA ROTA COMBINADA: DOSSIÊ + LEITURAS (GUIAS.HTML)
-# =====================================================================
-@app.route('/api/guias', methods=['POST'])
-def obter_guias_regionais():
-    dados = request.get_json() or {}
-    regiao = dados.get('regiao', 'Norte de Portugal')
     
-    # --- 1. CHAMADA AO GROQ PARA GERAR O RELATÓRIO DA IA ---
+    historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
+    
+    if len(historico_conversas[sessao_id]) > 13:
+        historico_conversas[sessao_id] = [historico_conversas[sessao_id][0]] + historico_conversas[sessao_id][-12:]
+    
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=historico_conversas[sessao_id],
+            temperature=0.2
+        )
+        resposta_final = completion.choices[0].message.content
+        historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
+    except Exception as e:
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
+
+    return {"response": resposta_final}
+
+# =====================================================================
+# 3. NOVO ENDPOINT COMBINADO: DOSSIÊ IA + ARTIGOS VIVOS (GUIAS.HTML)
+# =====================================================================
+@app.post("/api/guias")
+async def obter_guias_regionais(data: RegionRequest):
+    """Gera um relatório customizado via Llama e busca artigos reais sobre a região no Tavily"""
+    regiao = data.regiao
+    
+    # --- Passo A: Relatório Analítico via Groq ---
     prompt_guia = f"""
     Atue como um Especialista Sénior em Relocalização e Integração em Portugal.
-    Gere um relatório estratégico, pragmático e direto para um imigrante sobre a região: {regiao}.
+    Gere um relatório analítico, pragmático e direto sobre a região: {regiao}.
     
-    O relatório deve conter estritamente estes tópicos formatados de forma clara (use marcadores rápidos):
-    - 💰 Custo de Vida Médio (Análise sobre Arrendamento e Supermercado face ao salário mínimo português)
-    - 💼 Principais Indústrias e Empregos (Mercados de trabalho mais ativos e onde há mais contratações nesta zona)
-    - 🌤️ Clima e Adaptação Cultural (O que esperar do tempo e do ritmo da população local)
-    - 💡 Dica Humana de Integração (Uma orientação humana e prática de acolhimento para quem acaba de aterrar)
+    O relatório deve conter estritamente estes tópicos com dados realistas (use bullet points):
+    - Custo de Vida Médio (Análise sobre Arrendamento de habitação e despesas básicas)
+    - Principais Indústrias e Empregos (Mercados de trabalho mais ativos e setores que mais contratam na zona)
+    - Clima e Adaptação Cultural (O que esperar do tempo e do ritmo da população local)
+    - Dica Humana de Integração (Uma orientação prática e próxima para quem está a chegar agora)
     
-    Seja focado em dados úteis, assertivo e acolhedor. Evite introduções longas.
+    Seja focado em dados úteis, assertivo e acolhedor. Não adicione introduções vagas nem saudações.
     """
     
     guia_ia_texto = "Análise estratégica regional temporariamente indisponível."
     try:
-        completion = groq_client.chat.completions.create(
-            model="llama3-8b-8192",
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt_guia}],
             temperature=0.3
         )
         guia_ia_texto = completion.choices[0].message.content
-    except Exception as e:
-        print(f"Erro no Groq Rota Guias: {e}")
+    except Exception:
+        pass
 
-    # --- 2. CHAMADA AO TAVILY PARA CAPTURAR LEITURAS E CUSTO DE VIDA VIVO ---
+    # --- Passo B: Pesquisa de Artigos Vivos via Tavily ---
     artigos_resultados = []
     try:
-        termo_busca = f"custo de vida morar em {regiao} portugal dicas habitação"
-        busca_tavily = tavily_client.search(
-            query=termo_busca,
-            search_depth="basic",
-            time_range="year",
-            max_results=3
-        )
+        url_tavily = "https://api.tavily.com/search"
+        payload_tavily = {
+            "api_key": TAVILY_API_KEY,
+            "query": f"custo de vida morar em {regiao} portugal dicas habitação aluguel",
+            "search_depth": "basic",
+            "time_range": "year",
+            "max_results": 3
+        }
         
-        for resultado in busca_tavily.get('results', []):
-            artigos_resultados.append({
-                "titulo": resultado.get('title', 'Guia Complementar de Habitação'),
-                "resumo": resultado.get('content', '')[:160] + "...",
-                "url": resultado.get('url', '#')
-            })
-    except Exception as e:
-        print(f"Erro no Tavily Rota Guias: {e}")
+        response = requests.post(url_tavily, json=payload_tavily, timeout=6)
+        if response.status_code == 200:
+            resultados = response.json().get("results", [])
+            for item in resultados:
+                artigos_resultados.append({
+                    "titulo": item.get("title", "Guia Local Complementar"),
+                    "resumo": item.get("content", "")[:160] + "...",
+                    "url": item.get("url", "#")
+                })
+    except Exception:
+        pass
 
-    # Se o Tavily não achar nada sobre a região, entrega um fallback seguro
+    # Fallback seguro de artigos se a pesquisa falhar
     if not artigos_resultados:
         artigos_resultados = [
             {
-                "titulo": f"Guia de Custo de Vida e Habitação em {regiao}",
-                "resumo": "Uma análise detalhada sobre preços de arrendamento de quartos, apartamentos e despesas essenciais nas principais cidades desta zona...",
+                "titulo": f"Métricas de Arrendamento e Mercado em {regiao}",
+                "resumo": "Análise detalhada sobre custos de habitação, infraestruturas locais e despesas fixas para novos residentes...",
                 "url": "https://www.idealista.pt/news/"
             }
         ]
 
-    return jsonify({
+    return {
         "guia_ia": guia_ia_texto,
         "artigos": artigos_resultados
-    }), 200
+    }
 
-# =====================================================================
-# EXECUÇÃO DO SERVIDOR DO FLASK
-# =====================================================================
-if __name__ == '__main__':
-    # O Render atribui uma porta dinâmica através da variável de ambiente PORT
-    porta = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=porta)
+@app.get("/")
+def home():
+    return {"status": "Servidor do Ecossistema Portal Imigrante PT Online!"}
