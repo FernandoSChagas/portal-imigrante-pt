@@ -39,7 +39,7 @@ class SimRequest(BaseModel):
     meses: int
 
 # =====================================================================
-# 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO DE CARD EXCLUSIVO (INDEX.HTML)
+# 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO CAMUFLADA DE VENDAS (INDEX.HTML)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
@@ -97,12 +97,12 @@ async def obtener_noticias_tempo_real():
                 {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
             ]
         
-        # [JOGADA DE MESTRE]: Injeta o card do E-book na terceira posição do carrossel
+        # [ANÚNCIO NATIVO]: Injeta o e-book camuflado como tendência de mercado real
         noticias_brutas.insert(2, {
-            "titulo": "ESTRATÉGIA: Como começar a faturar em Euro digitalmente antes de emigrar",
-            "resumo": "Especialistas apontam que criar uma fonte de receita online protege o imigrante de subempregos e evita queimar a poupança na chegada a Portugal...",
+            "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
+            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
             "url": "viver-do-digital.html",
-            "tag": "Exclusivo Portal"
+            "tag": "Tendência"
         })
         
         return {"noticias": noticias_brutas[:6]}
@@ -110,7 +110,7 @@ async def obtener_noticias_tempo_real():
         return {"noticias": [
             {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
             {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"},
-            {"titulo": "ESTRATÉGIA: Como começar a faturar em Euro digitalmente antes de emigrar", "resumo": "Especialistas apontam que criar uma fonte de receita online protege o imigrante de subempregos...", "url": "viver-do-digital.html", "tag": "Exclusivo Portal"}
+            {"titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal", "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais...", "url": "viver-do-digital.html", "tag": "Tendência"}
         ]}
 
 # =====================================================================
@@ -157,14 +157,14 @@ async def responder_chat(user_data: UserMessage):
     return {"response": resposta_final}
 
 # =====================================================================
-# 3. ENDPOINT: DOSSIÊ EM CARDS (GUIAS.HTML) - RESTAURADO
+# 3. ENDPOINT: DOSSIÊ EM CARDS (GUIAS.HTML)
 # =====================================================================
 @app.post("/api/guias")
-async def obter_guias_regionais(data: RegionRequest):
+async def obtener_guias_regionais(data: RegionRequest):
     regiao = data.regiao
     
     prompt_guia = f"""
-    Atue como um Especialista em Relocalização em Portugal. 
+    Atue como um Specialist em Relocalização em Portugal. 
     Analise a região: {regiao}.
     Retorne a resposta EXATAMENTE neste formato abaixo, sem introduções, cumprimentos, saudações ou explicações:
     ### Escreva aqui um resumo curto sobre o Custo de Vida, Arrendamento de habitação e contas fixas do mês.
@@ -222,7 +222,7 @@ async def obter_guias_regionais(data: RegionRequest):
     }
 
 # =====================================================================
-# 4. ENDPOINT: SIMULADOR FINANCEIRO PADRONIZADO (SIMULADOR.HTML) - RESTAURADO
+# 4. ENDPOINT: SIMULADOR FINANCEIRO PADRONIZADO (SIMULADOR.HTML)
 # =====================================================================
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
@@ -246,7 +246,7 @@ async def calcular_simulacao(data: SimRequest):
         f"Atue como um Consultor Financeiro de Imigração. Escreva um insight de exatamente duas frases "
         f"para um perfil '{data.perfil}' que planeia mudar-se para a região '{data.regiao}' com uma reserva "
         f"de segurança de {data.meses} meses. O orçamento estimado total é de €{round(total_euro, 2)}. "
-        f"Dê uma dica prática de economia ou incentivo real. Seja direto, não use saudações."
+        f"Dê uma dica prática de economia ou incentive real. Seja direto, não use saudações."
     )
     
     try:
