@@ -34,21 +34,24 @@ class RegionRequest(BaseModel):
     regiao: str
 
 # =====================================================================
-# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML)
+# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML) - FILTRADO
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    """Pesquisa em tempo real por todo o universo de imigração, vistos e viagens nas últimas 24h"""
+    """Pesquisa focada estritamente em Portugal, CPLP e Europa, banindo redes sociais"""
     try:
         url = "https://api.tavily.com/search"
-        query_global = (
-            "imigração Portugal AIMA vistos passaporte autorização de residência "
-            "leis voos viagens cartão cidadão Polícia Federal Consulado hoje últimas notícias"
+        
+        # Filtro refinado: focamos no ecossistema PT/CPLP e usamos o operador "-" para banir o Instagram e EUA
+        query_refinada = (
+            "imigração Portugal AIMA vistos CPLP regularização "
+            "comunidade países língua portuguesa acordos mobilidade Europa "
+            "-site:instagram.com -site:facebook.com -site:twitter.com -\"Estados Unidos\" -\"EUA\""
         )
         
         payload = {
             "api_key": TAVILY_API_KEY,
-            "query": query_global,
+            "query": query_refinada,
             "search_depth": "advanced",
             "time_range": "day",
             "max_results": 8
@@ -63,6 +66,10 @@ async def obtener_noticias_tempo_real():
                 site_url = item.get("url", "").lower()
                 titulo = item.get("title", "")
                 
+                # Ignora o link se por algum motivo ainda contiver redes sociais na URL
+                if "instagram" in site_url or "tiktok" in site_url or "facebook" in site_url:
+                    continue
+                
                 tag = "Atualidade"
                 if "sicnoticias" in site_url: tag = "SIC Notícias"
                 elif "dn.pt" in site_url or "dn-pt" in site_url: tag = "DN Portugal"
@@ -72,6 +79,7 @@ async def obtener_noticias_tempo_real():
                 elif "g1" in site_url or "globo" in site_url: tag = "G1 Brasil"
                 elif "rtp" in site_url: tag = "RTP Notícias"
                 elif "observador" in site_url: tag = "Observador"
+                elif "cplp" in site_url: tag = "Conexão CPLP"
                 
                 noticias_brutas.append({
                     "titulo": titulo,
@@ -87,8 +95,8 @@ async def obtener_noticias_tempo_real():
         
     return {
         "noticias": [
-            {"titulo": "Plantão Consular: Emissão de Passaportes", "resumo": "Acompanha os fluxos de triagem e prazos para vistos de residência...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"},
-            {"titulo": "Reestruturação de Agendamentos AIMA", "resumo": "Novas diretivas para validação de processos pendentes e renovações...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"}
+            {"titulo": "Mobilidade CPLP: Prazos e Documentação Atualizada", "resumo": "Novas diretivas facilitam a validação e circulação de cidadãos da comunidade de língua portuguesa...", "url": "https://www.cplp.org", "tag": "Conexão CPLP"},
+            {"titulo": "Reestruturação de Agendamentos AIMA", "resumo": "Diretivas para validação de processos pendentes e renovações de autorizações de residência...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"}
         ]
     }
 
@@ -134,22 +142,20 @@ async def responder_chat(user_data: UserMessage):
     return {"response": resposta_final}
 
 # =====================================================================
-# 3. NOVO ENDPOINT COMBINADO: DOSSIÊ IA + ARTIGOS VIVOS (GUIAS.HTML)
+# 3. ENDPOINT COMBINADO: DOSSIÊ IA + ARTIGOS VIVOS (GUIAS.HTML)
 # =====================================================================
 @app.post("/api/guias")
-async def obter_guias_regionais(data: RegionRequest):
-    """Gera um relatório customizado via Llama e busca artigos reais sobre a região no Tavily"""
+async def obtener_guias_regionais(data: RegionRequest):
     regiao = data.regiao
     
-    # --- Passo A: Relatório Analítico via Groq ---
     prompt_guia = f"""
-    Atue como um Especialista Sénior em Relocalização e Integração em Portugal.
+    Atue como um Specialist Sénior em Relocalização e Integração em Portugal.
     Gere um relatório analítico, pragmático e direto sobre a região: {regiao}.
     
     O relatório deve conter estritamente estes tópicos com dados realistas (use bullet points):
     - Custo de Vida Médio (Análise sobre Arrendamento de habitação e despesas básicas)
     - Principais Indústrias e Empregos (Mercados de trabalho mais ativos e setores que mais contratam na zona)
-    - Clima e Adaptação Cultural (O que esperar do tempo e do ritmo da população local)
+    - Clima e Adaptação Cultural (O que esperar do tempo e do ritmo da população Box local)
     - Dica Humana de Integração (Uma orientação prática e próxima para quem está a chegar agora)
     
     Seja focado em dados úteis, assertivo e acolhedor. Não adicione introduções vagas nem saudações.
@@ -166,13 +172,12 @@ async def obter_guias_regionais(data: RegionRequest):
     except Exception:
         pass
 
-    # --- Passo B: Pesquisa de Artigos Vivos via Tavily ---
     artigos_resultados = []
     try:
         url_tavily = "https://api.tavily.com/search"
         payload_tavily = {
             "api_key": TAVILY_API_KEY,
-            "query": f"custo de vida morar em {regiao} portugal dicas habitação aluguel",
+            "query": f"custo de vida morar em {regiao} portugal dicas habitação aluguel -site:instagram.com",
             "search_depth": "basic",
             "time_range": "year",
             "max_results": 3
@@ -190,7 +195,6 @@ async def obter_guias_regionais(data: RegionRequest):
     except Exception:
         pass
 
-    # Fallback seguro de artigos se a pesquisa falhar
     if not artigos_resultados:
         artigos_resultados = [
             {
