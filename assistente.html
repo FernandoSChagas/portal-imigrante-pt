@@ -4,262 +4,438 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imigrante AI - Assistente Virtual</title>
+    <link rel="stylesheet" href="css/hub.css">
     <style>
         /* =====================================================================
-           ESTILO PREMIUM DARK COM CORREÇÃO DE RESPONSIVIDADE (MOBILE READY)
+           ESTRUTURA COMPLETA DO CHAT IA
            ===================================================================== */
-        :root {
-            --bg-dark: #0d1117;
-            --bg-card: #161b22;
-            --border-color: #21262d;
-            --text-main: #c9d1d9;
-            --text-muted: #8b949e;
-            --teal-primary: #008080;
-            --teal-glow: #00a3a3;
-            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: var(--font-stack);
-            line-height: 1.6;
-            min-height: 100vh;
+        .chat-wrapper {
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 0 20px;
             display: flex;
             flex-direction: column;
-        }
-
-        /* BARRA DE NAVEGAÇÃO SUPERIOR - FLEXÍVEL PARA MOBILE */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 70px;
-            background-color: rgba(22, 27, 34, 0.95);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 5%;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-
-        .logo {
-            font-size: 1.3rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: #fff;
-        }
-
-        .logo-highlight {
-            color: var(--teal-glow);
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            margin-left: 25px;
-            font-size: 0.95rem;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--teal-glow);
-        }
-
-        .nav-links a.nav-btn-ia {
-            background-color: var(--teal-primary);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-        }
-
-        /* CONFIGURAÇÃO PARA TELEMÓVEIS (MOBILE FIX) */
-        @media (max-width: 768px) {
-            .navbar {
-                height: auto;
-                padding: 12px 15px !important;
-                flex-direction: column !important;
-                gap: 10px;
-            }
-
-            .logo {
-                font-size: 1.1rem !important;
-            }
-
-            .nav-links {
-                width: 100%;
-                justify-content: center !important;
-                gap: 15px !important;
-            }
-
-            .nav-links a {
-                margin-left: 0 !important;
-                font-size: 0.8rem !important;
-            }
-
-            .chat-wrapper-container {
-                padding-top: 125px !important; /* Mais espaço para a navbar maior no telemóvel */
-            }
-            
-            .chat-container {
-                height: calc(100vh - 140px) !important;
-                width: 100% !important;
-                border-radius: 0 !important;
-                border-left: none;
-                border-right: none;
-            }
-        }
-
-        /* ESTRUTURA CENTRAL DO CHAT */
-        .chat-wrapper-container {
-            flex: 1;
-            padding-top: 90px;
-            padding-bottom: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle at top, #161b22 0%, #0d1117 100%);
+            min-height: calc(100vh - 320px);
         }
 
         .chat-container {
-            width: 92%;
-            max-width: 750px;
-            background-color: rgba(22, 27, 34, 0.8);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background-color: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 130px);
+            height: 550px;
             overflow: hidden;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         }
 
         .chat-header {
-            padding: 15px;
-            background-color: rgba(22, 27, 34, 0.9);
-            border-bottom: 1px solid var(--border-color);
-            text-align: center;
+            background-color: #0d1117;
+            padding: 15px 20px;
+            border-bottom: 1px solid #21262d;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .chat-header h2 { color: #fff; font-size: 1.2rem; }
-        .chat-header p { color: var(--text-muted); font-size: 0.8rem; }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #00e5ff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00e5ff;
+        }
 
-        .chat-box {
+        .chat-header h2 {
+            font-size: 1.1rem;
+            color: #fff;
+            margin: 0;
+        }
+
+        .chat-messages {
             flex: 1;
-            overflow-y: auto;
             padding: 20px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            background-color: rgba(13, 17, 23, 0.4);
+            background-color: #0d1117;
         }
 
-        /* BALÕES DE MENSAGENS */
         .message {
-            max-width: 85%;
+            max-width: 75%;
             padding: 12px 16px;
-            border-radius: 12px;
+            border-radius: 8px;
             font-size: 0.95rem;
-            line-height: 1.4;
-            animation: fadeIn 0.3s ease-in-out;
+            line-height: 1.5;
         }
 
-        .user-message {
-            align-self: flex-end;
-            background-color: var(--teal-primary);
+        .message.user {
+            background-color: #008080;
             color: #fff;
-            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
         }
 
-        .bot-message {
+        .message.bot {
+            background-color: #161b22;
+            color: #c9d1d9;
             align-self: flex-start;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            border-bottom-left-radius: 4px;
+            border-top-left-radius: 2px;
+            border: 1px solid #21262d;
         }
 
-        /* ÁREA DE INPUT */
-        .input-area {
-            display: flex;
+        .chat-input-area {
             padding: 15px;
-            background-color: rgba(22, 27, 34, 0.9);
-            border-top: 1px solid var(--border-color);
+            background-color: #161b22;
+            border-top: 1px solid #21262d;
+            display: flex;
             gap: 10px;
         }
 
-        .input-area input {
+        .chat-input-area input {
             flex: 1;
             background-color: #0d1117;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
             padding: 12px;
             color: #fff;
             font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        .input-area button {
-            background-color: var(--teal-primary);
-            color: #fff;
+        .chat-input-area input:focus {
+            border-color: #00e5ff;
+        }
+
+        .chat-input-area button {
+            background-color: #008080;
+            color: white;
             border: none;
             padding: 0 20px;
-            border-radius: 8px;
+            border-radius: 6px;
+            font-weight: bold;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-input-area button:hover {
+            background-color: #00a3a3;
+        }
+
+        /* CAIXA DE AVISO DA IA (DISCLAIMER) */
+        .ai-disclaimer {
+            margin-top: 12px;
+            background-color: rgba(22, 27, 34, 0.6);
+            border: 1px solid rgba(48, 54, 61, 0.5);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-disclaimer-icon {
+            font-size: 1.2rem;
+        }
+
+        .ai-disclaimer p {
+            margin: 0;
+            font-size: 0.82rem;
+            color: #8b949e;
+            line-height: 1.4;
+        }
+
+        /* =====================================================================
+           RODAPÉ E SISTEMA DE MODAIS (PADRONIZADO COM A HOME)
+           ===================================================================== */
+        footer {
+            background-color: #0d1117;
+            border-top: 1px solid #21262d;
+            padding: 40px 20px;
+            margin-top: 60px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-info {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .footer-info h4 {
+            font-size: 1.1rem;
+            color: #ffffff;
+            margin-bottom: 8px;
             font-weight: 700;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+        .footer-info p {
+            color: #8b949e;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .footer-nav {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-nav a, .footer-nav button {
+            color: #8b949e;
+            text-decoration: none;
+            background: none;
+            border: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .footer-nav a:hover, .footer-nav button:hover {
+            color: #00e5ff;
+        }
+
+        .footer-credits {
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #485264;
+        }
+
+        .trademark { color: #00e5ff; font-weight: bold; }
+
+        /* MODAIS */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(4, 8, 18, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease; padding: 20px;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-window {
+            background-color: #161b22; border: 2px solid #30363d; border-radius: 12px;
+            max-width: 700px; width: 100%; max-height: 80vh;
+            display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            transform: translateY(-20px); transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-window { transform: translateY(0); }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { color: #00e5ff; font-size: 1.2rem; }
+        .close-modal { background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer; }
+        .close-modal:hover { color: #fff; }
+        .modal-body { padding: 25px 20px; overflow-y: auto; color: #c9d1d9; font-size: 0.95rem; }
+        .modal-body h3 { color: #fff; margin: 20px 0 10px 0; font-size: 1.2rem; }
+        .modal-body p { margin-bottom: 15px; color: #8b949e; line-height: 1.6; }
+        .modal-body ul { margin-left: 20px; margin-bottom: 15px; color: #8b949e; }
+        
+        @media (max-width: 768px) {
+            .navbar { padding: 0 15px !important; height: auto !important; min-height: 70px; flex-direction: column !important; justify-content: center !important; gap: 10px; padding-top: 12px !important; padding-bottom: 12px !important; }
+            .logo { font-size: 1.1rem !important; text-align: center; }
+            .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; }
+            .nav-links a { margin-left: 0 !important; font-size: 0.8rem !important; }
+            .main-container { padding-top: 130px !important; }
+            .chat-container { height: 450px; }
+            .footer-main { flex-direction: column; text-align: center; }
+            .footer-nav { justify-content: center; gap: 15px; }
+            .footer-credits { flex-direction: column; text-align: center; gap: 8px; }
         }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <a href="index.html" style="text-decoration: none;">
-            <div class="logo">PORTAL<span class="logo-highlight">IMIGRANTE PT</span></div>
-        </a>
+        <div class="logo">PORTAL<span class="logo-highlight">IMIGRANTE PT</span></div>
         <div class="nav-links">
             <a href="index.html">Notícias ao Vivo</a>
             <a href="#">Guias Regionais</a>
-            <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
+            <a href="viver-do-digital.html" style="color: #00e5ff; font-weight: bold; border: 1px dashed rgba(0, 229, 255, 0.4); padding: 5px 10px; border-radius: 4px;">Ganhar em Euro 💶</a>
+            <a href="#" class="nav-btn-ia active">Assistente IA 🤖</a>
         </div>
     </nav>
 
-    <div class="chat-wrapper-container">
-        <div class="chat-container">
-            <div class="chat-header">
-                <h2>Imigrante AI</h2>
-                <p>O teu conselheiro virtual para Portugal</p>
+    <main class="main-container">
+        <div class="chat-wrapper">
+            
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="status-dot"></div>
+                    <h2>Imigrante AI — Consultas de Legislação e Logística</h2>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">
+                        Olá! Sou o Imigrante AI. Estou aqui para te ajudar com dúvidas burocráticas (NIF, NISS, AIMA, prazos de 7 anos para nacionalidade) ou com logística de viagem e adaptação cultural. Como posso ajudar o teu planeamento hoje?
+                    </div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" placeholder="Escreve a tua mensagem sobre vistos, AIMA ou viagens..." onkeypress="verificarTeclado(event)">
+                    <button onclick="enviarMensagem()">Enviar</button>
+                </div>
+            </div>
+
+            <div class="ai-disclaimer">
+                <span class="ai-disclaimer-icon">⚠️</span>
+                <p><strong>Aviso Importante:</strong> O Imigrante AI utiliza modelos generativos de inteligência artificial baseados em documentações públicas e dados da internet. Embora procuremos a máxima precisão, as respostas estão suscetíveis a omissões ou erros e não substituem a consulta direta a balcões oficiais (AIMA, Consulados ou Diário da República) ou aconselhamento jurídico profissional.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-main">
+                <div class="footer-info">
+                    <h4>Portal Imigrante PT</h4>
+                    <p>Apoio prático e estratégico para estabelecer e integrar imigrantes na Europa através de informações reais sobre mercado de trabalho, imigração e negócios digitais.</p>
+                </div>
+                <div class="footer-nav">
+                    <button onclick="openModal('modal-termos')">Termos</button>
+                    <button onclick="openModal('modal-privacidade')">Privacidade</button>
+                    <a href="mailto:farchulleta@gmail.com">Suporte</a>
+                </div>
             </div>
             
-            <div class="chat-box" id="chatBox">
-                </div>
-            
-            <div class="input-area">
-                <input type="text" id="userInput" placeholder="Pergunta-me algo..." autocomplete="off">
-                <button onclick="enviarMensagem()">Enviar</button>
+            <div class="footer-credits">
+                <div>© 2026 <span class="trademark">Portal Imigrante PT®</span>.</div>
+                <div>Apoio ao Imigrante Digital • 🍏</div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3>Política de Privacidade</h3>
+                <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>A sua privacidade é importante para nós. É política do Portal Imigrante PT respeitar a sua privacidade em relação a qualquer informação sua que possamos coletar no site Portal Imigrante PT, e outros sites que possuímos e operamos.</p>
+                <p>Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e consentimento.</p>
+                <p>Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente aceitáveis ​​para evitar perdas e roubos.</p>
+                <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
+                <p>Esta política é efetiva a partir de 27 May 2026 15:07.</p>
             </div>
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3>Termos de Serviço</h3>
+                <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>1. Termos</h3>
+                <p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis e concorda que é responsável pelo cumprimento de todas as leis locais aplicáveis.</p>
+                <h3>2. Uso de Licença</h3>
+                <p>É concedida permissão para baixar temporariamente uma cópia dos materiais no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial.</p>
+                <h3>3. Isenção de responsabilidade</h3>
+                <p>Os materiais no site da Portal Imigrante PT são fornecidos 'como estão'. Portal Imigrante PT não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://portal-imigrante-pt.onrender.com/api/chat";
+        
+        // Gera um ID de sessão único para manter a memória do chat durante a navegação
+        if (!localStorage.getItem("chat_session_id")) {
+            localStorage.setItem("chat_session_id", "sessao_" + Math.random().toString(36).substr(2, 9));
+        }
+        const SESSION_ID = localStorage.getItem("chat_session_id");
+
+        function verificarTeclado(event) {
+            if (event.key === "Enter") {
+                enviarMensagem();
+            }
+        }
+
+        async function enviarMensagem() {
+            const input = document.getElementById("userInput");
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            const chatMessages = document.getElementById("chatMessages");
+
+            // Mensagem do Utilizador no Ecrã
+            chatMessages.innerHTML += `<div class="message user">${texto}</div>`;
+            input.value = "";
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Indicador visual de carregamento
+            const loadingId = "load_" + Date.now();
+            chatMessages.innerHTML += `<div class="message bot" id="${loadingId}">A processar resposta...</div>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: texto, session_id: SESSION_ID })
+                });
+                
+                const data = await response.json();
+                document.getElementById(loadingId).remove();
+
+                if (data.response) {
+                    chatMessages.innerHTML += `<div class="message bot">${data.response}</div>`;
+                } else {
+                    chatMessages.innerHTML += `<div class="message bot">[Erro]: O motor não respondeu adequadamente. Tenta novamente.</div>`;
+                }
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                chatMessages.innerHTML += `<div class="message bot">[Erro de Rede]: Não foi possível ligar ao servidor de inteligência.</div>`;
+            }
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // CONTROLE DOS MODAIS
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        function closeModalOnOverlay(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+    </script>
 </body>
 </html>
