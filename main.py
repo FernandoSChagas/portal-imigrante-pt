@@ -2,12 +2,11 @@ import os
 import requests
 import csv
 from datetime import datetime
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
-from groq import Groq
+from pydantic import BaseModel
 
-app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado com Leads")
+app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado com Captura de Leads")
 
 # Configuração de CORS aberta para o GitHub Pages
 app.add_middleware(
@@ -25,7 +24,7 @@ TAVILY_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 historico_conversas = {}
 
-# Ficheiro onde os leads serão guardados no servidor
+# Nome do ficheiro onde guardaremos a tua lista de e-mails para o E-book
 LEADS_FILE = "leads_portal.csv"
 
 # =====================================================================
@@ -42,19 +41,12 @@ class SimRequest(BaseModel):
     perfil: str
     regiao: str
     meses: int
-    # Campos opcionais caso queiras capturar o lead direto no clique do simulador
-    nome: str = None
-    email: str = None
-    whatsapp: str = None
-
-class LeadRequest(BaseModel):
-    nome: str
-    email: str
-    whatsapp: str
-    origem: str = "geral"
+    nome: str  # Obrigatório para libertar o cálculo
+    email: str # Obrigatório para libertar o cálculo
+    whatsapp: str = "Não informado"
 
 # =====================================================================
-# FUNÇÃO AUXILIAR: GUARDAR LEAD NO FICHEIRO CSV
+# FUNÇÃO AUXILIAR: GRAVAR O LEAD NO SERVIDOR (RENDER)
 # =====================================================================
 def guardar_lead_local(nome: str, email: str, whatsapp: str, origem: str):
     try:
@@ -62,7 +54,7 @@ def guardar_lead_local(nome: str, email: str, whatsapp: str, origem: str):
         with open(LEADS_FILE, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             if not ficheiro_existe:
-                # Cabeçalho do CSV
+                # Cria o cabeçalho caso o ficheiro ainda não exista
                 writer.writerow(["Data/Hora", "Nome", "Email", "WhatsApp", "Origem"])
             
             data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -73,27 +65,27 @@ def guardar_lead_local(nome: str, email: str, whatsapp: str, origem: str):
         return False
 
 # =====================================================================
-# NOVO ENDPOINT: CAPTURA DE LEADS AVULSO (FORMULÁRIOS / POPUPS)
+# ENDPOINT SECRETO: EXPORTAR LEADS PARA EXCEL / CSV
 # =====================================================================
-@app.post("/api/leads")
-async def capturar_lead(data: LeadRequest):
-    sucesso = guardar_lead_local(data.nome, data.email, data.whatsapp, data.origem)
-    if sucesso:
-        return {"status": "sucesso", "mensagem": "Lead capturado com sucesso!"}
-    return {"status": "erro", "mensagem": "Não foi possível salvar o lead."}
-
-# EXCLUSIVO: Endpoint secreto para tu descarregares os teus leads em tempo real
 @app.get("/api/leads/exportar")
 async def exportar_leads():
     if not os.path.exists(LEADS_FILE):
         return {"mensagem": "Nenhum lead capturado ainda."}
     
-    leads = []
+    linhas = []
     with open(LEADS_FILE, mode="r", encoding="utf-8") as f:
-        reader = csv.dictReader(f) if hasattr(csv, 'dictReader') else csv.Reader(f)
-        # Leitura simples para retorno JSON rápido
-        linhas = list(reader)
-    return {"leads": linhas}
+        reader = csv.reader(f)
+        headers = next(reader)
+        for row in reader:
+            if row:
+                linhas.append({
+                    "data": row[0],
+                    "nome": row[1],
+                    "email": row[2],
+                    "whatsapp": row[3],
+                    "origem": row[4]
+                })
+    return {"total_leads": len(linhas), "leads": linhas}
 
 # =====================================================================
 # 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO CAMUFLADA DE VENDAS (INDEX.HTML)
@@ -153,6 +145,7 @@ async def obtener_noticias_tempo_real():
                 {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
             ]
         
+        # [ANÚNCIO NATIVO E INVISÍVEL] Injeta o card do E-book estratégico disfarçado
         noticias_brutas.insert(2, {
             "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
@@ -277,13 +270,16 @@ async def obtener_guias_regionais(data: RegionRequest):
     }
 
 # =====================================================================
-# 4. ENDPOINT: SIMULADOR FINANCEIRO COM CAPTURA (SIMULADOR.HTML)
+# 4. ENDPOINT: SIMULADOR FINANCEIRO OBRIGATÓRIO COM CAPTURA (SIMULADOR.HTML)
 # =====================================================================
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
-    # Se o formulário do simulador enviar dados do utilizador, guarda automaticamente
-    if data.nome and data.email:
-        guardar_lead_local(data.nome, data.email, data.whatsapp or "Não informado", "simulador")
+    # Proteção de backend: Bloqueia a execução se os dados de lead estiverem vazios
+    if not data.nome or not data.email or "@" not in data.email:
+        raise HTTPException(status_code=400, detail="Nome e Email válidos são obrigatórios para libertar os cálculos do simulador.")
+    
+    # Grava o lead automaticamente identificando que veio do Simulador
+    guardar_lead_local(data.nome, data.email, data.whatsapp, "Simulador")
 
     custos_base = {
         "Lisboa e Vale do Tejo": {"quarto": 750, "mercado": 450, "transp": 40},
@@ -305,7 +301,7 @@ async def calcular_simulacao(data: SimRequest):
         f"Atue como um Consultor Financeiro de Imigração. Escreva um insight de exatamente duas frases "
         f"para um perfil '{data.perfil}' que planeia mudar-se para a região '{data.regiao}' com uma reserva "
         f"de segurança de {data.meses} meses. O orçamento estimado total é de €{round(total_euro, 2)}. "
-        f"Dê uma dica prática de economia ou incentive real. Seja direto, não use saudações."
+        f"Dê uma dica prática de economia ou incentivo real. Seja direto, não use saudações."
     )
     
     try:
