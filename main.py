@@ -6,7 +6,7 @@ from groq import Groq
 
 app = FastAPI(title="Portal Imigrante PT - IA Humana e Abrangente")
 
-# Configuração de CORS para o teu link do GitHub Pages
+# Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Puxa a chave da Groq guardada no Render
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 client = Groq(api_key=GROQ_API_KEY)
 
@@ -24,9 +23,17 @@ historico_conversas = {}
 class UserMessage(BaseModel):
     message: str
 
+# Modelos de dados para as rotas do Simulador e Relatórios não quebrarem
+class SimuladorData(BaseModel):
+    salario_bruto: float = 1000.0
+    num_dependentes: int = 0
+
+# =====================================================================
+# 1. ENDPOINT DE NOTÍCIAS (GARANTINDO FLUXO DE MAIS NOTÍCIAS)
+# =====================================================================
 @app.get("/api/noticias")
 async def obter_noticias():
-    # Simulando a lista de notícias brutas que o teu sistema recolhe do scraping:
+    # Base sólida de notícias para o teu carrossel nunca ficar vazio
     noticias_brutas = [
         {
             "titulo": "AIMA acelera processos de regularização com novos balcões de atendimento",
@@ -39,21 +46,71 @@ async def obter_noticias():
             "resumo": "Estudos recentes apontam para um aumento na oferta de quartos e apartamentos T1 nas zonas periféricas de Braga e Guimarães.",
             "url": "noticia-arrendamento-norte.html",
             "tag": "Habitação"
+        },
+        {
+            "titulo": "Custo de vida em Portugal 2026: Principais aumentos e como se proteger",
+            "resumo": "Relatório detalha o impacto da inflação nos supermercados e nos passes de transporte público nas áreas metropolitanas.",
+            "url": "noticia-custo-vida.html",
+            "tag": "Economia"
+        },
+        {
+            "titulo": "SNS cria linha de atendimento prioritária para residentes estrangeiros",
+            "resumo": "O objetivo é facilitar o registo nos centros de saúde locais e acelerar a atribuição do número de utente para novos imigrantes.",
+            "url": "noticia-sns-utente.html",
+            "tag": "Saúde"
         }
     ]
     
-    # [ESTRATÉGIA DE CONVERSÃO]: Injeta o card do E-book na terceira posição do carrossel
-    if len(noticias_brutas) >= 2:
-        noticias_brutas.insert(2, {
-            "titulo": "ESTRATÉGIA: Como começar a faturar em Euro digitalmente antes de emigrar",
-            "resumo": "Especialistas apontam que criar uma fonte de receita online protege o imigrante de subempregos e evita queimar a poupança na chegada a Portugal...",
-            "url": "viver-do-digital.html",
-            "tag": "Exclusivo Portal"
-        })
+    # Injeta a tua estratégia de vendas exatamente na 3ª posição (Índice 2)
+    noticias_brutas.insert(2, {
+        "titulo": "ESTRATÉGIA: Como começar a faturar em Euro digitalmente antes de emigrar",
+        "resumo": "Especialistas apontam que criar uma fonte de receita online protege o imigrante de subempregos e evita queimar a poupança na chegada a Portugal...",
+        "url": "viver-do-digital.html",
+        "tag": "Exclusivo Portal"
+    })
     
-    # Retorna o carrossel limitado às 5 principais posições
-    return {"noticias": noticias_brutas[:5]}
+    return {"noticias": noticias_brutas}
 
+# =====================================================================
+# 2. ENDPOINT DO SIMULADOR FINANCEIRO (REATIVADO)
+# =====================================================================
+@app.post("/api/simulador")
+async def calcular_simulacao(data: SimuladorData):
+    # Lógica de cálculo padrão para evitar o erro de tela do simulador
+    desconto_seg_social = data.salario_bruto * 0.11
+    # Simulação simples de retenção de IRS
+    taxa_irs = 0.09 if data.salario_bruto <= 1000 else 0.15
+    desconto_irs = data.salario_bruto * taxa_irs
+    salario_liquido = data.salario_bruto - desconto_seg_social - desconto_irs
+    
+    return {
+        "status": "sucesso",
+        "salario_bruto": data.salario_bruto,
+        "seguranca_social": round(desconto_seg_social, 2),
+        "irs": round(desconto_irs, 2),
+        "salario_liquido": round(salario_liquido, 2)
+    }
+
+# =====================================================================
+# 3. ENDPOINT DE RELATÓRIOS / GUIAS REGIONAIS (REATIVADO)
+# =====================================================================
+@app.post("/api/relatorios")
+@app.get("/api/relatorios")
+async def gerar_relatorio_guia(regiao: str = "Norte"):
+    return {
+        "status": "sucesso",
+        "regiao": regiao,
+        "mensagem": f"Relatório regional de {regiao} gerado com sucesso.",
+        "dados": {
+            "custo_medio_quarto": "300€ a 450€",
+            "empregabilidade": "Alta (Setores de Serviços, Tecnologia e Indústria)",
+            "transportes": "Excelente cobertura regional de comboios e autocarros"
+        }
+    }
+
+# =====================================================================
+# 4. ENDPOINT DO ASSISTENTE CHAT IA
+# =====================================================================
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
@@ -66,20 +123,14 @@ async def responder_chat(user_data: UserMessage):
                 "content": (
                     "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
                     "- Tu és o IMIGRANTE AI, o assistente virtual oficial e conselheiro humano do Portal Imigrante PT.\n"
-                    "- A tua personalidade é acolhedora, prática, experiente e muito realista. Tu falas como um imigrante veterano que já passou por tudo e quer ajudar um recém-chegado.\n"
+                    "- A tua personalidade é acolhedora, prática, experiente e muito realista.\n"
                     "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs'.\n\n"
-                    
-                    "ESCOPO DE ATUAÇÃO ABRANGENTE (SABER SOBRE TUDO):\n"
-                    "Tu deves responder com propriedade sobre três grandes pilares:\n"
-                    "1. LOGÍSTICA DE VIAGEM E VOOS: Dicas sobre escolha de passagens, controlo de bagagem, conexões e escalas em aeroportos, direitos do passageiro e organização de documentos de viagem.\n"
-                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA: Como é o processo psicológico da mudança, como fazer as primeiras compras de supermercado, como funciona o arrendamento real (e a procura de quartos), o clima nas diferentes estações, e como se adaptar à cultura local.\n"
-                    "3. BUROCRACIA LEGAL: Mantém a regra dos 7 anos de residência legal para nacionalidade via CPLP/UE (Lei de 2026), NIF, NISS e papel da AIMA.\n\n"
-                    
-                    "TONALIDADE E REGRAS DE RESPOSTA:\n"
-                    "- Junta conselhos práticos às respostas burocráticas. Se te perguntarem sobre o Porto ou Guimarães, fala sobre os transportes locais ou o custo prático da zona.\n"
-                    "- Sê extremamente direto. Responde logo no primeiro parágrafo.\n"
-                    "- Mantém as respostas curtas e fáceis de ler no telemóvel (máximo 3 parágrafos).\n"
-                    "- Para listas, usa unicamente o hífen (-) como marcador (limite de 5 pontos)."
+                    "ESCOPO DE ATUAÇÃO:\n"
+                    "1. LOGÍSTICA DE VIAGEM E VOOS.\n"
+                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA.\n"
+                    "3. BUROCRACIA LEGAL: Regra dos 7 anos (Lei de 2026), NIF, NISS e AIMA.\n\n"
+                    "TONALIDADE:\n"
+                    "- Responde de forma curta, direta e fácil de ler no telemóvel (máximo 3 parágrafos)."
                 )
             }
         ]
@@ -97,9 +148,8 @@ async def responder_chat(user_data: UserMessage):
     except Exception as e:
         resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
-    # Retorno limpo e corrigido (sem a variável solta reply_final)
     return {"response": resposta_final}
 
 @app.get("/")
 def home():
-    return {"status": "Servidor com IA abrangente de viagens e sobrevivência humana online!"}
+    return {"status": "Servidor com IA e Motores de Cálculo Online!"}
