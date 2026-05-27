@@ -1,6 +1,5 @@
 import os
 import requests
-import xml.etree.ElementTree as ET
 import re
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,46 +29,52 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# ENDPOINT: MOTOR RSS INTELIGENTE (SIC NOTÍCIAS & DN PORTUGAL)
+# ENDPOINT: MOTOR RSS SEGURO (SIC NOTÍCIAS & DN PORTUGAL)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    """Consome feeds RSS oficiais da SIC Notícias e DN em tempo real com filtro do portal"""
-    # Lista de Feeds baseada estritamente na SIC Notícias e no Diário de Notícias
+    """Consome feeds oficiais de Portugal via Regex/String de forma blindada contra falhas de XML"""
+    # URLs oficiais e atualizadas dos feeds estruturados
     FEEDS_RSS = [
-        {"tag": "SIC Notícias", "url": "https://sicnoticias.pt/rss"},
+        {"tag": "SIC Notícias", "url": "https://sicnoticias.pt/noticias/?service=rss"},
         {"tag": "DN Portugal", "url": "https://www.dn.pt/rss/ultimas.xml"}
     ]
     
-    # Palavras-chave para o filtro do Portal Imigrante PT
     PALAVRAS_CHAVE = ["aima", "imigração", "imigrante", "visto", "residência", "nacionalidade", "leis", "portugal", "estrangeiro"]
-    
     noticias_filtradas = []
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
     for feed in FEEDS_RSS:
         try:
-            response = requests.get(feed["url"], headers=headers, timeout=4)
+            response = requests.get(feed["url"], headers=headers, timeout=5)
             if response.status_code != 200:
                 continue
                 
-            root = ET.fromstring(response.content)
+            # Extração segura por blocos <item> usando Regex para evitar quebras por XML mal formado
+            items = re.findall(r'<item>(.*?)</item>', response.text, re.DOTALL)
             
-            for item in root.findall('.//item'):
-                titulo = item.find('title').text if item.find('title') is not None else ""
-                resumo_bruto = item.find('description').text if item.find('description') is not None else ""
-                url = item.find('link').text if item.find('link') is not None else "#"
+            for item in items:
+                # Extrai os campos limpando CDATA e tags comuns
+                titulo_match = re.search(r'<title>(.*?)</title>', item, re.DOTALL)
+                link_match = re.search(r'<link>(.*?)</link>', item, re.DOTALL)
+                desc_match = re.search(r'<description>(.*?)</description>', item, re.DOTALL)
                 
-                # Tratamento e remoção de tags HTML/imagens embutidas que surgem no RSS da SIC
+                titulo = titulo_match.group(1) if titulo_match else ""
+                url = link_match.group(1) if link_match else "#"
+                resumo_bruto = desc_match.group(1) if desc_match else ""
+                
+                # Limpeza profunda de CDATA e Tags HTML vindas dos jornais
+                titulo = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', titulo).strip()
+                url = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', url).strip()
                 if resumo_bruto:
+                    resumo_bruto = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', resumo_bruto)
                     resumo_bruto = re.sub('<[^<]+?>', '', resumo_bruto).strip()
                 
                 texto_analise = (titulo + " " + (resumo_bruto or "")).lower()
                 
-                # Aplicação do Filtro do Nicho
+                # Filtro por nicho
                 if any(termo in texto_analise for termo in PALAVRAS_CHAVE):
                     resumo = resumo_bruto[:140] + "..." if resumo_bruto else "Aceda aos detalhes completos no artigo original do portal."
-                    
                     noticias_filtradas.append({
                         "titulo": titulo,
                         "resumo": resumo,
@@ -77,37 +82,49 @@ async def obtener_noticias_tempo_real():
                         "tag": feed["tag"]
                     })
                     
-                if len(noticias_filtradas) >= 8:
+                if len(noticias_filtradas) >= 6:
                     break
-                    
         except Exception:
             continue
 
-    # Se o filtro capturou notícias do nicho, envia para o ecrã
+    # Se encontramos notícias do nicho, retorna imediatamente
     if len(noticias_filtradas) > 0:
         return {"noticias": noticias_filtradas[:5]}
 
-    # FALLBACK: Se não houver notícias específicas de imigração, exibe as últimas gerais da SIC e DN
+    # FALLBACK REAL: Se não houver notícias de imigração nas últimas horas, 
+    # extrai as últimas notícias gerais publicadas para manter o site sempre vivo
     try:
+        noticias_fallback = []
         for feed in FEEDS_RSS:
-            response = requests.get(feed["url"], headers=headers, timeout=3)
-            root = ET.fromstring(response.content)
-            for item in root.findall('.//item')[:2]:
-                resumo_fallback = item.find('description').text if item.find('description') is not None else ""
-                if resumo_fallback:
-                    resumo_fallback = re.sub('<[^<]+?>', '', resumo_fallback).strip()
+            response = requests.get(feed["url"], headers=headers, timeout=4)
+            items = re.findall(r'<item>(.*?)</item>', response.text, re.DOTALL)[:3]
+            for item in items:
+                titulo_match = re.search(r'<title>(.*?)</title>', item, re.DOTALL)
+                link_match = re.search(r'<link>(.*?)</link>', item, re.DOTALL)
+                desc_match = re.search(r'<description>(.*?)</description>', item, re.DOTALL)
                 
-                noticias_filtradas.append({
-                    "titulo": item.find('title').text,
-                    "resumo": (resumo_fallback or "")[:140] + "...",
-                    "url": item.find('link').text,
+                t = titulo_match.group(1) if titulo_match else "Última Hora"
+                u = link_match.group(1) if link_match else "#"
+                d = desc_match.group(1) if desc_match else ""
+                
+                t = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', t).strip()
+                u = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', u).strip()
+                if d:
+                    d = re.sub(r'<!\[CDATA\[(.*?)\]\]>', r'\1', d)
+                    d = re.sub('<[^<]+?>', '', d).strip()
+                
+                noticias_fallback.append({
+                    "titulo": t,
+                    "resumo": d[:130] + "..." if d else "Verifique a cobertura completa no portal oficial.",
+                    "url": u,
                     "tag": feed["tag"]
                 })
-        return {"noticias": noticias_filtradas[:5]}
+        if noticias_fallback:
+            return {"noticias": noticias_fallback[:5]}
     except Exception:
         pass
 
-    # BACKUP FIXO DE SEGURANÇA SE TODA A REDE FALHAR
+    # BACKUP FIXO DE SEGURANÇA SE A REDE DE FEEDS CAIR POR COMPLETO
     return {
         "noticias": [
             {
@@ -118,7 +135,7 @@ async def obtener_noticias_tempo_real():
             },
             {
                 "titulo": "Contagem de prazos para Nacionalidade",
-                "resumo": "Análise detalhada sobre os critérios de fixação de residência legal efetiva para fins de atribuição de cidadania portuguesa...",
+                "resumo": "Análise detalhada sobre os critérios de fixação de residência legal efetiva para fins de attribution de cidadania portuguesa...",
                 "url": "https://diariodarepublica.pt",
                 "tag": "DN Portugal"
             }
@@ -149,14 +166,14 @@ async def responder_chat(user_data: UserMessage):
                     "- Se te perguntarem sobre notícias em tempo real deste mês, sê honesto e curto: explica que o teu foco é a estrutura legal estável (7 anos, AIMA, NIF) e sugere olhar o painel de notícias da nossa página inicial.\n\n"
                     
                     "ESCOPO DE ATUAÇÃO:\n"
-                    "1. LOGÍSTICA DE VIAGEM E VOOS: Passagens, malas de mão, conexões.\n"
+                    "1. LOGÍSTICA DE VIAGem E VOOS: Passagens, malas de mão, conexões.\n"
                     "2. DICAS HUMANAS DE SOBREVIVÊNCIA: Mudança, custo de vida, quartos, adaptação cultural.\n"
                     "3. BUROCRACIA LEGAL: Regra de 7 ANOS de residência para nacionalidade via CPLP/UE (Lei de 2026), NIF, NISS e AIMA.\n\n"
                     
                     "REGRAS ESTRITAS DE FORMATO:\n"
                     "- Responde à pergunta logo na primeira frase.\n"
                     "- O limite máximo absoluto de cada resposta é de 2 parágrafos curtos.\n"
-                    "- Em listas, usa unicamente hifens (-) e no máximo 3 a 4 pontos."
+                    "- Em locais de lista, usa unicamente hifens (-) e no máximo 3 a 4 pontos."
                 )
             }
         ]
