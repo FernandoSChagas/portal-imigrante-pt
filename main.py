@@ -1,6 +1,7 @@
 import os
 import requests
 import xml.etree.ElementTree as ET
+import re
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -29,18 +30,18 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# ENDPOINT: MOTOR RSS INTELIGENTE EM TEMPO REAL DIRECTO DOS JORNAIS
+# ENDPOINT: MOTOR RSS INTELIGENTE (SIC NOTÍCIAS & DN PORTUGAL)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    """Consome feeds RSS oficiais de Portugal em tempo real e filtra por termos de imigração"""
-    # Feeds RSS estáveis de notícias gerais de última hora em Portugal
+    """Consome feeds RSS oficiais da SIC Notícias e DN em tempo real com filtro do portal"""
+    # Lista de Feeds baseada estritamente na SIC Notícias e no Diário de Notícias
     FEEDS_RSS = [
-        {"tag": "Jornal de Notícias", "url": "https://www.jn.pt/rss/ultimas.xml"},
-        {"tag": "Público", "url": "https://www.publico.pt/feed/ultimas"}
+        {"tag": "SIC Notícias", "url": "https://sicnoticias.pt/rss"},
+        {"tag": "DN Portugal", "url": "https://www.dn.pt/rss/ultimas.xml"}
     ]
     
-    # Palavras-chave cirúrgicas para o filtro do Portal Imigrante PT
+    # Palavras-chave para o filtro do Portal Imigrante PT
     PALAVRAS_CHAVE = ["aima", "imigração", "imigrante", "visto", "residência", "nacionalidade", "leis", "portugal", "estrangeiro"]
     
     noticias_filtradas = []
@@ -48,12 +49,10 @@ async def obtener_noticias_tempo_real():
 
     for feed in FEEDS_RSS:
         try:
-            # Requisição direta do servidor (ignora o bloqueio de CORS dos navegadores)
             response = requests.get(feed["url"], headers=headers, timeout=4)
             if response.status_code != 200:
                 continue
                 
-            # Processamento da árvore estrutural do XML
             root = ET.fromstring(response.content)
             
             for item in root.findall('.//item'):
@@ -61,13 +60,13 @@ async def obtener_noticias_tempo_real():
                 resumo_bruto = item.find('description').text if item.find('description') is not None else ""
                 url = item.find('link').text if item.find('link') is not None else "#"
                 
-                # Tratamento de limpeza simples para descrições com tags HTML perdidas no RSS
-                if resumo_bruto and "<" in resumo_bruto:
-                    resumo_bruto = ET.fromstring(f"<span>{resumo_bruto}</span>").text or resumo_bruto
+                # Tratamento e remoção de tags HTML/imagens embutidas que surgem no RSS da SIC
+                if resumo_bruto:
+                    resumo_bruto = re.sub('<[^<]+?>', '', resumo_bruto).strip()
                 
                 texto_analise = (titulo + " " + (resumo_bruto or "")).lower()
                 
-                # Executa o filtro inteligente: valida se a notícia é de interesse do seu público
+                # Aplicação do Filtro do Nicho
                 if any(termo in texto_analise for termo in PALAVRAS_CHAVE):
                     resumo = resumo_bruto[:140] + "..." if resumo_bruto else "Aceda aos detalhes completos no artigo original do portal."
                     
@@ -78,39 +77,42 @@ async def obtener_noticias_tempo_real():
                         "tag": feed["tag"]
                     })
                     
-                # Break de segurança para não processar dados em excesso e manter a rota ultra-rápida
                 if len(noticias_filtradas) >= 8:
                     break
                     
         except Exception:
-            continue # Se um feed falhar isoladamente, passa para o próximo sem quebrar a API
+            continue
 
-    # Se o filtro encontrou notícias quentes de hoje, envia para o carrossel
+    # Se o filtro capturou notícias do nicho, envia para o ecrã
     if len(noticias_filtradas) > 0:
         return {"noticias": noticias_filtradas[:5]}
 
-    # FALLBACK INTELIGENTE: Se nenhum jornal publicou sobre imigração nas últimas horas,
-    # o servidor entrega as notícias gerais mais recentes dos feeds para o carrossel nunca ficar vazio.
+    # FALLBACK: Se não houver notícias específicas de imigração, exibe as últimas gerais da SIC e DN
     try:
-        response = requests.get(FEEDS_RSS[0]["url"], headers=headers, timeout=3)
-        root = ET.fromstring(response.content)
-        for item in root.findall('.//item')[:3]:
-            noticias_filtradas.append({
-                "titulo": item.find('title').text,
-                "resumo": (item.find('description').text or "")[:140] + "...",
-                "url": item.find('link').text,
-                "tag": FEEDS_RSS[0]["tag"]
-            })
-        return {"noticias": noticias_filtradas}
+        for feed in FEEDS_RSS:
+            response = requests.get(feed["url"], headers=headers, timeout=3)
+            root = ET.fromstring(response.content)
+            for item in root.findall('.//item')[:2]:
+                resumo_fallback = item.find('description').text if item.find('description') is not None else ""
+                if resumo_fallback:
+                    resumo_fallback = re.sub('<[^<]+?>', '', resumo_fallback).strip()
+                
+                noticias_filtradas.append({
+                    "titulo": item.find('title').text,
+                    "resumo": (resumo_fallback or "")[:140] + "...",
+                    "url": item.find('link').text,
+                    "tag": feed["tag"]
+                })
+        return {"noticias": noticias_filtradas[:5]}
     except Exception:
         pass
 
-    # BACKUP FIXO DE SEGURANÇA ABSOLUTA CASO TODA A REDE FALHE
+    # BACKUP FIXO DE SEGURANÇA SE TODA A REDE FALHAR
     return {
         "noticias": [
             {
-                "titulo": "Plantão de Atualizações AIMA",
-                "resumo": "Acompanha a reestruturação dos novos balcões de atendimento e regras de agendamento digital para este trimestre...",
+                "titulo": "Plantão de Updates do Ecossistema",
+                "resumo": "Acompanha os novos fluxos de triagem e tempos médios de resposta para vistos e agendamentos estruturados neste trimestre...",
                 "url": "https://aima.gov.pt",
                 "tag": "AIMA"
             },
@@ -139,7 +141,7 @@ async def responder_chat(user_data: UserMessage):
                     "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
                     "- Tu és o IMIGRANTE AI, o assistente virtual oficial do Portal Imigrante PT.\n"
                     "- Tu tens uma MEMÓRIA HUMANA: lembra-te do nome do utilizador e do contexto que ele já partilhou contigo ao longo do diálogo.\n"
-                    "- A tua personalidade é acolhedora, prática e extremamente direta. Fala como um veterano objective.\n"
+                    "- A tua personalidade é acolhedora, prática e extremamente direta. Fala como um veterano objetivo.\n"
                     "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs' ou 'MIRA'.\n\n"
                     
                     "REGRA DE TRANSPARÊNCIA E DO ANO ATUAL:\n"
