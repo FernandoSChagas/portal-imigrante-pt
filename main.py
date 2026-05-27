@@ -7,7 +7,6 @@ from groq import Groq
 
 app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado")
 
-# Configuração de CORS aberta para permitir que o teu GitHub Pages aceda com segurança
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,18 +15,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Chaves de API estáveis do ecossistema obtidas das variáveis de ambiente do Render
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 TAVILY_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
-
-# Memórias globais do servidor para o chat
 historico_conversas = {}
 
-# =====================================================================
-# MODELOS DE DADOS PYDANTIC (VALIDAÇÃO DAS ROTAS)
-# =====================================================================
 class UserMessage(BaseModel):
     message: str
     session_id: str = "comum"
@@ -45,14 +38,12 @@ class SimRequest(BaseModel):
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    """Pesquisa aberta nas últimas 24h focada em Portugal, banindo redes sociais e EUA"""
     try:
         url = "https://api.tavily.com/search"
         query_focada = (
             "notícias imigração Portugal visto AIMA CPLP "
             "-site:instagram.com -site:facebook.com -site:twitter.com -site:tiktok.com -\"EUA\" -\"Estados Unidos\""
         )
-        
         payload = {
             "api_key": TAVILY_API_KEY,
             "query": query_focada,
@@ -60,12 +51,10 @@ async def obtener_noticias_tempo_real():
             "time_range": "day",
             "max_results": 10
         }
-        
         response = requests.post(url, json=payload, timeout=6)
         if response.status_code == 200:
             resultados = response.json().get("results", [])
             noticias_brutas = []
-            
             for item in resultados:
                 site_url = item.get("url", "").lower()
                 titulo = item.get("title", "")
@@ -95,12 +84,10 @@ async def obtener_noticias_tempo_real():
                     "url": item.get("url", "#"),
                     "tag": tag
                 })
-            
             if noticias_brutas:
                 return {"noticias": noticias_brutas[:5]}
     except Exception as e:
         print(f"Erro Tavily: {e}")
-        
     return {
         "noticias": [
             {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
@@ -115,7 +102,6 @@ async def obtener_noticias_tempo_real():
 async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
     sessao_id = user_data.session_id 
-    
     if sessao_id not in historico_conversas:
         historico_conversas[sessao_id] = [
             {
@@ -132,12 +118,9 @@ async def responder_chat(user_data: UserMessage):
                 )
             }
         ]
-    
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
-    
     if len(historico_conversas[sessao_id]) > 13:
         historico_conversas[sessao_id] = [historico_conversas[sessao_id][0]] + historico_conversas[sessao_id][-12:]
-    
     try:
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -148,7 +131,6 @@ async def responder_chat(user_data: UserMessage):
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
         resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
-
     return {"response": resposta_final}
 
 # =====================================================================
@@ -157,7 +139,6 @@ async def responder_chat(user_data: UserMessage):
 @app.post("/api/guias")
 async def obter_guias_regionais(data: RegionRequest):
     regiao = data.regiao
-    
     prompt_guia = f"""
     Atue como um Especialista em Relocalização em Portugal. 
     Analise a região: {regiao}.
@@ -167,7 +148,6 @@ async def obter_guias_regionais(data: RegionRequest):
     ### Escreva aqui um resumo curto sobre o Clima predominante da região e o ritmo de vida e cultura da população local.
     ### Escreva aqui uma Dica Prática Humana e direta de adaptação e acolhimento para o imigrante no primeiro mês.
     """
-    
     guia_ia_texto = "###Dados em atualização...###Dados em atualização...###Dados em atualização...###Dados em atualização..."
     try:
         completion = client.chat.completions.create(
@@ -189,7 +169,6 @@ async def obter_guias_regionais(data: RegionRequest):
             "time_range": "year",
             "max_results": 3
         }
-        
         response = requests.post(url_tavily, json=payload_tavily, timeout=6)
         if response.status_code == 200:
             resultados = response.json().get("results", [])
@@ -210,46 +189,36 @@ async def obter_guias_regionais(data: RegionRequest):
                 "url": "https://www.idealista.pt/news/"
             }
         ]
-
-    return {
-        "guia_ia": guia_ia_texto,
-        "artigos": artigos_resultados
-    }
+    return {"guia_ia": guia_ia_texto, "artigos": artigos_resultados}
 
 # =====================================================================
-# 4. NOVO ENDPOINT: SIMULADOR DE RESERVA FINANCEIRA (SIMULADOR.HTML)
+# 4. ENDPOINT: SIMULADOR PADRONIZADO COM OS GUIAS (SIMULADOR.HTML)
 # =====================================================================
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
-    """Mapeia custos operacionais de 2026 e devolve o plano financeiro com insight da IA"""
-    # Constantes matemáticas de custos reais estimados para 2026 (Euro)
+    """Mapeia custos operacionais padronizados com o menu oficial dos guias"""
+    # Constantes calibradas para o padrão de regiões do portal
     custos_base = {
-        "Lisboa": {"quarto": 750, "mercado": 450, "transp": 40},
-        "Porto": {"quarto": 500, "mercado": 420, "transp": 40},
-        "Norte": {"quarto": 400, "mercado": 400, "transp": 30},
-        "Interior": {"quarto": 300, "mercado": 350, "transp": 30}
+        "Lisboa e Vale do Tejo": {"quarto": 750, "mercado": 450, "transp": 40},
+        "Algarve": {"quarto": 550, "mercado": 420, "transp": 40},
+        "Centro de Portugal": {"quarto": 450, "mercado": 380, "transp": 35},
+        "Norte de Portugal": {"quarto": 400, "mercado": 400, "transp": 30},
+        "Ilhas (Açores e Madeira)": {"quarto": 400, "mercado": 430, "transp": 30},
+        "Alentejo": {"quarto": 300, "mercado": 350, "transp": 30}
     }
     
-    reg = custos_base.get(data.regiao, custos_base["Norte"])
-    
-    # Define o multiplicador com base no tamanho do núcleo familiar selecionado
+    reg = custos_base.get(data.regiao, custos_base["Norte de Portugal"])
     mult = 1.0 if data.perfil == "solteiro" else (1.8 if data.perfil == "casal" else 2.5)
     
-    # Cálculo das despesas fixas de sobrevivência mensal
     custo_mensal = (reg["quarto"] + (reg["mercado"] * mult) + (reg["transp"] * (2 if mult > 1 else 1)))
-    
-    # Orçamento final = (Custo mensal * quantidade de meses escolhida) + 2 cauções obrigatórias de aluguer
     total_euro = (custo_mensal * data.meses) + (reg["quarto"] * 2)
-    
-    # Conversão referencial para Real (Média estável de mercado)
     total_real = total_euro * 6.2
     
-    # Solicita um insight motivacional e prático à inteligência artificial
     prompt_ia = (
         f"Atue como um Consultor Financeiro de Imigração. Escreva um insight de exatamente duas frases "
         f"para um perfil '{data.perfil}' que planeia mudar-se para a região '{data.regiao}' com uma reserva "
-        f"de segurança calculada para {data.meses} meses. O orçamento estimado total é de €{round(total_euro, 2)}. "
-        f"Dê uma dica prática de economia de custos ou incentivo real. Seja direto, não use saudações."
+        f"de segurança de {data.meses} meses. O orçamento estimado total é de €{round(total_euro, 2)}. "
+        f"Dê uma dica prática de economia ou incentivo real. Seja direto, não use saudações."
     )
     
     try:
@@ -260,10 +229,7 @@ async def calcular_simulacao(data: SimRequest):
         )
         insight_final = completion.choices[0].message.content
     except Exception:
-        insight_final = (
-            "Excelente planeamento! Ter uma reserva estruturada para este período garante a tranquilidade "
-            "necessária para focar na tua inserção no mercado de trabalho e validação de documentos iniciais."
-        )
+        insight_final = "Excelente planeamento! Ter uma reserva estruturada para este período garante a estabilidade necessária para se estabelecer e integrar com sucesso."
 
     return {
         "total_euro": round(total_euro, 2),
