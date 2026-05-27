@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from groq import Groq
 
 app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado com Captura de Leads")
 
@@ -24,7 +25,7 @@ TAVILY_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 historico_conversas = {}
 
-# Nome do ficheiro onde guardaremos a tua lista de e-mails para o E-book
+# Nome do ficheiro de armazenamento
 LEADS_FILE = "leads_portal.csv"
 
 # =====================================================================
@@ -41,51 +42,63 @@ class SimRequest(BaseModel):
     perfil: str
     regiao: str
     meses: int
-    nome: str  # Obrigatório para libertar o cálculo
-    email: str # Obrigatório para libertar o cálculo
+    nome: str  
+    email: str 
     whatsapp: str = "Não informado"
 
 # =====================================================================
-# FUNÇÃO AUXILIAR: GRAVAR O LEAD NO SERVIDOR (RENDER)
+# FUNÇÃO AUXILIAR: GRAVAR O LEAD NO SERVIDOR
 # =====================================================================
 def guardar_lead_local(nome: str, email: str, whatsapp: str, origem: str):
     try:
         ficheiro_existe = os.path.exists(LEADS_FILE)
+        
+        # Se não existir, cria e escreve o cabeçalho imediatamente
+        if not ficheiro_existe:
+            with open(LEADS_FILE, mode="w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["Data/Hora", "Nome", "Email", "WhatsApp", "Origem"])
+        
+        # Adiciona o novo lead na linha abaixo
         with open(LEADS_FILE, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            if not ficheiro_existe:
-                # Cria o cabeçalho caso o ficheiro ainda não exista
-                writer.writerow(["Data/Hora", "Nome", "Email", "WhatsApp", "Origem"])
-            
             data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             writer.writerow([data_atual, nome, email, whatsapp, origem])
         return True
     except Exception as e:
-        print(f"Erro ao guardar lead: {str(e)}")
+        print(f"Erro crítico ao guardar lead: {str(e)}")
         return False
 
 # =====================================================================
-# ENDPOINT SECRETO: EXPORTAR LEADS PARA EXCEL / CSV
+# ENDPOINT CORRIGIDO: EXPORTAR LEADS SEM FALHAS DE LEITURA
 # =====================================================================
 @app.get("/api/leads/exportar")
 async def exportar_leads():
     if not os.path.exists(LEADS_FILE):
-        return {"mensagem": "Nenhum lead capturado ainda."}
+        return {"total_leads": 0, "leads": [], "aviso": "Nenhum lead guardado no ficheiro ainda."}
     
     linhas = []
-    with open(LEADS_FILE, mode="r", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        headers = next(reader)
-        for row in reader:
-            if row:
-                linhas.append({
-                    "data": row[0],
-                    "nome": row[1],
-                    "email": row[2],
-                    "whatsapp": row[3],
-                    "origem": row[4]
-                })
-    return {"total_leads": len(linhas), "leads": linhas}
+    try:
+        with open(LEADS_FILE, mode="r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            # Tenta ler o cabeçalho de forma segura
+            try:
+                headers = next(reader)
+            except StopIteration:
+                return {"total_leads": 0, "leads": [], "aviso": "Ficheiro vazio."}
+                
+            for row in reader:
+                if row and len(row) >= 5:
+                    linhas.append({
+                        "data": row[0],
+                        "nome": row[1],
+                        "email": row[2],
+                        "whatsapp": row[3],
+                        "origem": row[4]
+                    })
+        return {"total_leads": len(linhas), "leads": linhas}
+    except Exception as e:
+        return {"erro": f"Erro ao ler os dados: {str(e)}"}
 
 # =====================================================================
 # 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO CAMUFLADA DE VENDAS (INDEX.HTML)
@@ -145,7 +158,6 @@ async def obtener_noticias_tempo_real():
                 {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
             ]
         
-        # [ANÚNCIO NATIVO E INVISÍVEL] Injeta o card do E-book estratégico disfarçado
         noticias_brutas.insert(2, {
             "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
@@ -270,15 +282,14 @@ async def obtener_guias_regionais(data: RegionRequest):
     }
 
 # =====================================================================
-# 4. ENDPOINT: SIMULADOR FINANCEIRO OBRIGATÓRIO COM CAPTURA (SIMULADOR.HTML)
+# 4. ENDPOINT: SIMULADOR FINANCEIRO OBRIGATÓRIO COM CAPTURA
 # =====================================================================
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
-    # Proteção de backend: Bloqueia a execução se os dados de lead estiverem vazios
     if not data.nome or not data.email or "@" not in data.email:
-        raise HTTPException(status_code=400, detail="Nome e Email válidos são obrigatórios para libertar os cálculos do simulador.")
+        raise HTTPException(status_code=400, detail="Nome e Email válidos são obrigatórios.")
     
-    # Grava o lead automaticamente identificando que veio do Simulador
+    # Grava o lead de forma limpa e estruturada
     guardar_lead_local(data.nome, data.email, data.whatsapp, "Simulador")
 
     custos_base = {
@@ -312,7 +323,7 @@ async def calcular_simulacao(data: SimRequest):
         )
         insight_final = completion.choices[0].message.content
     except Exception:
-        insight_final = "Excelente planeamento! Ter uma reserva estruturada para este período garante a estabilidade necessária para se estabelecer e integrar com sucesso."
+        insight_final = "Excelente planeamento! Ter uma reserva estruturada para este período garante a estabilidade necessária para se estabelecer."
 
     return {
         "total_euro": round(total_euro, 2),
