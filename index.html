@@ -66,12 +66,6 @@
         .btn-left { left: 0; }
         .btn-right { right: 0; }
 
-        /* Estilo auxiliar para o link de vendas do Euro */
-        .euro-vendas-link:hover {
-            color: #ffffff !important;
-            text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
-        }
-
         /* =====================================================================
            RODAPÉ MODULAR, COMPACTO E RESPONSIVO (ALINHADO COM A LANDING PAGE)
            ===================================================================== */
@@ -280,34 +274,18 @@
     <main class="main-container">
         
         <section class="live-widgets">
-            <div class="widget-card" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; min-height: 90px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span class="widget-icon" style="margin: 0;">💶</span>
-                    <div>
-                        <h4 style="margin: 0; font-size: 0.9rem;">Euro hoje</h4>
-                        <p id="cotacao-euro" style="margin: 2px 0 0 0; font-weight: bold; color: #ffffff;">A carregar câmbio ao vivo...</p>
-                    </div>
-                </div>
-                <div style="width: 100%; border-top: 1px dashed rgba(0, 229, 255, 0.15); padding-top: 6px; margin-top: 4px;">
-                    <a href="viver-do-digital.html" class="euro-vendas-link" style="color: #00e5ff; text-decoration: none; font-size: 0.78rem; font-weight: 500; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s ease;">
-                        💡 Cansado de converter? Fature direto em Euro por R$ 47 →
-                    </a>
+            <div class="widget-card">
+                <span class="widget-icon">💶</span>
+                <div>
+                    <h4>Euro hoje</h4>
+                    <p id="cotacao-euro">A carregar câmbio ao vivo...</p>
                 </div>
             </div>
-
             <div class="widget-card">
                 <span class="widget-icon">☀️</span>
                 <div>
                     <h4 id="titulo-clima">Clima Local</h4>
                     <p id="info-clima">A detetar localização...</p>
-                </div>
-            </div>
-
-            <div class="widget-card" style="border: 1px solid rgba(0, 229, 255, 0.3); background: linear-gradient(135deg, #161b22 0%, #0d1224 100%); cursor: pointer;" onclick="window.location.href='viver-do-digital.html'">
-                <span class="widget-icon">💻</span>
-                <div>
-                    <h4>Trabalhar Online</h4>
-                    <p style="font-size: 0.85rem; color: #e2e8f0;">Fature em Euros do zero. Ver manual completo R$ 47 →</p>
                 </div>
             </div>
         </section>
@@ -374,7 +352,7 @@
                 <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
                 <h3>Compromisso do Usuário</h3>
                 <ul>
-                    <li>A) Não se envolver in atividades que sejam ilegais ou contrárias à boa fé e à ordem pública;</li>
+                    <li>A) Não se envolver em atividades que sejam ilegais ou contrárias à boa fé e à ordem pública;</li>
                     <li>B) Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de azar ou contra os direitos humanos;</li>
                     <li>C) Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Portal Imigrante PT.</li>
                 </ul>
@@ -393,7 +371,7 @@
                 <h3>1. Termos</h3>
                 <p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis e concorda que é responsável pelo cumprimento de todas as leis locais aplicáveis.</p>
                 <h3>2. Uso de Licença</h3>
-                <p>É concedida permissão para baixar temporariamente uma cópia dos materiais (informações ou software) no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial. Sob esta licença, você não pode: modificar ou copiar os materiais; usar para fins comerciais; tentar descompilar o software ou remover notações de propriedade.</p>
+                <p>É concedida permission para baixar temporariamente uma cópia dos materiais (informações ou software) no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial. Sob esta licença, você não pode: modificar ou copiar os materiais; usar para fins comerciais; tentar descompilar o software ou remover notações de propriedade.</p>
                 <h3>3. Isenção de responsabilidade</h3>
                 <p>Os materiais no site da Portal Imigrante PT são fornecidos 'como estão'. Portal Imigrante PT não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias.</p>
                 <h3>4. Limitações</h3>
@@ -417,7 +395,7 @@
             }
         }
 
-        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA
+        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (INCLUINDO O CARD EXCLUSIVO DE VENDAS INJETADO NO BACKEND)
         async function carregarNoticiasVivas() {
             const grid = document.getElementById("newsGrid");
             try {
@@ -428,6 +406,10 @@
                     grid.innerHTML = ""; 
                     data.noticias.forEach(noticia => {
                         const fonte = noticia.tag || "Ao Vivo";
+                        
+                        // Diferencia visualmente se o link for para a nossa própria Landing Page externa/interna
+                        const targetAttr = noticia.url.includes("viver-do-digital") ? "" : 'target="_blank"';
+                        
                         grid.innerHTML += `
                             <article class="news-card-carousel">
                                 <div>
@@ -435,7 +417,7 @@
                                     <h3 style="font-size:1.05rem; margin: 10px 0; color:#fff;">${noticia.titulo}</h3>
                                     <p style="font-size:0.85rem; color:#8b949e; line-height:1.4;">${noticia.resumo}</p>
                                 </div>
-                                <a href="${noticia.url}" target="_blank" class="read-more" style="margin-top:15px; display:inline-block; font-size:0.85rem; color:#00a3a3; text-decoration:none;">Ler artigo completo →</a>
+                                <a href="${noticia.url}" ${targetAttr} class="read-more" style="margin-top:15px; display:inline-block; font-size:0.85rem; color:#00a3a3; text-decoration:none;">Ler artigo completo →</a>
                             </article>
                         `;
                     });
