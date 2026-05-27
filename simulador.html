@@ -29,7 +29,7 @@
         .input-group { margin-bottom: 28px; }
         .input-group label { display: block; margin-bottom: 12px; color: #8b949e; font-weight: 600; font-size: 0.95rem; }
         
-        .select-custom { 
+        .select-custom, .input-custom { 
             background: #0d1117; 
             border: 1px solid #30363d; 
             color: #fff; 
@@ -38,11 +38,12 @@
             width: 100%; 
             outline: none; 
             font-size: 1rem;
-            cursor: pointer;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
             transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
         }
-        .select-custom:focus { border-color: #00e5ff; box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15); }
+        .select-custom:focus, .input-custom:focus { border-color: #00e5ff; box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15); }
+        .select-custom { cursor: pointer; }
 
         /* SLIDER CUSTOMIZADO COM GLOW CIANO */
         .range-container { background: #0d1117; padding: 15px 20px; border-radius: 8px; border: 1px solid #30363d; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
@@ -53,7 +54,7 @@
             margin-top: 5px;
         }
 
-        /* BOTÃO DE CÁLCULO ENÉRGICO */
+        /* BOTÕES ENÉRGICOS */
         .btn-calc { 
             background: linear-gradient(135deg, #008080, #00b3b3); 
             color: #ffffff; 
@@ -74,7 +75,18 @@
             transform: translateY(-2px); 
             box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4);
         }
-        .btn-calc:active { transform: translateY(0); }
+
+        /* SECÇÃO DE CAPTURA DE LEADS NATIVA */
+        .lead-section { 
+            display: none; 
+            background: rgba(0, 229, 255, 0.02); 
+            border: 1px dashed rgba(0, 229, 255, 0.2); 
+            padding: 30px; 
+            border-radius: 12px; 
+            margin-top: 20px;
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ÁREA DE RESULTADOS DINÂMICOS */
         .results-area { display: none; margin-top: 35px; border-top: 1px dashed #30363d; padding-top: 35px; animation: fadeIn 0.4s ease-out; }
@@ -102,11 +114,9 @@
             color: #c9d1d9; 
             line-height: 1.6; 
             font-size: 0.95rem;
-            position: relative;
         }
         .ai-insight::before { content: '💡'; margin-right: 8px; font-style: normal; }
 
-        /* FUNIL DE VENDAS COMPACTO */
         .cta-box { 
             margin-top: 30px; 
             text-align: center; 
@@ -129,9 +139,7 @@
         }
         .cta-link:hover { background: #00e5ff; color: #0d1117; box-shadow: 0 0 15px rgba(0,229,255,0.4); }
 
-        /* =====================================================================
-           RODAPÉ COMPACTO E POPUPS REATIVOS (PADRÃO DO PORTAL)
-           ===================================================================== */
+        /* RODAPÉ PADRONIZADO */
         footer { background-color: #0d1117; border-top: 1px solid #21262d; padding: 40px 20px; margin-top: 80px; }
         .footer-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
@@ -144,7 +152,7 @@
         .footer-credits { border-top: 1px solid rgba(255, 255, 255, 0.03); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-family: monospace; font-size: 0.75rem; color: #485264; }
         .trademark { color: #00e5ff; font-weight: bold; }
 
-        /* MODAIS */
+        /* MODAIS DE SUPORTE */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(4, 8, 18, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 20px; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-window { background-color: #161b22; border: 2px solid #30363d; border-radius: 12px; max-width: 700px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.7); transform: translateY(-20px); transition: transform 0.3s ease; }
@@ -152,12 +160,10 @@
         .modal-header { padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
         .modal-header h3 { color: #00e5ff; font-size: 1.2rem; }
         .close-modal { background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer; }
-        .close-modal:hover { color: #ffffff; }
         .modal-body { padding: 25px 20px; overflow-y: auto; color: #c9d1d9; font-size: 0.95rem; }
         .modal-body p { margin-bottom: 15px; color: #8b949e; font-size: 0.95rem; line-height: 1.6; }
 
         @media (max-width: 768px) {
-            .main-container { padding-top: 130px !important; }
             .navbar { flex-direction: column !important; height: auto !important; padding: 15px !important; gap: 10px; }
             .footer-main, .footer-credits { flex-direction: column; text-align: center; gap: 10px; }
             .footer-nav { justify-content: center; }
@@ -184,35 +190,59 @@
                 <p>Projete com precisão o capital necessário para a sua transição com base na realidade de 2026.</p>
             </div>
 
-            <div class="input-group">
-                <label><i class="fa-solid fa-users" style="color: #00e5ff; margin-right: 6px;"></i> Perfil Familiar:</label>
-                <select id="perfil" class="select-custom">
-                    <option value="solteiro">Solteiro</option>
-                    <option value="casal" selected>Casal</option>
-                    <option value="familia">Família (com 1 filho)</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label><i class="fa-solid fa-map-location-dot" style="color: #00e5ff; margin-right: 6px;"></i> Região de Destino:</label>
-                <select id="regiao" class="select-custom">
-                    <option value="Norte de Portugal">Norte de Portugal</option>
-                    <option value="Centro de Portugal">Centro de Portugal</option>
-                    <option value="Lisboa e Vale do Tejo">Região de Lisboa</option>
-                    <option value="Alentejo">Alentejo</option>
-                    <option value="Algarve">Algarve</option>
-                    <option value="Ilhas (Açores e Madeira)">Açores e Madeira</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label><i class="fa-solid fa-calendar-days" style="color: #00e5ff; margin-right: 6px;"></i> Tempo de Cobertura: <span id="mesesVal" style="color:#00e5ff; font-weight:bold;">6 meses</span></label>
-                <div class="range-container">
-                    <input type="range" id="meses" min="3" max="12" value="6" oninput="document.getElementById('mesesVal').innerText = this.value + ' meses'">
+            <div id="setupForm">
+                <div class="input-group">
+                    <label><i class="fa-solid fa-users" style="color: #00e5ff; margin-right: 6px;"></i> Perfil Familiar:</label>
+                    <select id="perfil" class="select-custom">
+                        <option value="solteiro">Solteiro</option>
+                        <option value="casal" selected>Casal</option>
+                        <option value="familia">Família (com 1 filho)</option>
+                    </select>
                 </div>
+
+                <div class="input-group">
+                    <label><i class="fa-solid fa-map-location-dot" style="color: #00e5ff; margin-right: 6px;"></i> Região de Destino:</label>
+                    <select id="regiao" class="select-custom">
+                        <option value="Norte de Portugal">Norte de Portugal</option>
+                        <option value="Centro de Portugal">Centro de Portugal</option>
+                        <option value="Lisboa e Vale do Tejo">Região de Lisboa</option>
+                        <option value="Alentejo">Alentejo</option>
+                        <option value="Algarve">Algarve</option>
+                        <option value="Ilhas (Açores e Madeira)">Açores e Madeira</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fa-solid fa-calendar-days" style="color: #00e5ff; margin-right: 6px;"></i> Tempo de Cobertura: <span id="mesesVal" style="color:#00e5ff; font-weight:bold;">6 meses</span></label>
+                    <div class="range-container">
+                        <input type="range" id="meses" min="3" max="12" value="6" oninput="document.getElementById('mesesVal').innerText = this.value + ' meses'">
+                    </div>
+                </div>
+
+                <button class="btn-calc" onclick="mostrarCapturaLeads()">Calcular Orçamento de Partida</button>
             </div>
 
-            <button class="btn-calc" onclick="calcularSimulacao()">Calcular Orçamento de Partida</button>
+            <div id="leadForm" class="lead-section">
+                <h3 style="color: #ffffff; font-size: 1.2rem; margin-top: 0; margin-bottom: 10px; text-align: center;">📊 Cálculo Estruturado com Sucesso!</h3>
+                <p style="color: #8b949e; font-size: 0.9rem; text-align: center; margin-bottom: 20px;">Insira o seu Nome e E-mail para libertar o acesso imediato aos valores do simulador e receber bónus informativos.</p>
+                
+                <div class="input-group">
+                    <label>Nome Completo:</label>
+                    <input type="text" id="leadNome" class="input-custom" placeholder="Ex: Fernando Silva">
+                </div>
+
+                <div class="input-group">
+                    <label>E-mail Principal:</label>
+                    <input type="email" id="leadEmail" class="input-custom" placeholder="Ex: oteuemail@gmail.com">
+                </div>
+
+                <div class="input-group">
+                    <label>WhatsApp / Contacto (Opcional):</label>
+                    <input type="text" id="leadWhatsapp" class="input-custom" placeholder="Ex: +351 912 345 678">
+                </div>
+
+                <button class="btn-calc" onclick="executarCalculoFinal()">Desbloquear Resultados do Simulador</button>
+            </div>
 
             <div class="results-area" id="resArea">
                 <div class="total-box">
@@ -244,7 +274,6 @@
                     <a href="mailto:farchulleta@gmail.com">Suporte</a>
                 </div>
             </div>
-            
             <div class="footer-credits">
                 <div>© 2026 <span class="trademark">Portal Imigrante PT®</span>.</div>
                 <div>Apoio ao Imigrante Digital • 🍏</div>
@@ -259,9 +288,8 @@
                 <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
             </div>
             <div class="modal-body">
-                <p>A sua privacidade é importante para nós. É política do Portal Imigrante PT respeitar a sua privacidade em relação a qualquer informação sua que possamos coletar no site Portal Imigrante PT, e outros sites que possuímos e operamos.</p>
-                <p>Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e consentimento.</p>
-                <p>Esta política é efetiva a partir de 27 de Maio de 2026.</p>
+                <p>A sua privacidade é importante para nós. O Portal Imigrante PT armazena de forma estritamente segura os dados coletados no simulador apenas para fins de envio do orçamento e comunicação interna sobre relocalização internacional.</p>
+                <p>Esta política é efetiva a partir de Maio de 2026.</p>
             </div>
         </div>
     </div>
@@ -273,25 +301,51 @@
                 <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
             </div>
             <div class="modal-body">
-                <h3>1. Termos</h3>
-                <p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis e concorda que é responsável pelo cumprimento de todas as leis locais aplicáveis.</p>
-                <h3>2. Uso de Licença</h3>
-                <p>É concedida permissão para baixar temporariamente uma cópia dos materiais no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial.</p>
+                <p>Ao realizar a simulação, concorda em fornecer dados reais de contacto para processamento interno e concorda que as estimativas geradas seguem as taxas médias do ano corrente de 2026.</p>
             </div>
         </div>
     </div>
 
     <script>
-        async function calcularSimulacao() {
+        // Transição suave: Esconde o botão e abre os campos do Lead
+        function mostrarCapturaLeads() {
+            document.getElementById("setupForm").style.opacity = "0.5";
+            // Bloqueia interações nas opções para forçar o foco no lead
+            document.getElementById("perfil").disabled = true;
+            document.getElementById("regiao").disabled = true;
+            document.getElementById("meses").disabled = true;
+            
+            document.getElementById("leadForm").style.display = "block";
+            document.getElementById("leadForm").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Faz o envio conjunto completo para a tua API no Render
+        async function ejecutarCalculoFinal() {
+            const nome = document.getElementById("leadNome").value.trim();
+            const email = document.getElementById("leadEmail").value.trim();
+            const whatsapp = document.getElementById("leadWhatsapp").value.trim() || "Não informado";
+
+            if (!nome || !email || !email.includes("@")) {
+                alert("Por favor, introduza um Nome e um E-mail válido para desbloquear os cálculos do simulador.");
+                return;
+            }
+
             const resArea = document.getElementById("resArea");
             const iaBox = document.getElementById("iaInsight");
+            
+            // Esconde o bloco de lead após validação e carrega a área final
+            document.getElementById("leadForm").style.display = "none";
+            document.getElementById("setupForm").style.display = "none";
             resArea.style.display = "block";
-            iaBox.innerText = "Sincronizando com o motor inteligente e convertendo moedas...";
+            iaBox.innerText = "Sincronizando com o motor inteligente, guardando os teux dados e convertendo moedas...";
 
             const payload = {
                 perfil: document.getElementById("perfil").value,
                 regiao: document.getElementById("regiao").value,
-                meses: parseInt(document.getElementById("meses").value)
+                meses: parseInt(document.getElementById("meses").value),
+                nome: nome,
+                email: email,
+                whatsapp: whatsapp
             };
 
             try {
@@ -300,17 +354,22 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
+                
+                if (!response.ok) {
+                    throw new Error("Erro na resposta da API.");
+                }
+
                 const data = await response.json();
                 
                 document.getElementById("totalEuro").innerText = `€ ${data.total_euro.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`;
                 document.getElementById("totalReal").innerText = `R$ ${data.total_real.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`;
                 iaBox.innerText = data.insight_ia;
             } catch (error) {
-                iaBox.innerText = "Erro ao conectar com o motor de cálculo. Tente novamente.";
+                iaBox.innerText = "Ocorreu um erro ao processar o cálculo estruturado. Recarregue a página e tente novamente.";
             }
         }
 
-        // CONTROLE DOS MODAIS
+        // CONTROLE DOS MODAIS DE SUPORTE
         function openModal(modalId) { document.getElementById(modalId).classList.add('active'); document.body.style.overflow = 'hidden'; }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); document.body.style.overflow = ''; }
         function closeModalOnOverlay(event) { if (event.target.classList.contains('modal-overlay')) { event.target.classList.remove('active'); document.body.style.overflow = ''; } }
