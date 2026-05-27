@@ -34,7 +34,7 @@ class RegionRequest(BaseModel):
     regiao: str
 
 # =====================================================================
-# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML) - CORRIGIDO
+# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
@@ -42,7 +42,6 @@ async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
         
-        # Simplificado para expandir as chances de encontrar notícias de hoje, mantendo as exclusões estritas
         query_focada = (
             "notícias imigração Portugal visto AIMA CPLP "
             "-site:instagram.com -site:facebook.com -site:twitter.com -site:tiktok.com -\"EUA\" -\"Estados Unidos\""
@@ -66,7 +65,7 @@ async def obtener_noticias_tempo_real():
                 titulo = item.get("title", "")
                 conteudo = item.get("content", "").lower()
                 
-                # Barreira dupla de segurança contra redes sociais e EUA
+                # Barreira de segurança dupla contra redes sociais e EUA
                 if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
                     continue
                 if "estados unidos" in titulo.lower() or " eua " in f" {titulo.lower()} ":
@@ -93,7 +92,6 @@ async def obtener_noticias_tempo_real():
                 })
             
             if noticias_brutas:
-                # Retorna as 5 notícias mais frescas filtradas
                 return {"noticias": noticias_brutas[:5]}
     except Exception as e:
         print(f"Erro Tavily: {e}")
@@ -119,11 +117,13 @@ async def responder_chat(user_data: UserMessage):
                 "role": "system",
                 "content": (
                     "Tu és o IMIGRANTE AI, o assistente virtual oficial do Portal Imigrante PT. "
+                    "O teu objetivo é ser um suporte amplo e completo para ajudar utilizadores com QUALQUER assunto "
+                    "ligado a imigração, com especialidade em vistos para a Europa, processos da AIMA, documentação, "
+                    "logística de voos, mercado de trabalho e dicas de integração e sobrevivência inicial. "
                     "Tu tens uma MEMÓRIA HUMANA: lembra-te do contexto do diálogo. "
-                    "A tua personalidade é acolhedora, prática e extremamente direta. "
+                    "A tua personalidade é acolhedora, prática, muito prestativa e extremamente direta. "
                     "PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs' ou 'MIRA'. "
-                    "O ano atual é 2026. Foca em burocracia legal (7 anos de residência, AIMA, NIF), "
-                    "logística de voos e sobrevivência inicial. Responde curto, máximo 2 parágrafos."
+                    "O ano atual é 2026. Responde de forma curta, usando no máximo 2 parágrafos."
                 )
             }
         ]
