@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viver do Digital na Europa | Método Oficial</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #060b16;
+            --bg-surface: #0b1325;
+            --brand-cyan: #00e5ff;
+            --brand-blue: #007799;
+            --text-pure: #ffffff;
+            --text-body: #94a3b8;
+            --border-glow: rgba(0, 229, 255, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-pure);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .urgency-bar {
+            background: linear-gradient(90deg, #001f3f, #007799);
+            text-align: center;
+            padding: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--brand-cyan);
+            font-weight: bold;
+        }
+
+        /* ----------------------------------
+           HERO SECTION (A DOBRA QUE VENDE)
+           ---------------------------------- */
+        .hero {
+            position: relative;
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            right: 10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.12) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .tagline {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--brand-cyan);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin-bottom: 25px;
+        }
+
+        h1 span {
+            background: linear-gradient(120deg, #ffffff, var(--brand-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-body);
+            font-size: 1.2rem;
+            margin-bottom: 35px;
+            max-width: 600px;
+        }
+
+        /* Mockup de Celular/Smartphone de Elite */
+        .phone-mockup-container {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .phone-frame {
+            background: #000000;
+            border: 4px solid #1e293b;
+            border-radius: 36px;
+            padding: 10px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.05);
+            max-width: 320px;
+            width: 100%;
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+
+        .phone-frame:hover {
+            transform: scale(1.02);
+            cursor: pointer;
+        }
+
+        /* Speaker/Notch do Celular */
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background-color: #1e293b;
+            border-radius: 2px;
+            z-index: 10;
+        }
+
+        .phone-screen {
+            background-color: #060b16;
+            border-radius: 28px;
+            overflow: hidden;
+            aspect-ratio: 9 / 19.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .phone-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #060b16;
+        }
+
+        /* Botão de Ação Premium */
+        .cta-btn {
+            background: linear-gradient(180deg, #00f0ff 0%, #00b6cc 100%);
+            color: #040812;
+            padding: 20px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0 10px 25px rgba(0, 229, 255, 0.35);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0, 229, 255, 0.5);
+        }
+
+        /* ----------------------------------
+           SEÇÃO DOS BÓNUS (ENTREGA DE VALOR)
+           ---------------------------------- */
+        .features-section {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            text-align: center;
+            margin-bottom: 50px;
+            font-weight: 700;
+        }
+
+        .bonus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .bonus-card {
+            background-color: var(--bg-surface);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 35px;
+            transition: border-color 0.3s ease;
+        }
+
+        .bonus-card:hover {
+            border-color: rgba(0, 229, 255, 0.3);
+        }
+
+        .bonus-badge {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--brand-cyan);
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .bonus-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+        }
+
+        .bonus-card p {
+            color: var(--text-body);
+            font-size: 1rem;
+        }
+
+        /* --------------------------------------------------
+           RODAPÉ MODULAR, COMPACTO E 100% RESPONSIVO
+           -------------------------------------------------- */
+        footer {
+            background-color: #03060c;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px 20px;
+            margin-top: 80px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-info {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .footer-info h4 {
+            font-size: 1.1rem;
+            color: var(--text-pure);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .footer-info p {
+            color: var(--text-body);
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .footer-nav {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-nav a, .footer-nav button {
+            color: var(--text-body);
+            text-decoration: none;
+            background: none;
+            border: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .footer-nav a:hover, .footer-nav button:hover {
+            color: var(--brand-cyan);
+        }
+
+        .footer-credits {
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #4f5a6e;
+        }
+
+        .trademark {
+            color: var(--brand-cyan);
+            font-weight: bold;
+        }
+
+        /* --------------------------------------------------
+           SISTEMA DE MODAIS REATIVOS (POP-UPS INTERNOS)
+           -------------------------------------------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(4, 8, 18, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-window {
+            background-color: var(--bg-surface);
+            border: 2px solid var(--border-color, #334155);
+            border-radius: 12px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-window {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: var(--brand-cyan);
+            font-size: 1.2rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-body);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: var(--text-pure);
+        }
+
+        .modal-body {
+            padding: 25px 20px;
+            overflow-y: auto;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+
+        /* Formatação de textos dentro dos modais */
+        .modal-body h2, .modal-body h3 { color: #fff; margin: 20px 0 10px 0; font-size: 1.2rem; }
+        .modal-body p { margin-bottom: 15px; color: #94a3b8; font-size: 0.95rem; }
+        .modal-body ul, .modal-body ol { margin-left: 20px; margin-bottom: 15px; color: #94a3b8; }
+        .modal-body li { margin-bottom: 5px; }
+        .modal-body a { color: var(--brand-cyan); text-decoration: none; }
+
+        /* ----------------------------------
+           MEDIA QUERIES PARA ADAPTAÇÃO TOTAL
+           ---------------------------------- */
+        @media (max-width: 968px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding-top: 40px;
+            }
+            .hero p { margin: 0 auto 35px auto; }
+            h1 { font-size: 2.4rem; }
+        }
+
+        @media (max-width: 640px) {
+            .footer-main {
+                flex-direction: column;
+                text-align: center;
+            }
+            .footer-nav {
+                justify-content: center;
+                gap: 15px;
+            }
+            .footer-credits {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="urgency-bar">
+        ⚡ OFERTA DE LANÇAMENTO: ACESSO IMEDIATO LIBERADO POR TEMPO LIMITADO
+    </div>
+
+    <section class="hero">
+        <div>
+            <span class="tagline">Mercado Europeu 2026</span>
+            <h1>Construa sua Operação Digital e <span>Ganhe em Euro</span></h1>
+            <p>
+                O passo a passo estratégico e visual criado para quem deseja validar um negócio digital na Europa do absoluto zero, sem teorias cansativas e com ferramentas 100% gratuitas.
+            </p>
+            <a href="https://pay.hotmart.com/M106020293W?bid=1779893305283" class="cta-btn">Quero Meu Acesso Imediato</a>
+        </div>
+
+        <div class="phone-mockup-container">
+            <a href="https://pay.hotmart.com/M106020293W?bid=1779893305283" style="text-decoration: none; display: block;">
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <img src="https://i.imgur.com/HV2UWWz.jpeg" alt="Capa Viver do Digital na Europa">
+                    </div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <h2 class="section-title">O que você vai receber hoje:</h2>
+        
+        <div class="bonus-grid">
+            <div class="bonus-card">
+                <span class="bonus-badge">PRODUTO PRINCIPAL</span>
+                <h3>Manual Viver do Digital</h3>
+                <p>O guia definitivo em e-book que destrincha o mercado europeu, ensinando como estruturar propostas comerciais altamente lucrativas.</p>
+            </div>
+
+            <div class="bonus-card">
+                <span class="bonus-badge">BÓNUS AUTOMÁTICO</span>
+                <h3>Planilha de Precificação</h3>
+                <p>Insira suas metas financeiras e custos pessoais para descobrir de forma automatizada o valor exato da sua hora em Euros.</p>
+            </div>
+
+            <div class="bonus-card">
+                <span class="bonus-badge">BÓNUS ACELERAÇÃO</span>
+                <h3>Templates de Abordagem</h3>
+                <p>Modelos de e-mail e mensagens prontos em português e inglês para pescar clientes corporativos e agências diretamente pelo LinkedIn.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 60px;">
+            <a href="https://pay.hotmart.com/M106020293W?bid=1779893305283" class="cta-btn" style="background: transparent; color: var(--brand-cyan); border: 2px solid var(--brand-cyan); box-shadow: none;">Baixar Todo o Ecossistema por R$ 47,00</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-main">
+                <div class="footer-info">
+                    <h4>Portal Imigrante PT</h4>
+                    <p>Apoio prático e estratégico para estabelecer e integrar imigrantes na Europa através de informações reais sobre mercado de trabalho, imigração e negócios digitais.</p>
+                </div>
+                <div class="footer-nav">
+                    <button onclick="openModal('modal-termos')">Termos</button>
+                    <button onclick="openModal('modal-privacidade')">Privacidade</button>
+                    <a href="mailto:farchulleta@gmail.com">Suporte</a>
+                </div>
+            </div>
+            
+            <div class="footer-credits">
+                <div>
+                    © 2026 <span class="trademark">Portal Imigrante PT®</span>.
+                </div>
+                <div>
+                    Apoio ao Imigrante Digital • 🍏
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3>Política de Privacidade</h3>
+                <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>A sua privacidade é importante para nós. É política do Portal Imigrante PT respeitar a sua privacidade em relação a qualquer informação sua que possamos coletar no site Portal Imigrante PT, e outros sites que possuímos e operamos.</p>
+                <p>Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e consentimento. Também informamos por que estamos coletando e como será usado.</p>
+                <p>Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente aceitáveis ​​para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou modificação não autorizados.</p>
+                <p>Não compartilhamos informações de identificação pessoal publicamente ou com terceiros, exceto quando exigido por lei.</p>
+                <p>O nosso site pode ter links para sites externos que não são operados por nós. Esteja ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos aceitar responsabilidade por suas respectivas políticas de privacidade.</p>
+                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer alguns dos serviços desejados.</p>
+                <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais. Se você tiver alguma dúvida sobre como lidamos com dados do usuário e informações pessoais, entre em contacto connosco.</p>
+                <ul>
+                    <li>O serviço Google AdSense que usamos para veicular publicidade usa um cookie DoubleClick para veicular anúncios mais relevantes em toda a Web e limitar o número de vezes que um determinado anúncio é exibido para você.</li>
+                    <li>Para mais informações sobre o Google AdSense, consulte as FAQs oficiais sobre privacidade do Google AdSense.</li>
+                    <li>Utilizamos anúncios para compensar os custos de funcionamento deste site e fornecer financiamento para futuros desenvolvimentos. Os cookies de publicidade comportamental usados ​​por este site foram projetados para garantir que você forneça os anúncios mais relevantes sempre que possível, rastreando anonimamente seus interesses e apresentando coisas semelhantes que possam ser do seu interesse.</li>
+                    <li>Vários parceiros anunciam em nosso nome e os cookies de rastreamento de afiliados simplesmente nos permitem ver se nossos clientes acessaram o site através de um dos sites de nossos parceiros, para que possamos creditá-los adequadamente.</li>
+                </ul>
+                <h3>Compromisso do Usuário</h3>
+                <p>O usuário se compromete a fazer uso adequado dos conteúdos e da informação que o Portal Imigrante PT oferece no site:</p>
+                <ul>
+                    <li>A) Não se envolver em atividades que sejam ilegais ou contrárias à boa fé a à ordem pública;</li>
+                    <li>B) Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de sorte ou azar, qualquer tipo de pornografia ilegal, de apologia ao terrorismo ou contra os direitos humanos;</li>
+                    <li>C) Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Portal Imigrante PT.</li>
+                </ul>
+                <p>Esta política é efetiva a partir de 27 May 2026 15:07.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3>Termos de Serviço</h3>
+                <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>1. Termos</h3>
+                <p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis ​​e concorda que é responsável pelo cumprimento de todas as leis locais aplicáveis. Se você não concordar com algum desses termos, está proibido de usar ou acessar este site.</p>
+                <h3>2. Uso de Licença</h3>
+                <p>É concedida permission para baixar temporariamente uma cópia dos materiais (informações ou software) no site Portal Imigrante PT , apenas para visualização transitória pessoal e não comercial. Sob esta licença, você não pode: modificar ou copiar os materiais; usar os materiais para qualquer finalidade comercial; tentar descompilar ou fazer engenharia reversa de qualquer software; remover notações de propriedade; ou transferir os materiais para outrem.</p>
+                <h3>3. Isenção de responsabilidade</h3>
+                <p>Os materiais no site da Portal Imigrante PT são fornecidos 'como estão'. Portal Imigrante PT não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias, incluindo, sem limitação, condições de comercialização ou adequação a um fim específico.</p>
+                <h3>4. Limitações</h3>
+                <p>Em nenhum caso o Portal Imigrante PT ou seus fornecedores serão responsáveis ​​por quaisquer danos (incluindo danos por perda de dados ou lucro) decorrentes do uso ou da incapacidade de usar os materiais, mesmo que notificado da possibilidade de tais danos.</p>
+                <h3>5. Precisão dos materiais</h3>
+                <p>Os materiais exibidos no site podem incluir erros técnicos, tipográficos ou fotográficos. Portal Imigrante PT não garante que qualquer material em seu site seja preciso ou atual, podendo fazer alterações a qualquer momento sem aviso prévio.</p>
+                <h3>6. Links</h3>
+                <p>O Portal Imigrante PT não analisou todos os sites vinculados ao seu site e não é responsável pelo conteúdo de nenhum site vinculado. O uso de qualquer site vinculado é por conta e risco do usuário.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden'; // Trava o scroll do fundo
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = ''; // Libera o scroll
+        }
+
+        // Fecha o modal caso o usuário clique fora da caixa interna
+        function closeModalOnOverlay(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+    </script>
+
+</body>
+</html>
