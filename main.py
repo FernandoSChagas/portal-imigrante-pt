@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
 
-app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado com Captura de Leads")
+app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado com Google Sheets")
 
 # Configuração de CORS aberta para o GitHub Pages
 app.add_middleware(
@@ -18,15 +18,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Chaves de API
+# Chaves de API e Configurações
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 TAVILY_API_KEY = "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"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-S0LKPb0z4-J8uitpt3_tB7dYYxaTFpA2KXIjWJkU3BNT9empVC17YRzaf3dgGweW/exec"
 
 client = Groq(api_key=GROQ_API_KEY)
 historico_conversas = {}
-
-# Nome do ficheiro de armazenamento
-LEADS_FILE = "leads_portal.csv"
 
 # =====================================================================
 # MODELOS DE DADOS PYDANTIC
@@ -47,58 +45,39 @@ class SimRequest(BaseModel):
     whatsapp: str = "Não informado"
 
 # =====================================================================
-# FUNÇÃO AUXILIAR: GRAVAR O LEAD NO SERVIDOR
+# FUNÇÃO AUXILIAR: GRAVAR O LEAD DIRETAMENTE NO GOOGLE SHEETS
 # =====================================================================
-def guardar_lead_local(nome: str, email: str, whatsapp: str, origem: str):
+def guardar_lead_local(nome: str, email: str, whatsapp: str, origin: str):
     try:
-        ficheiro_existe = os.path.exists(LEADS_FILE)
-        
-        # Se não existir, cria e escreve o cabeçalho imediatamente
-        if not ficheiro_existe:
-            with open(LEADS_FILE, mode="w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(["Data/Hora", "Nome", "Email", "WhatsApp", "Origem"])
-        
-        # Adiciona o novo lead na linha abaixo
-        with open(LEADS_FILE, mode="a", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            writer.writerow([data_atual, nome, email, whatsapp, origem])
-        return True
+        payload = {
+            "nome": nome,
+            "email": email,
+            "whatsapp": whatsapp,
+            "origem": origin
+        }
+        # Envia os dados em tempo real para o Webhook do Google Apps Script
+        response = requests.post(GOOGLE_SCRIPT_URL, json=payload, timeout=8)
+        if response.status_code == 200:
+            print("Lead salvo com sucesso no Google Sheets!")
+            return True
+        return False
     except Exception as e:
-        print(f"Erro crítico ao guardar lead: {str(e)}")
+        print(f"Erro ao enviar para o Google Sheets: {str(e)}")
         return False
 
 # =====================================================================
-# ENDPOINT CORRIGIDO: EXPORTAR LEADS SEM FALHAS DE LEITURA
+# ENDPOINT: PUXA OS DADOS DO GOOGLE SHEETS PARA O PAINEL DE LEADS
 # =====================================================================
 @app.get("/api/leads/exportar")
 async def exportar_leads():
-    if not os.path.exists(LEADS_FILE):
-        return {"total_leads": 0, "leads": [], "aviso": "Nenhum lead guardado no ficheiro ainda."}
-    
-    linhas = []
     try:
-        with open(LEADS_FILE, mode="r", encoding="utf-8") as f:
-            reader = csv.reader(f)
-            # Tenta ler o cabeçalho de forma segura
-            try:
-                headers = next(reader)
-            except StopIteration:
-                return {"total_leads": 0, "leads": [], "aviso": "Ficheiro vazio."}
-                
-            for row in reader:
-                if row and len(row) >= 5:
-                    linhas.append({
-                        "data": row[0],
-                        "nome": row[1],
-                        "email": row[2],
-                        "whatsapp": row[3],
-                        "origem": row[4]
-                    })
-        return {"total_leads": len(linhas), "leads": linhas}
+        # Puxa a lista completa e atualizada diretamente do teu Google Sheets
+        response = requests.get(GOOGLE_SCRIPT_URL, timeout=8)
+        if response.status_code == 200:
+            return response.json()
+        return {"total_leads": 0, "leads": [], "erro": "Não foi possível ler o Google Sheets."}
     except Exception as e:
-        return {"erro": f"Erro ao ler os dados: {str(e)}"}
+        return {"erro": f"Erro de conexão com o Google: {str(e)}"}
 
 # =====================================================================
 # 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO CAMUFLADA DE VENDAS (INDEX.HTML)
@@ -193,7 +172,7 @@ async def responder_chat(user_data: UserMessage):
                     "Tu tens uma MEMÓRIA HUMANA: lembra-te do contexto do diálogo. "
                     "A tua personalidade é acolhedora, prática, muito prestativa e extremamente direta. "
                     "PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs' ou 'MIRA'. "
-                    "O ano atual é 2026. Responde de forma curta, usando no máximo 2 parágrafos."
+                    "O ano atual é 2026. Responde de forma corta, usando no máximo 2 parágrafos."
                 )
             }
         ]
@@ -282,14 +261,14 @@ async def obtener_guias_regionais(data: RegionRequest):
     }
 
 # =====================================================================
-# 4. ENDPOINT: SIMULADOR FINANCEIRO OBRIGATÓRIO COM CAPTURA
+# 4. ENDPOINT: SIMULADOR FINANCEIRO COM ENVIO PARA O SHEETS
 # =====================================================================
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
     if not data.nome or not data.email or "@" not in data.email:
         raise HTTPException(status_code=400, detail="Nome e Email válidos são obrigatórios.")
     
-    # Grava o lead de forma limpa e estruturada
+    # Grava o lead diretamente no teu Google Sheets permanente
     guardar_lead_local(data.nome, data.email, data.whatsapp, "Simulador")
 
     custos_base = {
