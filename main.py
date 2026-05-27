@@ -1,12 +1,13 @@
 import os
+import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
 
-app = FastAPI(title="Portal Imigrante PT - IA Humana e Abrangente")
+app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado")
 
-# Configuração de CORS
+# Configuração de CORS aberta para o GitHub Pages
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,133 +16,138 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Chaves de API
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
-client = Groq(api_key=GROQ_API_KEY)
+TAVILY_API_KEY = "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"
 
+client = Groq(api_key=GROQ_API_KEY)
 historico_conversas = {}
 
+# =====================================================================
+# MODELOS DE DADOS PYDANTIC
+# =====================================================================
 class UserMessage(BaseModel):
     message: str
+    session_id: str = "comum"
 
-# Modelos de dados para as rotas do Simulador e Relatórios não quebrarem
-class SimuladorData(BaseModel):
-    salario_bruto: float = 1000.0
-    num_dependentes: int = 0
+class RegionRequest(BaseModel):
+    regiao: str
+
+class SimRequest(BaseModel):
+    perfil: str
+    regiao: str
+    meses: int
 
 # =====================================================================
-# 1. ENDPOINT DE NOTÍCIAS (GARANTINDO FLUXO DE MAIS NOTÍCIAS)
+# 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO DE CARD EXCLUSIVO (INDEX.HTML)
 # =====================================================================
 @app.get("/api/noticias")
-async def obter_noticias():
-    # Base sólida de notícias para o teu carrossel nunca ficar vazio
-    noticias_brutas = [
-        {
-            "titulo": "AIMA acelera processos de regularização com novos balcões de atendimento",
-            "resumo": "Novas medidas descentralizadas prometem reduzir o tempo de espera para manifestações de interesse e agendamentos estruturais em Portugal.",
-            "url": "noticia-aima-balcoes.html",
-            "tag": "Nacional"
-        },
-        {
-            "titulo": "Mercado de arrendamento no Porto e Braga regista ligeira estabilização de preços",
-            "resumo": "Estudos recentes apontam para um aumento na oferta de quartos e apartamentos T1 nas zonas periféricas de Braga e Guimarães.",
-            "url": "noticia-arrendamento-norte.html",
-            "tag": "Habitação"
-        },
-        {
-            "titulo": "Custo de vida em Portugal 2026: Principais aumentos e como se proteger",
-            "resumo": "Relatório detalha o impacto da inflação nos supermercados e nos passes de transporte público nas áreas metropolitanas.",
-            "url": "noticia-custo-vida.html",
-            "tag": "Economia"
-        },
-        {
-            "titulo": "SNS cria linha de atendimento prioritária para residentes estrangeiros",
-            "resumo": "O objetivo é facilitar o registo nos centros de saúde locais e acelerar a atribuição do número de utente para novos imigrantes.",
-            "url": "noticia-sns-utente.html",
-            "tag": "Saúde"
+async def obtener_noticias_tempo_real():
+    try:
+        url = "https://api.tavily.com/search"
+        query_focada = (
+            "notícias imigração Portugal visto AIMA CPLP "
+            "-site:instagram.com -site:facebook.com -site:twitter.com -site:tiktok.com -\"EUA\" -\"Estados Unidos\""
+        )
+        
+        payload = {
+            "api_key": TAVILY_API_KEY,
+            "query": query_focada,
+            "search_depth": "advanced",
+            "time_range": "day",
+            "max_results": 10
         }
-    ]
-    
-    # Injeta a tua estratégia de vendas exatamente na 3ª posição (Índice 2)
-    noticias_brutas.insert(2, {
-        "titulo": "ESTRATÉGIA: Como começar a faturar em Euro digitalmente antes de emigrar",
-        "resumo": "Especialistas apontam que criar uma fonte de receita online protege o imigrante de subempregos e evita queimar a poupança na chegada a Portugal...",
-        "url": "viver-do-digital.html",
-        "tag": "Exclusivo Portal"
-    })
-    
-    return {"noticias": noticias_brutas}
+        
+        response = requests.post(url, json=payload, timeout=6)
+        noticias_brutas = []
+
+        if response.status_code == 200:
+            resultados = response.json().get("results", [])
+            for item in resultados:
+                site_url = item.get("url", "").lower()
+                titulo = item.get("title", "")
+                conteudo = item.get("content", "").lower()
+                
+                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
+                    continue
+                if "estados unidos" in titulo.lower() or " eua " in f" {titulo.lower()} ":
+                    continue
+                if "estados unidos" in conteudo or " eua " in f" {conteudo} ":
+                    continue
+                
+                tag = "Portugal"
+                if "sicnoticias" in site_url: tag = "SIC Notícias"
+                elif "dn.pt" in site_url: tag = "DN Portugal"
+                elif "publico" in site_url: tag = "Público"
+                elif "jn.pt" in site_url: tag = "Jornal de Notícias"
+                elif "aima" in site_url: tag = "AIMA Oficial"
+                elif "rtp" in site_url: tag = "RTP Notícias"
+                
+                noticias_brutas.append({
+                    "titulo": titulo,
+                    "resumo": item.get("content", "Aceda à cobertura de última hora diretamente no portal de notícias.")[:135] + "...",
+                    "url": item.get("url", "#"),
+                    "tag": tag
+                })
+
+        # Fallback de segurança caso a API falhe ou venha curta
+        if len(noticias_brutas) < 2:
+            noticias_brutas = [
+                {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
+                {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
+            ]
+        
+        # [JOGADA DE MESTRE]: Injeta o card do E-book na terceira posição do carrossel
+        noticias_brutas.insert(2, {
+            "titulo": "ESTRATÉGIA: Como começar a faturar em Euro digitalmente antes de emigrar",
+            "resumo": "Especialistas apontam que criar uma fonte de receita online protege o imigrante de subempregos e evita queimar a poupança na chegada a Portugal...",
+            "url": "viver-do-digital.html",
+            "tag": "Exclusivo Portal"
+        })
+        
+        return {"noticias": noticias_brutas[:6]}
+    except Exception:
+        return {"noticias": [
+            {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
+            {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"},
+            {"titulo": "ESTRATÉGIA: Como começar a faturar em Euro digitalmente antes de emigrar", "resumo": "Especialistas apontam que criar uma fonte de receita online protege o imigrante de subempregos...", "url": "viver-do-digital.html", "tag": "Exclusivo Portal"}
+        ]}
 
 # =====================================================================
-# 2. ENDPOINT DO SIMULADOR FINANCEIRO (REATIVADO)
-# =====================================================================
-@app.post("/api/simulador")
-async def calcular_simulacao(data: SimuladorData):
-    # Lógica de cálculo padrão para evitar o erro de tela do simulador
-    desconto_seg_social = data.salario_bruto * 0.11
-    # Simulação simples de retenção de IRS
-    taxa_irs = 0.09 if data.salario_bruto <= 1000 else 0.15
-    desconto_irs = data.salario_bruto * taxa_irs
-    salario_liquido = data.salario_bruto - desconto_seg_social - desconto_irs
-    
-    return {
-        "status": "sucesso",
-        "salario_bruto": data.salario_bruto,
-        "seguranca_social": round(desconto_seg_social, 2),
-        "irs": round(desconto_irs, 2),
-        "salario_liquido": round(salario_liquido, 2)
-    }
-
-# =====================================================================
-# 3. ENDPOINT DE RELATÓRIOS / GUIAS REGIONAIS (REATIVADO)
-# =====================================================================
-@app.post("/api/relatorios")
-@app.get("/api/relatorios")
-async def gerar_relatorio_guia(regiao: str = "Norte"):
-    return {
-        "status": "sucesso",
-        "regiao": regiao,
-        "mensagem": f"Relatório regional de {regiao} gerado com sucesso.",
-        "dados": {
-            "custo_medio_quarto": "300€ a 450€",
-            "empregabilidade": "Alta (Setores de Serviços, Tecnologia e Indústria)",
-            "transportes": "Excelente cobertura regional de comboios e autocarros"
-        }
-    }
-
-# =====================================================================
-# 4. ENDPOINT DO ASSISTENTE CHAT IA
+# 2. ENDPOINT: ASSISTENTE VIRTUAL IA COM MEMÓRIA (ASSISTENTE.HTML)
 # =====================================================================
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
-    sessao_id = "utilizador_atual"
+    sessao_id = user_data.session_id 
     
     if sessao_id not in historico_conversas:
         historico_conversas[sessao_id] = [
             {
                 "role": "system",
                 "content": (
-                    "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
-                    "- Tu és o IMIGRANTE AI, o assistente virtual oficial e conselheiro humano do Portal Imigrante PT.\n"
-                    "- A tua personalidade é acolhedora, prática, experiente e muito realista.\n"
-                    "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs'.\n\n"
-                    "ESCOPO DE ATUAÇÃO:\n"
-                    "1. LOGÍSTICA DE VIAGEM E VOOS.\n"
-                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA.\n"
-                    "3. BUROCRACIA LEGAL: Regra dos 7 anos (Lei de 2026), NIF, NISS e AIMA.\n\n"
-                    "TONALIDADE:\n"
-                    "- Responde de forma curta, direta e fácil de ler no telemóvel (máximo 3 parágrafos)."
+                    "Tu és o IMIGRANTE AI, o assistente virtual oficial do Portal Imigrante PT. "
+                    "O teu objetivo é ser um suporte amplo e completo para ajudar utilizadores com QUALQUER assunto "
+                    "ligado a imigração, com especialidade em vistos para a Europa, processos da AIMA, documentação, "
+                    "logística de voos, mercado de trabalho e dicas de integração e sobrevivência inicial. "
+                    "Tu tens uma MEMÓRIA HUMANA: lembra-te do contexto do diálogo. "
+                    "A tua personalidade é acolhedora, prática, muito prestativa e extremamente direta. "
+                    "PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs' ou 'MIRA'. "
+                    "O ano atual é 2026. Responde de forma curta, usando no máximo 2 parágrafos."
                 )
             }
         ]
     
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
     
+    if len(historico_conversas[sessao_id]) > 13:
+        historico_conversas[sessao_id] = [historico_conversas[sessao_id][0]] + historico_conversas[sessao_id][-12:]
+    
     try:
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=historico_conversas[sessao_id],
-            temperature=0.4
+            temperature=0.2
         )
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
@@ -150,6 +156,115 @@ async def responder_chat(user_data: UserMessage):
 
     return {"response": resposta_final}
 
+# =====================================================================
+# 3. ENDPOINT: DOSSIÊ EM CARDS (GUIAS.HTML) - RESTAURADO
+# =====================================================================
+@app.post("/api/guias")
+async def obter_guias_regionais(data: RegionRequest):
+    regiao = data.regiao
+    
+    prompt_guia = f"""
+    Atue como um Especialista em Relocalização em Portugal. 
+    Analise a região: {regiao}.
+    Retorne a resposta EXATAMENTE neste formato abaixo, sem introduções, cumprimentos, saudações ou explicações:
+    ### Escreva aqui um resumo curto sobre o Custo de Vida, Arrendamento de habitação e contas fixas do mês.
+    ### Escreva aqui um resumo curto sobre as Principais Indústrias, empresas, fábricas e empregos mais ativos na zona.
+    ### Escreva aqui um resumo curto sobre o Clima predominante da região e o ritmo de vida e cultura da população local.
+    ### Escreva aqui uma Dica Prática Humana e direta de adaptação e acolhimento para o imigrante no primeiro mês.
+    """
+    
+    guia_ia_texto = "###Dados em atualização...###Dados em atualização...###Dados em atualização...###Dados em atualização..."
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt_guia}],
+            temperature=0.2
+        )
+        guia_ia_texto = completion.choices[0].message.content
+    except Exception:
+        pass
+
+    artigos_resultados = []
+    try:
+        url_tavily = "https://api.tavily.com/search"
+        payload_tavily = {
+            "api_key": TAVILY_API_KEY,
+            "query": f"custo de vida morar em {regiao} portugal dicas habitação aluguel -site:instagram.com",
+            "search_depth": "basic",
+            "time_range": "year",
+            "max_results": 3
+        }
+        
+        response = requests.post(url_tavily, json=payload_tavily, timeout=6)
+        if response.status_code == 200:
+            resultados = response.json().get("results", [])
+            for item in resultados:
+                artigos_resultados.append({
+                    "titulo": item.get("title", "Guia Local Complementar"),
+                    "resumo": item.get("content", "")[:160] + "...",
+                    "url": item.get("url", "#")
+                })
+    except Exception:
+        pass
+
+    if not artigos_resultados:
+        artigos_resultados = [
+            {
+                "titulo": f"Métricas de Arrendamento e Mercado em {regiao}",
+                "resumo": "Análise detalhada sobre custos de habitação, infraestruturas locais e despesas fixas para novos residentes...",
+                "url": "https://www.idealista.pt/news/"
+            }
+        ]
+
+    return {
+        "guia_ia": guia_ia_texto,
+        "artigos": artigos_resultados
+    }
+
+# =====================================================================
+# 4. ENDPOINT: SIMULADOR FINANCEIRO PADRONIZADO (SIMULADOR.HTML) - RESTAURADO
+# =====================================================================
+@app.post("/api/simulador")
+async def calcular_simulacao(data: SimRequest):
+    custos_base = {
+        "Lisboa e Vale do Tejo": {"quarto": 750, "mercado": 450, "transp": 40},
+        "Algarve": {"quarto": 550, "mercado": 420, "transp": 40},
+        "Centro de Portugal": {"quarto": 450, "mercado": 380, "transp": 35},
+        "Norte de Portugal": {"quarto": 400, "mercado": 400, "transp": 30},
+        "Ilhas (Açores e Madeira)": {"quarto": 400, "mercado": 430, "transp": 30},
+        "Alentejo": {"quarto": 300, "mercado": 350, "transp": 30}
+    }
+    
+    reg = custos_base.get(data.regiao, custos_base["Norte de Portugal"])
+    mult = 1.0 if data.perfil == "solteiro" else (1.8 if data.perfil == "casal" else 2.5)
+    
+    custo_mensal = (reg["quarto"] + (reg["mercado"] * mult) + (reg["transp"] * (2 if mult > 1 else 1)))
+    total_euro = (custo_mensal * data.meses) + (reg["quarto"] * 2)
+    total_real = total_euro * 6.2
+    
+    prompt_ia = (
+        f"Atue como um Consultor Financeiro de Imigração. Escreva um insight de exatamente duas frases "
+        f"para um perfil '{data.perfil}' que planeia mudar-se para a região '{data.regiao}' com uma reserva "
+        f"de segurança de {data.meses} meses. O orçamento estimado total é de €{round(total_euro, 2)}. "
+        f"Dê uma dica prática de economia ou incentivo real. Seja direto, não use saudações."
+    )
+    
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt_ia}],
+            temperature=0.5
+        )
+        insight_final = completion.choices[0].message.content
+    except Exception:
+        insight_final = "Excelente planeamento! Ter uma reserva estruturada para este período garante a estabilidade necessária para se estabelecer e integrar com sucesso."
+
+    return {
+        "total_euro": round(total_euro, 2),
+        "total_real": round(total_real, 2),
+        "insight_ia": insight_final
+    }
+
 @app.get("/")
 def home():
-    return {"status": "Servidor com IA e Motores de Cálculo Online!"}
+    return {"status": "Servidor do Ecossistema Portal Imigrante PT Completo e Online!"}
