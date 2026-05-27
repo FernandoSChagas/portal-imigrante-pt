@@ -22,7 +22,7 @@ TAVILY_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# Memórias globais do servidor
+# Memórias globais do servidor para o chat
 historico_conversas = {}
 
 # Modelos de Dados Pydantic para validação das rotas POST
@@ -34,7 +34,7 @@ class RegionRequest(BaseModel):
     regiao: str
 
 # =====================================================================
-# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML) - FILTRADO
+# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
@@ -42,7 +42,6 @@ async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
         
-        # Filtro refinado: focamos no ecossistema PT/CPLP e usamos o operador "-" para banir o Instagram e EUA
         query_refinada = (
             "imigração Portugal AIMA vistos CPLP regularização "
             "comunidade países língua portuguesa acordos mobilidade Europa "
@@ -66,7 +65,6 @@ async def obtener_noticias_tempo_real():
                 site_url = item.get("url", "").lower()
                 titulo = item.get("title", "")
                 
-                # Ignora o link se por algum motivo ainda contiver redes sociais na URL
                 if "instagram" in site_url or "tiktok" in site_url or "facebook" in site_url:
                     continue
                 
@@ -142,36 +140,36 @@ async def responder_chat(user_data: UserMessage):
     return {"response": resposta_final}
 
 # =====================================================================
-# 3. ENDPOINT COMBINADO: DOSSIÊ IA + ARTIGOS VIVOS (GUIAS.HTML)
+# 3. ENDPOINT: DOSSIÊ ESTRUTURADO EM CARDS (GUIAS.HTML)
 # =====================================================================
 @app.post("/api/guias")
-async def obtener_guias_regionais(data: RegionRequest):
+async def obter_guias_regionais(data: RegionRequest):
+    """Gera dados formatados estritamente por marcas para alimentar o grid de cartões"""
     regiao = data.regiao
     
+    # Prompt ultra-estruturado modificado para separar as respostas com o separador exato do JavaScript
     prompt_guia = f"""
-    Atue como um Specialist Sénior em Relocalização e Integração em Portugal.
-    Gere um relatório analítico, pragmático e direto sobre a região: {regiao}.
-    
-    O relatório deve conter estritamente estes tópicos com dados realistas (use bullet points):
-    - Custo de Vida Médio (Análise sobre Arrendamento de habitação e despesas básicas)
-    - Principais Indústrias e Empregos (Mercados de trabalho mais ativos e setores que mais contratam na zona)
-    - Clima e Adaptação Cultural (O que esperar do tempo e do ritmo da população Box local)
-    - Dica Humana de Integração (Uma orientação prática e próxima para quem está a chegar agora)
-    
-    Seja focado em dados úteis, assertivo e acolhedor. Não adicione introduções vagas nem saudações.
+    Atue como um Especialista em Relocalização em Portugal. 
+    Analise a região: {regiao}.
+    Retorne a resposta EXATAMENTE neste formato abaixo, sem introduções, cumprimentos, saudações ou explicações:
+    ### Escreva aqui um resumo curto sobre o Custo de Vida, Arrendamento de habitação e contas fixas do mês.
+    ### Escreva aqui um resumo curto sobre as Principais Indústrias, empresas, fábricas e empregos mais ativos na zona.
+    ### Escreva aqui um resumo curto sobre o Clima predominante da região e o ritmo de vida e cultura da população local.
+    ### Escreva aqui uma Dica Prática Humana e direta de adaptação e acolhimento para o imigrante no primeiro mês.
     """
     
-    guia_ia_texto = "Análise estratégica regional temporariamente indisponível."
+    guia_ia_texto = "###Dados em atualização...###Dados em atualização...###Dados em atualização...###Dados em atualização..."
     try:
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt_guia}],
-            temperature=0.3
+            temperature=0.2
         )
         guia_ia_texto = completion.choices[0].message.content
     except Exception:
         pass
 
+    # Pesquisa de links reais na internet via Tavily (banindo redes sociais)
     artigos_resultados = []
     try:
         url_tavily = "https://api.tavily.com/search"
