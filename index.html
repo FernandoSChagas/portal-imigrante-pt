@@ -66,6 +66,172 @@
         .btn-left { left: 0; }
         .btn-right { right: 0; }
 
+        /* =====================================================================
+           RODAPÉ MODULAR, COMPACTO E RESPONSIVO (ALINHADO COM A LANDING PAGE)
+           ===================================================================== */
+        footer {
+            background-color: #0d1117;
+            border-top: 1px solid #21262d;
+            padding: 40px 20px;
+            margin-top: 80px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .footer-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-info {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .footer-info h4 {
+            font-size: 1.1rem;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .footer-info p {
+            color: #8b949e;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .footer-nav {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-nav a, .footer-nav button {
+            color: #8b949e;
+            text-decoration: none;
+            background: none;
+            border: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .footer-nav a:hover, .footer-nav button:hover {
+            color: #00e5ff;
+        }
+
+        .footer-credits {
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #485264;
+        }
+
+        .trademark {
+            color: #00e5ff;
+            font-weight: bold;
+        }
+
+        /* =====================================================================
+           SISTEMA DE MODAIS REATIVOS (POP-UPS INTERNOS)
+           ===================================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(4, 8, 18, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-window {
+            background-color: #161b22;
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-window {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: #00e5ff;
+            font-size: 1.2rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #ffffff;
+        }
+
+        .modal-body {
+            padding: 25px 20px;
+            overflow-y: auto;
+            color: #c9d1d9;
+            font-size: 0.95rem;
+        }
+
+        .modal-body h3 { color: #fff; margin: 20px 0 10px 0; font-size: 1.2rem; }
+        .modal-body p { margin-bottom: 15px; color: #8b949e; font-size: 0.95rem; line-height: 1.6; }
+        .modal-body ul { margin-left: 20px; margin-bottom: 15px; color: #8b949e; }
+        .modal-body li { margin-bottom: 5px; }
+
         @media (max-width: 768px) {
             .navbar {
                 padding: 0 15px !important;
@@ -83,9 +249,12 @@
             .nav-links a.nav-btn-ia { padding: 6px 12px !important; }
             .main-container { padding-top: 130px !important; }
             
-            /* No telemóvel mostra 1 card de cada vez para não amassar */
             .news-card-carousel { flex: 0 0 100% !important; }
             .carousel-container { padding: 10px 35px; }
+
+            .footer-main { flex-direction: column; text-align: center; }
+            .footer-nav { justify-content: center; gap: 15px; }
+            .footer-credits { flex-direction: column; text-align: center; gap: 8px; }
         }
     </style>
 </head>
@@ -121,7 +290,7 @@
             <div class="widget-card" style="border: 1px solid rgba(0, 229, 255, 0.3); background: linear-gradient(135deg, #161b22 0%, #0d1224 100%); cursor: pointer;" onclick="window.location.href='viver-do-digital.html'">
                 <span class="widget-icon">💻</span>
                 <div>
-                    <h4 style="color: #00e5ff;">Trabalhar Online</h4>
+                    <h4>Trabalhar Online</h4>
                     <p style="font-size: 0.85rem; color: #e2e8f0;">Fature em Euros do zero. Ver manual completo R$ 47 →</p>
                 </div>
             </div>
@@ -147,6 +316,75 @@
         </section>
 
     </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-main">
+                <div class="footer-info">
+                    <h4>Portal Imigrante PT</h4>
+                    <p>Apoio prático e estratégico para estabelecer e integrar imigrantes na Europa através de informações reais sobre mercado de trabalho, imigração e negócios digitais.</p>
+                </div>
+                <div class="footer-nav">
+                    <button onclick="openModal('modal-termos')">Termos</button>
+                    <button onclick="openModal('modal-privacidade')">Privacidade</button>
+                    <a href="mailto:farchulleta@gmail.com">Suporte</a>
+                </div>
+            </div>
+            
+            <div class="footer-credits">
+                <div>
+                    © 2026 <span class="trademark">Portal Imigrante PT®</span>.
+                </div>
+                <div>
+                    Apoio ao Imigrante Digital • 🍏
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3>Política de Privacidade</h3>
+                <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>A sua privacidade é importante para nós. É política do Portal Imigrante PT respeitar a sua privacidade em relação a qualquer informação sua que possamos coletar no site Portal Imigrante PT, e outros sites que possuímos e operamos.</p>
+                <p>Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e consentimento. Também informamos por que estamos coletando e como será usado.</p>
+                <p>Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente aceitáveis ​​para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou modificação não autorizados.</p>
+                <p>Não compartilhamos informações de identificação pessoal publicamente ou com terceiros, exceto quando exigido por lei.</p>
+                <p>O nosso site pode tel links para sites externos que não são operados por nós. Esteja ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos aceitar responsabilidade por suas respectivas políticas de privacidade.</p>
+                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer alguns dos serviços desejados.</p>
+                <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
+                <h3>Compromisso do Usuário</h3>
+                <ul>
+                    <li>A) Não se envolver em atividades que sejam ilegais ou contrárias à boa fé e à ordem pública;</li>
+                    <li>B) Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de azar ou contra os direitos humanos;</li>
+                    <li>C) Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Portal Imigrante PT.</li>
+                </ul>
+                <p>Esta política é efetiva a partir de 27 May 2026 15:07.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3>Termos de Serviço</h3>
+                <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>1. Termos</h3>
+                <p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis e concorda que é responsável pelo cumprimento de todas as leis locais aplicáveis.</p>
+                <h3>2. Uso de Licença</h3>
+                <p>É concedida permissão para baixar temporariamente uma cópia dos materiais (informações ou software) no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial. Sob esta licença, você não pode: modificar ou copiar os materiais; usar para fins comerciais; tentar descompilar o software ou remover notações de propriedade.</p>
+                <h3>3. Isenção de responsabilidade</h3>
+                <p>Os materiais no site da Portal Imigrante PT são fornecidos 'como estão'. Portal Imigrante PT não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias.</p>
+                <h3>4. Limitações</h3>
+                <p>Em nenhum caso o Portal Imigrante PT ou seus fornecedores serão responsáveis por quaisquer danos decorrentes do uso ou da incapacidade de usar os materiais contidos na plataforma.</p>
+            </div>
+        </div>
+    </div>
 
     <script>
         const SERVIDOR_URL = "https://portal-imigrante-pt.onrender.com/api";
@@ -207,7 +445,7 @@
             track.style.transform = `translateX(-${posicaoAtual * larguraCard}px)`;
         }
 
-        // 3. CLIMA POR IP REAL AO VIVO (CORRIGIDO E SEGURO)
+        // 3. CLIMA POR IP REAL AO VIVO
         async function carregarClimaDinamico() {
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
@@ -240,6 +478,24 @@
             }
             campoTitulo.innerText = "Clima em Portugal";
             campoTexto.innerText = "Guimarães: 18°C (Céu Limpo ☀️)";
+        }
+
+        // 4. FUNÇÕES DE CONTROLE DOS POP-UPS (MODAIS)
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         }
 
         // Inicialização ordenada do Hub
