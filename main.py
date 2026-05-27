@@ -25,13 +25,20 @@ client = Groq(api_key=GROQ_API_KEY)
 # Memórias globais do servidor para o chat
 historico_conversas = {}
 
-# Modelos de Dados Pydantic para validação das rotas POST
+# =====================================================================
+# MODELOS DE DADOS PYDANTIC (VALIDAÇÃO DAS ROTAS)
+# =====================================================================
 class UserMessage(BaseModel):
     message: str
     session_id: str = "comum"
 
 class RegionRequest(BaseModel):
     regiao: str
+
+class SimRequest(BaseModel):
+    perfil: str
+    regiao: str
+    meses: int
 
 # =====================================================================
 # 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML)
@@ -41,7 +48,6 @@ async def obtener_noticias_tempo_real():
     """Pesquisa aberta nas últimas 24h focada em Portugal, banindo redes sociais e EUA"""
     try:
         url = "https://api.tavily.com/search"
-        
         query_focada = (
             "notícias imigração Portugal visto AIMA CPLP "
             "-site:instagram.com -site:facebook.com -site:twitter.com -site:tiktok.com -\"EUA\" -\"Estados Unidos\""
@@ -65,7 +71,6 @@ async def obtener_noticias_tempo_real():
                 titulo = item.get("title", "")
                 conteudo = item.get("content", "").lower()
                 
-                # Barreira de segurança dupla contra redes sociais e EUA
                 if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
                     continue
                 if "estados unidos" in titulo.lower() or " eua " in f" {titulo.lower()} ":
@@ -150,7 +155,7 @@ async def responder_chat(user_data: UserMessage):
 # 3. ENDPOINT: DOSSIÊ ESTRUTURADO EM CARDS (GUIAS.HTML)
 # =====================================================================
 @app.post("/api/guias")
-async def obtener_guias_regionais(data: RegionRequest):
+async def obter_guias_regionais(data: RegionRequest):
     regiao = data.regiao
     
     prompt_guia = f"""
@@ -209,6 +214,61 @@ async def obtener_guias_regionais(data: RegionRequest):
     return {
         "guia_ia": guia_ia_texto,
         "artigos": artigos_resultados
+    }
+
+# =====================================================================
+# 4. NOVO ENDPOINT: SIMULADOR DE RESERVA FINANCEIRA (SIMULADOR.HTML)
+# =====================================================================
+@app.post("/api/simulador")
+async def calcular_simulacao(data: SimRequest):
+    """Mapeia custos operacionais de 2026 e devolve o plano financeiro com insight da IA"""
+    # Constantes matemáticas de custos reais estimados para 2026 (Euro)
+    custos_base = {
+        "Lisboa": {"quarto": 750, "mercado": 450, "transp": 40},
+        "Porto": {"quarto": 500, "mercado": 420, "transp": 40},
+        "Norte": {"quarto": 400, "mercado": 400, "transp": 30},
+        "Interior": {"quarto": 300, "mercado": 350, "transp": 30}
+    }
+    
+    reg = custos_base.get(data.regiao, custos_base["Norte"])
+    
+    # Define o multiplicador com base no tamanho do núcleo familiar selecionado
+    mult = 1.0 if data.perfil == "solteiro" else (1.8 if data.perfil == "casal" else 2.5)
+    
+    # Cálculo das despesas fixas de sobrevivência mensal
+    custo_mensal = (reg["quarto"] + (reg["mercado"] * mult) + (reg["transp"] * (2 if mult > 1 else 1)))
+    
+    # Orçamento final = (Custo mensal * quantidade de meses escolhida) + 2 cauções obrigatórias de aluguer
+    total_euro = (custo_mensal * data.meses) + (reg["quarto"] * 2)
+    
+    # Conversão referencial para Real (Média estável de mercado)
+    total_real = total_euro * 6.2
+    
+    # Solicita um insight motivacional e prático à inteligência artificial
+    prompt_ia = (
+        f"Atue como um Consultor Financeiro de Imigração. Escreva um insight de exatamente duas frases "
+        f"para um perfil '{data.perfil}' que planeia mudar-se para a região '{data.regiao}' com uma reserva "
+        f"de segurança calculada para {data.meses} meses. O orçamento estimado total é de €{round(total_euro, 2)}. "
+        f"Dê uma dica prática de economia de custos ou incentivo real. Seja direto, não use saudações."
+    )
+    
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt_ia}],
+            temperature=0.5
+        )
+        insight_final = completion.choices[0].message.content
+    except Exception:
+        insight_final = (
+            "Excelente planeamento! Ter uma reserva estruturada para este período garante a tranquilidade "
+            "necessária para focar na tua inserção no mercado de trabalho e validação de documentos iniciais."
+        )
+
+    return {
+        "total_euro": round(total_euro, 2),
+        "total_real": round(total_real, 2),
+        "insight_ia": insight_final
     }
 
 @app.get("/")
