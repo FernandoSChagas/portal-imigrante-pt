@@ -5,172 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guias Regionais - Portal Imigrante PT</title>
     <link rel="stylesheet" href="css/hub.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .guias-wrapper {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            min-height: calc(100vh - 320px);
-        }
+        .guias-wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 30px; min-height: calc(100vh - 320px); }
+        
+        .search-box-region { background-color: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 40px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .search-box-region h1 { font-size: 1.8rem; color: #fff; margin-bottom: 10px; }
+        .search-box-region p { color: #8b949e; margin-bottom: 25px; }
 
-        .search-box-region {
-            background-color: #161b22;
-            border: 1px solid #21262d;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-        }
+        .controls-group { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        .select-custom { background-color: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 12px 20px; color: #fff; font-size: 1rem; min-width: 280px; outline: none; cursor: pointer; }
+        .btn-gerar { background-color: #008080; color: white; border: none; padding: 0 35px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; height: 50px; }
+        .btn-gerar:hover { background-color: #00a3a3; transform: translateY(-2px); }
 
-        .search-box-region h1 {
-            font-size: 1.6rem;
-            color: #fff;
-            margin-bottom: 10px;
-        }
+        /* NOVO DESIGN DO DOSSIÊ (CARDS) */
+        .dossier-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; display: none; margin-top: 20px; }
+        .dossier-card { background-color: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 25px; position: relative; overflow: hidden; transition: 0.3s; }
+        .dossier-card:hover { border-color: #00e5ff; }
+        .dossier-card i { color: #00e5ff; font-size: 1.5rem; margin-bottom: 15px; display: block; }
+        .dossier-card h3 { color: #ffffff; font-size: 1.1rem; margin-bottom: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .dossier-card p { color: #c9d1d9; font-size: 0.92rem; line-height: 1.6; margin: 0; }
 
-        .search-box-region p {
-            color: #8b949e;
-            font-size: 0.95rem;
-            margin-bottom: 20px;
-        }
-
-        .controls-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .select-custom {
-            background-color: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 12px 20px;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-            min-width: 250px;
-            cursor: pointer;
-        }
-
-        .select-custom:focus {
-            border-color: #00e5ff;
-        }
-
-        .btn-gerar {
-            background-color: #008080;
-            color: white;
-            border: none;
-            padding: 0 30px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-            height: 48px;
-        }
-
-        .btn-gerar:hover { background-color: #00a3a3; }
-
-        /* RESULTADO DA IA */
-        .result-ia-container {
-            background-color: #161b22;
-            border: 1px solid #21262d;
-            border-radius: 12px;
-            padding: 25px;
-            display: none;
-            line-height: 1.6;
-            color: #c9d1d9;
-        }
-
-        .result-ia-container h2 {
-            color: #00e5ff;
-            margin-bottom: 15px;
-            font-size: 1.4rem;
-            border-bottom: 1px solid #30363d;
-            padding-bottom: 10px;
-        }
-
-        /* HUB DE ARTIGOS DINÂMICOS */
-        .articles-section {
-            display: none;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .articles-section h2 {
-            font-size: 1.3rem;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .articles-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .article-card {
-            background-color: #161b22;
-            border: 1px solid #21262d;
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: border-color 0.3s;
-        }
-
+        /* HUB DE ARTIGOS */
+        .articles-section { display: none; flex-direction: column; gap: 20px; margin-top: 40px; }
+        .articles-section h2 { font-size: 1.3rem; color: #fff; border-left: 4px solid #00e5ff; padding-left: 15px; }
+        .articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .article-card { background-color: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
         .article-card:hover { border-color: #00a3a3; }
-        .article-card h3 { font-size: 1.05rem; color: #fff; margin: 10px 0; }
-        .article-card p { font-size: 0.88rem; color: #8b949e; line-height: 1.4; margin-bottom: 15px; }
-        .article-link { color: #00e5ff; text-decoration: none; font-size: 0.88rem; font-weight: bold; }
+        .article-card h3 { font-size: 1rem; color: #fff; margin-bottom: 10px; }
+        .article-link { color: #00e5ff; text-decoration: none; font-size: 0.85rem; font-weight: bold; margin-top: 15px; }
 
-        /* LOADING */
-        .loading-pulse {
-            display: none;
-            text-align: center;
-            color: #8b949e;
-            font-size: 1rem;
-            padding: 20px;
-        }
+        .loading-pulse { display: none; text-align: center; color: #00e5ff; font-weight: bold; padding: 30px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
         footer { background-color: #0d1117; border-top: 1px solid #21262d; padding: 40px 20px; margin-top: 60px; }
-        .footer-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-        .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
-        .footer-info { flex: 1; min-width: 280px; }
-        .footer-info h4 { font-size: 1.1rem; color: #fff; margin-bottom: 8px; }
-        .footer-info p { color: #8b949e; font-size: 0.9rem; margin: 0; }
-        .footer-nav { display: flex; gap: 20px; }
-        .footer-nav button, .footer-nav a { color: #8b949e; background: none; border: none; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
-        .footer-nav button:hover, .footer-nav a:hover { color: #00e5ff; }
-        .footer-credits { border-top: 1px solid rgba(255, 255, 255, 0.03); padding-top: 20px; display: flex; justify-content: space-between; font-size: 0.75rem; color: #485264; font-family: monospace; }
-        .trademark { color: #00e5ff; font-weight: bold; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(4, 8, 18, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 20px; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-window { background-color: #161b22; border: 2px solid #30363d; border-radius: 12px; max-width: 700px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.7); transform: translateY(-20px); transition: transform 0.3s ease; }
-        .modal-overlay.active .modal-window { transform: translateY(0); }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { color: #00e5ff; }
-        .close-modal { background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer; }
-        .modal-body { padding: 25px 20px; overflow-y: auto; color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; }
-
         @media (max-width: 768px) {
-            .navbar { padding: 0 15px !important; flex-direction: column !important; gap: 10px; padding-top: 12px !important; padding-bottom: 12px !important; height: auto !important; }
-            .logo { text-align: center; }
-            .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; }
-            .nav-links a { font-size: 0.8rem !important; }
+            .dossier-grid { grid-template-columns: 1fr; }
             .main-container { padding-top: 130px !important; }
-            .controls-group { flex-direction: column; width: 100%; }
-            .select-custom, .btn-gerar { width: 100%; }
-            .footer-main, .footer-credits { flex-direction: column; text-align: center; gap: 10px; }
-            .footer-nav { justify-content: center; }
+            .navbar { flex-direction: column !important; height: auto !important; padding: 15px !important; gap: 10px; }
         }
     </style>
 </head>
@@ -188,62 +60,53 @@
 
     <main class="main-container">
         <div class="guias-wrapper">
-            
             <section class="search-box-region">
-                <h1>🗺️ Mapeamento Regional Inteligente</h1>
-                <p>Escolha uma região de Portugal para gerar um dossiê estratégico de imigração e listar os artigos de custo de vida mais recentes.</p>
-                
+                <h1>🗺️ Dossier Regional Inteligente</h1>
+                <p>O motor de inteligência vai analisar a região e cruzar dados de mercado em tempo real.</p>
                 <div class="controls-group">
                     <select id="regiaoSelect" class="select-custom">
-                        <option value="Norte de Portugal (Porto, Braga, Guimarães)">Norte de Portugal</option>
-                        <option value="Centro de Portugal (Coimbra, Aveiro, Viseu)">Centro de Portugal</option>
-                        <option value="Área Metropolitana de Lisboa">Região de Lisboa</option>
-                        <option value="Alentejo (Évora, Beja, Portalegre)">Alentejo</option>
-                        <option value="Algarve (Faro, Albufeira, Portimão)">Algarve</option>
-                        <option value="Ilhas (Madeira e Açores)">Ilhas (Açores e Madeira)</option>
+                        <option value="Norte de Portugal">Norte de Portugal</option>
+                        <option value="Centro de Portugal">Centro de Portugal</option>
+                        <option value="Lisboa e Vale do Tejo">Região de Lisboa</option>
+                        <option value="Alentejo">Alentejo</option>
+                        <option value="Algarve">Algarve</option>
+                        <option value="Ilhas (Açores e Madeira)">Açores e Madeira</option>
                     </select>
-                    <button class="btn-gerar" onclick="buscarDossieRegional()">Gerar Guia Vivo</button>
+                    <button class="btn-gerar" onclick="buscarDossieRegional()">Gerar Análise</button>
                 </div>
             </section>
 
-            <div class="loading-pulse" id="loadingControl">A processar dados geográficos e varrer artigos da internet...</div>
+            <div class="loading-pulse" id="loadingControl">Sincronizando com a rede de dados portuguesa...</div>
 
-            <section class="result-ia-container" id="iaResultBox"></section>
+            <section class="dossier-grid" id="iaDossierGrid">
+                <div class="dossier-card">
+                    <i class="fa-solid fa-coins"></i>
+                    <h3>Custo de Vida</h3>
+                    <p id="txt-custo">...</p>
+                </div>
+                <div class="dossier-card">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <h3>Emprego & Indústria</h3>
+                    <p id="txt-emprego">...</p>
+                </div>
+                <div class="dossier-card">
+                    <i class="fa-solid fa-cloud-sun"></i>
+                    <h3>Clima & Social</h3>
+                    <p id="txt-clima">...</p>
+                </div>
+                <div class="dossier-card">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <h3>Dica de Integração</h3>
+                    <p id="txt-dica">...</p>
+                </div>
+            </section>
 
             <section class="articles-section" id="articlesSection">
-                <h2>🔗 Leituras Recomendadas e Custo de Vida Atual</h2>
+                <h2>🔗 Leituras e Fontes Externas</h2>
                 <div class="articles-grid" id="articlesGrid"></div>
             </section>
-
         </div>
     </main>
-
-    <footer>
-        <div class="footer-container">
-            <div class="footer-main">
-                <div class="footer-info">
-                    <h4>Portal Imigrante PT</h4>
-                    <p>Apoio prático e estratégico para estabelecer e integrar imigrantes na Europa através de informações reais sobre mercado de trabalho, imigração e negócios digitais.</p>
-                </div>
-                <div class="footer-nav">
-                    <button onclick="openModal('modal-termos')">Termos</button>
-                    <button onclick="openModal('modal-privacidade')">Privacidade</button>
-                    <a href="mailto:farchulleta@gmail.com">Suporte</a>
-                </div>
-            </div>
-            <div class="footer-credits">
-                <div>© 2026 <span class="trademark">Portal Imigrante PT®</span>.</div>
-                <div>Apoio ao Imigrante Digital • 🍏</div>
-            </div>
-        </div>
-    </footer>
-
-    <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
-        <div class="modal-window"><div class="modal-header"><h3>Política de Privacidade</h3><button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button></div><div class="modal-body"><p>A sua privacidade é importante para nós. É política do Portal Imigrante PT respeitar a sua privacidade em relação a qualquer informação sua que possamos coletar.</p><p>Esta política é efetiva a partir de 27 May 2026.</p></div></div>
-    </div>
-    <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
-        <div class="modal-window"><div class="modal-header"><h3>Termos de Serviço</h3><button class="close-modal" onclick="closeModal('modal-termos')">&times;</button></div><div class="modal-body"><h3>1. Termos</h3><p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço e todas as leis aplicáveis.</p></div></div>
-    </div>
 
     <script>
         const BACKEND_URL = "https://portal-imigrante-pt.onrender.com/api/guias";
@@ -251,12 +114,11 @@
         async function buscarDossieRegional() {
             const regiao = document.getElementById("regiaoSelect").value;
             const loading = document.getElementById("loadingControl");
-            const iaBox = document.getElementById("iaResultBox");
+            const gridIA = document.getElementById("iaDossierGrid");
             const artSection = document.getElementById("articlesSection");
-            const artGrid = document.getElementById("articlesGrid");
 
             loading.style.display = "block";
-            iaBox.style.display = "none";
+            gridIA.style.display = "none";
             artSection.style.display = "none";
 
             try {
@@ -268,24 +130,27 @@
                 const data = await response.json();
                 loading.style.display = "none";
 
-                // 1. Injetar a resposta estruturada da IA
                 if(data.guia_ia) {
-                    iaBox.innerHTML = `<h2>📋 Análise Estratégica: ${regiao}</h2><div>${data.guia_ia.replace(/\n/g, '<br>')}</div>`;
-                    iaBox.style.display = "block";
+                    // Lógica para separar a resposta da IA em blocos
+                    const partes = data.guia_ia.split('###'); 
+                    // Assume que a IA enviou no formato: ###Custo...###Emprego...etc
+                    document.getElementById("txt-custo").innerText = partes[1] || "Dados em atualização...";
+                    document.getElementById("txt-emprego").innerText = partes[2] || "Dados em atualização...";
+                    document.getElementById("txt-clima").innerText = partes[3] || "Dados em atualização...";
+                    document.getElementById("txt-dica").innerText = partes[4] || "Dados em atualização...";
+                    
+                    gridIA.style.display = "grid";
                 }
 
-                // 2. Injetar os artigos vivos do Tavily
-                if(data.artigos && data.artigos.length > 0) {
+                if(data.artigos) {
+                    const artGrid = document.getElementById("articlesGrid");
                     artGrid.innerHTML = "";
                     data.artigos.forEach(art => {
                         artGrid.innerHTML += `
                             <div class="article-card">
-                                <div>
-                                    <div class="news-tag" style="background-color:#008080; font-size:0.7rem;">Blog/Guia</div>
-                                    <h3>${art.titulo}</h3>
-                                    <p>${art.resumo}</p>
-                                </div>
-                                <a href="${art.url}" target="_blank" class="article-link">Explorar Artigo original →</a>
+                                <h3>${art.titulo}</h3>
+                                <p>${art.resumo}</p>
+                                <a href="${art.url}" target="_blank" class="article-link">Ver fonte original →</a>
                             </div>
                         `;
                     });
@@ -293,13 +158,9 @@
                 }
             } catch (error) {
                 loading.style.display = "none";
-                alert("Erro ao conectar com o servidor regional. Tente novamente.");
+                alert("Erro ao gerar dossier. Tente novamente.");
             }
         }
-
-        function openModal(modalId) { document.getElementById(modalId).classList.add('active'); document.body.style.overflow = 'hidden'; }
-        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); document.body.style.overflow = ''; }
-        function closeModalOnOverlay(event) { if (event.target.classList.contains('modal-overlay')) { event.target.classList.remove('active'); document.body.style.overflow = ''; } }
     </script>
 </body>
 </html>
