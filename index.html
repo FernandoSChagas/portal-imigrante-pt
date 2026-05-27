@@ -96,6 +96,7 @@
         <div class="nav-links">
             <a href="#" class="active">Notícias ao Vivo</a>
             <a href="#">Guias Regionais</a>
+            <a href="viver-do-digital.html" style="color: #00e5ff; font-weight: bold; border: 1px dashed rgba(0, 229, 255, 0.4); padding: 5px 10px; border-radius: 4px;">Ganhar em Euro 💶</a>
             <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
         </div>
     </nav>
@@ -115,6 +116,13 @@
                 <div>
                     <h4 id="titulo-clima">Clima Local</h4>
                     <p id="info-clima">A detetar localização...</p>
+                </div>
+            </div>
+            <div class="widget-card" style="border: 1px solid rgba(0, 229, 255, 0.3); background: linear-gradient(135deg, #161b22 0%, #0d1224 100%); cursor: pointer;" onclick="window.location.href='viver-do-digital.html'">
+                <span class="widget-icon">💻</span>
+                <div>
+                    <h4 style="color: #00e5ff;">Trabalhar Online</h4>
+                    <p style="font-size: 0.85rem; color: #e2e8f0;">Fature em Euros do zero. Ver manual completo R$ 47 →</p>
                 </div>
             </div>
         </section>
@@ -187,7 +195,7 @@
         function moverCarrossel(direcao) {
             const track = document.getElementById("newsGrid");
             const cards = document.querySelectorAll(".news-card-carousel");
-            if (cards.length <= 3 && window.innerWidth > 768) return; // Não roda no PC se tiver só 3 cards
+            if (cards.length <= 3 && window.innerWidth > 768) return; 
             
             const maxPos = cards.length - (window.innerWidth <= 768 ? 1 : 3);
             posicaoAtual += direcao;
@@ -199,33 +207,42 @@
             track.style.transform = `translateX(-${posicaoAtual * larguraCard}px)`;
         }
 
-        // 3. CLIMA POR IP REAL AO VIVO
+        // 3. CLIMA POR IP REAL AO VIVO (CORRIGIDO E SEGURO)
         async function carregarClimaDinamico() {
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
             try {
-                const resIp = await fetch(`https://ip-api.com/json/?fields=status,city,lat,lon&nocache=${Date.now()}`);
+                const resIp = await fetch(`https://ipapi.co/json/?nocache=${Date.now()}`);
                 const dataIp = await resIp.json();
-                if (dataIp.status === "success") {
-                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.lat}&longitude=${dataIp.lon}&current_weather=true&nocache=${Date.now()}`);
+                
+                if (dataIp && dataIp.latitude && dataIp.longitude) {
+                    const cidade = dataIp.city || "Portugal";
+                    
+                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.latitude}&longitude=${dataIp.longitude}&current_weather=true&nocache=${Date.now()}`);
                     const dataWeather = await resWeather.json();
-                    if (dataWeather.current_weather) {
+                    
+                    if (dataWeather && dataWeather.current_weather) {
                         const temp = Math.round(dataWeather.current_weather.temperature);
                         const code = dataWeather.current_weather.weathercode;
+                        
                         let estadoCeu = "Céu Limpo ☀️";
                         if (code >= 1 && code <= 3) estadoCeu = "Pouco Nublado 🌤️";
                         else if (code >= 45 && code <= 48) estadoCeu = "Nevoeiro 🌫️";
                         else if (code >= 51) estadoCeu = "Chuva 🌧️";
-                        campoTitulo.innerText = `Clima em ${dataIp.city}`;
+                        
+                        campoTitulo.innerText = `Clima em ${cidade}`;
                         campoTexto.innerText = `${temp}°C (${estadoCeu})`;
                         return;
                     }
                 }
-            } catch (error) {}
-            campoTitulo.innerText = "Clima no Norte";
-            campoTexto.innerText = "Guimarães: 29°C (Céu Limpo ☀️)";
+            } catch (error) {
+                console.log("Erro na API de clima, aplicando fallback regional.");
+            }
+            campoTitulo.innerText = "Clima em Portugal";
+            campoTexto.innerText = "Guimarães: 18°C (Céu Limpo ☀️)";
         }
 
+        // Inicialização ordenada do Hub
         buscarEuro();
         carregarNoticiasVivas();
         carregarClimaDinamico();
