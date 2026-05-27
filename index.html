@@ -66,6 +66,12 @@
         .btn-left { left: 0; }
         .btn-right { right: 0; }
 
+        /* Estilo auxiliar para o link de vendas do Euro */
+        .euro-vendas-link:hover {
+            color: #ffffff !important;
+            text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+        }
+
         /* =====================================================================
            RODAPÉ MODULAR, COMPACTO E RESPONSIVO (ALINHADO COM A LANDING PAGE)
            ===================================================================== */
@@ -274,13 +280,21 @@
     <main class="main-container">
         
         <section class="live-widgets">
-            <div class="widget-card">
-                <span class="widget-icon">💶</span>
-                <div>
-                    <h4>Euro hoje</h4>
-                    <p id="cotacao-euro">A carregar câmbio ao vivo...</p>
+            <div class="widget-card" style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; min-height: 90px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="widget-icon" style="margin: 0;">💶</span>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.9rem;">Euro hoje</h4>
+                        <p id="cotacao-euro" style="margin: 2px 0 0 0; font-weight: bold; color: #ffffff;">A carregar câmbio ao vivo...</p>
+                    </div>
+                </div>
+                <div style="width: 100%; border-top: 1px dashed rgba(0, 229, 255, 0.15); padding-top: 6px; margin-top: 4px;">
+                    <a href="viver-do-digital.html" class="euro-vendas-link" style="color: #00e5ff; text-decoration: none; font-size: 0.78rem; font-weight: 500; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s ease;">
+                        💡 Cansado de converter? Fature direto em Euro por R$ 47 →
+                    </a>
                 </div>
             </div>
+
             <div class="widget-card">
                 <span class="widget-icon">☀️</span>
                 <div>
@@ -288,6 +302,7 @@
                     <p id="info-clima">A detetar localização...</p>
                 </div>
             </div>
+
             <div class="widget-card" style="border: 1px solid rgba(0, 229, 255, 0.3); background: linear-gradient(135deg, #161b22 0%, #0d1224 100%); cursor: pointer;" onclick="window.location.href='viver-do-digital.html'">
                 <span class="widget-icon">💻</span>
                 <div>
@@ -359,7 +374,7 @@
                 <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
                 <h3>Compromisso do Usuário</h3>
                 <ul>
-                    <li>A) Não se envolver em atividades que sejam ilegais ou contrárias à boa fé e à ordem pública;</li>
+                    <li>A) Não se envolver in atividades que sejam ilegais ou contrárias à boa fé e à ordem pública;</li>
                     <li>B) Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de azar ou contra os direitos humanos;</li>
                     <li>C) Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Portal Imigrante PT.</li>
                 </ul>
