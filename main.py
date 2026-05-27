@@ -1,5 +1,6 @@
 import os
 import requests
+import xml.etree.ElementTree as ET
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -18,8 +19,6 @@ app.add_middleware(
 
 # Chaves de API estáveis do ecossistema
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
-TAVILY_API_KEY = "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"
-
 client = Groq(api_key=GROQ_API_KEY)
 
 # Memória global do chat por sessão
@@ -30,83 +29,96 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# ENDPOINT: MOTOR DE BUSCA DA SEMANA (ORDENADO POR NOVIDADE)
+# ENDPOINT: MOTOR RSS INTELIGENTE EM TEMPO REAL DIRECTO DOS JORNAIS
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    """Pesquisa jornalismo dos últimos 7 dias e coloca a mais recente no primeiro card"""
-    try:
-        url = "https://api.tavily.com/search"
-        
-        # Filtro cirúrgico focado em grandes portais com alcance da última semana
-        payload = {
-            "api_key": TAVILY_API_KEY,
-            "query": "site:sicnoticias.pt OR site:dn.pt OR site:publico.pt OR site:jn.pt imigração AIMA leis Portugal",
-            "search_depth": "advanced",
-            "time_range": "week",  # <--- FORÇA A BUSCA DE NOTÍCIAS DA SEMANA
-            "max_results": 6       # Puxamos mais resultados para ter um carrossel rico
-        }
-        
-        response = requests.post(url, json=payload, timeout=6)
-        if response.status_code == 200:
-            resultados = response.json().get("results", [])
-            
-            noticias_brutas = []
-            for item in resultados:
-                site_url = item.get("url", "").lower()
-                
-                # Identifica dinamicamente a fonte do jornal português
-                tag = "Jornalismo PT"
-                if "sicnoticias" in site_url:
-                    tag = "SIC Notícias"
-                elif "dn.pt" in site_url:
-                    tag = "DN Portugal"
-                elif "publico.pt" in site_url:
-                    tag = "Público"
-                elif "jn.pt" in site_url:
-                    tag = "Jornal de Notícias"
-                elif "aima" in site_url:
-                    tag = "AIMA"
+    """Consome feeds RSS oficiais de Portugal em tempo real e filtra por termos de imigração"""
+    # Feeds RSS estáveis de notícias gerais de última hora em Portugal
+    FEEDS_RSS = [
+        {"tag": "Jornal de Notícias", "url": "https://www.jn.pt/rss/ultimas.xml"},
+        {"tag": "Público", "url": "https://www.publico.pt/feed/ultimas"}
+    ]
+    
+    # Palavras-chave cirúrgicas para o filtro do Portal Imigrante PT
+    PALAVRAS_CHAVE = ["aima", "imigração", "imigrante", "visto", "residência", "nacionalidade", "leis", "portugal", "estrangeiro"]
+    
+    noticias_filtradas = []
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
-                noticias_brutas.append({
-                    "titulo": item.get("title", "Atualização Legal Importante"),
-                    "resumo": item.get("content", "Verifica os detalhes completos no artigo original do portal.")[:140] + "...",
-                    "url": item.get("url", "#"),
-                    "tag": tag,
-                    "score": item.get("score", 0.0)  # Relevância e frescura dentro da semana
-                })
-            
-            # ORDENAÇÃO: Coloca o score mais alto (mais recente/relevante da semana) no topo
-            noticias_ordenadas = sorted(noticias_brutas, key=lambda x: x["score"], reverse=True)
-            
-            if noticias_ordenadas:
-                # Retorna até 5 notícias para o carrossel ficar com movimento nas setas, 
-                # mas o teu index.html vai mostrar sempre 3 de cada vez na tela do PC!
-                return {"noticias": noticias_ordenadas[:5]}
+    for feed in FEEDS_RSS:
+        try:
+            # Requisição direta do servidor (ignora o bloqueio de CORS dos navegadores)
+            response = requests.get(feed["url"], headers=headers, timeout=4)
+            if response.status_code != 200:
+                continue
                 
+            # Processamento da árvore estrutural do XML
+            root = ET.fromstring(response.content)
+            
+            for item in root.findall('.//item'):
+                titulo = item.find('title').text if item.find('title') is not None else ""
+                resumo_bruto = item.find('description').text if item.find('description') is not None else ""
+                url = item.find('link').text if item.find('link') is not None else "#"
+                
+                # Tratamento de limpeza simples para descrições com tags HTML perdidas no RSS
+                if resumo_bruto and "<" in resumo_bruto:
+                    resumo_bruto = ET.fromstring(f"<span>{resumo_bruto}</span>").text or resumo_bruto
+                
+                texto_analise = (titulo + " " + (resumo_bruto or "")).lower()
+                
+                # Executa o filtro inteligente: valida se a notícia é de interesse do seu público
+                if any(termo in texto_analise for termo in PALAVRAS_CHAVE):
+                    resumo = resumo_bruto[:140] + "..." if resumo_bruto else "Aceda aos detalhes completos no artigo original do portal."
+                    
+                    noticias_filtradas.append({
+                        "titulo": titulo,
+                        "resumo": resumo,
+                        "url": url,
+                        "tag": feed["tag"]
+                    })
+                    
+                # Break de segurança para não processar dados em excesso e manter a rota ultra-rápida
+                if len(noticias_filtradas) >= 8:
+                    break
+                    
+        except Exception:
+            continue # Se um feed falhar isoladamente, passa para o próximo sem quebrar a API
+
+    # Se o filtro encontrou notícias quentes de hoje, envia para o carrossel
+    if len(noticias_filtradas) > 0:
+        return {"noticias": noticias_filtradas[:5]}
+
+    # FALLBACK INTELIGENTE: Se nenhum jornal publicou sobre imigração nas últimas horas,
+    # o servidor entrega as notícias gerais mais recentes dos feeds para o carrossel nunca ficar vazio.
+    try:
+        response = requests.get(FEEDS_RSS[0]["url"], headers=headers, timeout=3)
+        root = ET.fromstring(response.content)
+        for item in root.findall('.//item')[:3]:
+            noticias_filtradas.append({
+                "titulo": item.find('title').text,
+                "resumo": (item.find('description').text or "")[:140] + "...",
+                "url": item.find('link').text,
+                "tag": FEEDS_RSS[0]["tag"]
+            })
+        return {"noticias": noticias_filtradas}
     except Exception:
         pass
-        
-    # BACKUP SE A API FALHAR
+
+    # BACKUP FIXO DE SEGURANÇA ABSOLUTA CASO TODA A REDE FALHE
     return {
         "noticias": [
             {
-                "titulo": "Plantão de Atualizações AIMA 2026",
+                "titulo": "Plantão de Atualizações AIMA",
                 "resumo": "Acompanha a reestruturação dos novos balcões de atendimento e regras de agendamento digital para este trimestre...",
                 "url": "https://aima.gov.pt",
                 "tag": "AIMA"
             },
             {
-                "titulo": "Artigo 15: Contagem de prazos para Nacionalidade",
+                "titulo": "Contagem de prazos para Nacionalidade",
                 "resumo": "Análise detalhada sobre os critérios de fixação de residência legal efetiva para fins de atribuição de cidadania portuguesa...",
                 "url": "https://diariodarepublica.pt",
                 "tag": "DN Portugal"
-            },
-            {
-                "titulo": "Logística e Vistos: Balanço Consular Semanal",
-                "resumo": "Verifica os novos fluxos de triagem e tempos médios de resposta para vistos de residência emitidos na rede diplomática...",
-                "url": "https://portaldascomunidades.mne.gov.pt",
-                "tag": "SIC Notícias"
             }
         ]
     }
@@ -127,7 +139,7 @@ async def responder_chat(user_data: UserMessage):
                     "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
                     "- Tu és o IMIGRANTE AI, o assistente virtual oficial do Portal Imigrante PT.\n"
                     "- Tu tens uma MEMÓRIA HUMANA: lembra-te do nome do utilizador e do contexto que ele já partilhou contigo ao longo do diálogo.\n"
-                    "- A tua personalidade é acolhedora, prática e extremamente direta. Fala como um veterano objetivo.\n"
+                    "- A tua personalidade é acolhedora, prática e extremamente direta. Fala como um veterano objective.\n"
                     "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'de outras IAs' ou 'MIRA'.\n\n"
                     
                     "REGRA DE TRANSPARÊNCIA E DO ANO ATUAL:\n"
