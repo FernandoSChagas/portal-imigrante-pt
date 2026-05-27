@@ -30,21 +30,26 @@ class UserMessage(BaseModel):
     session_id: str = "comum"
 
 # =====================================================================
-# ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL BLINDADO (TAVILY API DE HOJE)
+# ENDPOINT: NOVO MOTOR DE BUSCA GLOBAL E MULTI-FONTE (TEMPO REAL)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    """Pesquisa jornalismo das últimas 24 horas usando indexação limpa e estável contra bloqueios"""
+    """Pesquisa em tempo real por todo o universo de imigração, vistos e viagens em múltiplos jornais"""
     try:
         url = "https://api.tavily.com/search"
         
+        # Query expandida e refinada para cruzar termos do ecossistema luso-brasileiro
+        query_global = (
+            "imigração Portugal AIMA vistos passaporte autorização de residência "
+            "leis voos viagens cartão cidadão Polícia Federal Consulado hoje últimas notícias"
+        )
+        
         payload = {
             "api_key": TAVILY_API_KEY,
-            # Foco cirúrgico nos portais pedidos com termos de tempo real
-            "query": "site:sicnoticias.pt OR site:dn.pt Portugal imigração AIMA últimas notícias hoje",
+            "query": query_global,
             "search_depth": "advanced",
-            "time_range": "day",  # <--- LIMITA RÍGIDAMENTE ÀS ÚLTIMAS 24 HORAS
-            "max_results": 6
+            "time_range": "day",  # <--- LIMITA RIGOROSAMENTE ÀS ÚLTIMAS 24 HORAS
+            "max_results": 8      # Puxamos mais resultados para ter um filtro de fontes mais rico
         }
         
         response = requests.post(url, json=payload, timeout=6)
@@ -54,9 +59,10 @@ async def obtener_noticias_tempo_real():
             noticias_brutas = []
             for item in resultados:
                 site_url = item.get("url", "").lower()
+                titulo = item.get("title", "")
                 
-                # Identificação dinâmica e limpa da fonte
-                tag = "Jornalismo PT"
+                # Sistema dinâmico e inteligente para detetar e rotular a fonte original da notícia
+                tag = "Atualidade"
                 if "sicnoticias" in site_url:
                     tag = "SIC Notícias"
                 elif "dn.pt" in site_url or "dn-pt" in site_url:
@@ -65,40 +71,65 @@ async def obtener_noticias_tempo_real():
                     tag = "Público"
                 elif "jn.pt" in site_url:
                     tag = "Jornal de Notícias"
+                elif "aima" in site_url:
+                    tag = "AIMA Oficial"
+                elif "g1" in site_url or "globo" in site_url:
+                    tag = "G1 Brasil"
+                elif "cnn" in site_url:
+                    tag = "CNN"
+                elif "rtp" in site_url:
+                    tag = "RTP Notícias"
+                elif "observador" in site_url:
+                    tag = "Observador"
+                elif "gov.br" in site_url or "pf.gov.br" in site_url:
+                    tag = "Gov Brasil"
+                elif "consulado" in site_url:
+                    tag = "Consular"
+                elif "diariodarepublica" in site_url:
+                    tag = "Diário da República"
+                elif ".br" in site_url:
+                    tag = "Plantão BR"
+                elif ".pt" in site_url:
+                    tag = "Plantão PT"
+
+                # Ignora páginas institucionais vazias ou termos repetitivos na home
+                if "justiça" in titulo.lower() and len(titulo) < 15:
+                    continue
 
                 noticias_brutas.append({
-                    "titulo": item.get("title", "Atualização Legal Importante"),
-                    "resumo": item.get("content", "Verifica os detalhes completos no artigo original do portal.")[:135] + "...",
+                    "titulo": titulo,
+                    "resumo": item.get("content", "Aceda à cobertura de última hora diretamente no portal de notícias mapeado.")[:135] + "...",
                     "url": item.get("url", "#"),
                     "tag": tag
                 })
             
             if noticias_brutas:
+                # Retorna os 5 resultados mais quentes encontrados na internet nas últimas 24h
                 return {"noticias": noticias_brutas[:5]}
                 
     except Exception:
         pass
         
-    # BACKUP SE A API TAVILY FALHAR (Evita o carrossel em branco na tela)
+    # BACKUP SE A API TAVILY CAIR (Garante que o carrossel nunca fique em branco)
     return {
         "noticias": [
             {
-                "titulo": "Plantão de Notícias: Atualizações do Dia",
-                "resumo": "Acompanha o movimento dos balcões de atendimento e fluxos de agendamentos para este trimestre em Portugal...",
-                "url": "https://aima.gov.pt",
-                "tag": "SIC Notícias"
-            },
-            {
-                "titulo": "Contagem de prazos para Cidadania",
-                "resumo": "Análise sobre os critérios de fixação de residência legal para fins de atribuição de nacionalidade portuguesa...",
-                "url": "https://diariodarepublica.pt",
-                "tag": "DN Portugal"
-            },
-            {
-                "titulo": "Mudanças estruturais no acolhimento",
-                "resumo": "Verifica os novos prazos médios de triagem e respostas para vistos de residência emitidos na rede consular...",
+                "titulo": "Plantão Consular: Emissão de Passaportes e Vistos",
+                "resumo": "Acompanha os fluxos de triagem, taxas consulares e prazos de entrega para os novos vistos de procura de trabalho e residência...",
                 "url": "https://portaldascomunidades.mne.gov.pt",
-                "tag": "SIC Notícias"
+                "tag": "Consular"
+            },
+            {
+                "titulo": "Reestruturação de Agendamentos e Cartões AIMA",
+                "resumo": "Novas diretivas para a validação de processos pendentes, renovações automáticas e agendamento de manifestações de interesse...",
+                "url": "https://aima.gov.pt",
+                "tag": "AIMA Oficial"
+            },
+            {
+                "titulo": "Contagem de Prazos Legais para Cidadania Europeia",
+                "resumo": "Análise sobre a fixação do tempo de residência legal efetiva sob o abrigo das novas emendas à Lei da Nacionalidade...",
+                "url": "https://diariodarepublica.pt",
+                "tag": "Leis PT"
             }
         ]
     }
