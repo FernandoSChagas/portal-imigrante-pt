@@ -34,26 +34,26 @@ class RegionRequest(BaseModel):
     regiao: str
 
 # =====================================================================
-# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML)
+# 1. ENDPOINT: MOTOR DE BUSCA EM TEMPO REAL (INDEX.HTML) - CORRIGIDO
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    """Pesquisa focada estritamente em Portugal, CPLP e Europa, banindo redes sociais"""
+    """Pesquisa aberta nas últimas 24h focada em Portugal, banindo redes sociais e EUA"""
     try:
         url = "https://api.tavily.com/search"
         
-        query_refinada = (
-            "imigração Portugal AIMA vistos CPLP regularização "
-            "comunidade países língua portuguesa acordos mobilidade Europa "
-            "-site:instagram.com -site:facebook.com -site:twitter.com -\"Estados Unidos\" -\"EUA\""
+        # Simplificado para expandir as chances de encontrar notícias de hoje, mantendo as exclusões estritas
+        query_focada = (
+            "notícias imigração Portugal visto AIMA CPLP "
+            "-site:instagram.com -site:facebook.com -site:twitter.com -site:tiktok.com -\"EUA\" -\"Estados Unidos\""
         )
         
         payload = {
             "api_key": TAVILY_API_KEY,
-            "query": query_refinada,
+            "query": query_focada,
             "search_depth": "advanced",
             "time_range": "day",
-            "max_results": 8
+            "max_results": 10
         }
         
         response = requests.post(url, json=payload, timeout=6)
@@ -64,11 +64,17 @@ async def obtener_noticias_tempo_real():
             for item in resultados:
                 site_url = item.get("url", "").lower()
                 titulo = item.get("title", "")
+                conteudo = item.get("content", "").lower()
                 
-                if "instagram" in site_url or "tiktok" in site_url or "facebook" in site_url:
+                # Barreira dupla de segurança contra redes sociais e EUA
+                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
+                    continue
+                if "estados unidos" in titulo.lower() or " eua " in f" {titulo.lower()} ":
+                    continue
+                if "estados unidos" in conteudo or " eua " in f" {conteudo} ":
                     continue
                 
-                tag = "Atualidade"
+                tag = "Portugal"
                 if "sicnoticias" in site_url: tag = "SIC Notícias"
                 elif "dn.pt" in site_url or "dn-pt" in site_url: tag = "DN Portugal"
                 elif "publico" in site_url: tag = "Público"
@@ -77,7 +83,7 @@ async def obtener_noticias_tempo_real():
                 elif "g1" in site_url or "globo" in site_url: tag = "G1 Brasil"
                 elif "rtp" in site_url: tag = "RTP Notícias"
                 elif "observador" in site_url: tag = "Observador"
-                elif "cplp" in site_url: tag = "Conexão CPLP"
+                elif "cplp" in site_url: tag = "CPLP"
                 
                 noticias_brutas.append({
                     "titulo": titulo,
@@ -87,14 +93,15 @@ async def obtener_noticias_tempo_real():
                 })
             
             if noticias_brutas:
+                # Retorna as 5 notícias mais frescas filtradas
                 return {"noticias": noticias_brutas[:5]}
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Erro Tavily: {e}")
         
     return {
         "noticias": [
-            {"titulo": "Mobilidade CPLP: Prazos e Documentação Atualizada", "resumo": "Novas diretivas facilitam a validação e circulação de cidadãos da comunidade de língua portuguesa...", "url": "https://www.cplp.org", "tag": "Conexão CPLP"},
-            {"titulo": "Reestruturação de Agendamentos AIMA", "resumo": "Diretivas para validação de processos pendentes e renovações de autorizações de residência...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"}
+            {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
+            {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
         ]
     }
 
@@ -143,11 +150,9 @@ async def responder_chat(user_data: UserMessage):
 # 3. ENDPOINT: DOSSIÊ ESTRUTURADO EM CARDS (GUIAS.HTML)
 # =====================================================================
 @app.post("/api/guias")
-async def obter_guias_regionais(data: RegionRequest):
-    """Gera dados formatados estritamente por marcas para alimentar o grid de cartões"""
+async def obtener_guias_regionais(data: RegionRequest):
     regiao = data.regiao
     
-    # Prompt ultra-estruturado modificado para separar as respostas com o separador exato do JavaScript
     prompt_guia = f"""
     Atue como um Especialista em Relocalização em Portugal. 
     Analise a região: {regiao}.
@@ -169,7 +174,6 @@ async def obter_guias_regionais(data: RegionRequest):
     except Exception:
         pass
 
-    # Pesquisa de links reais na internet via Tavily (banindo redes sociais)
     artigos_resultados = []
     try:
         url_tavily = "https://api.tavily.com/search"
