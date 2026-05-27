@@ -1,11 +1,13 @@
 import os
 import requests
+import csv
+from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from groq import Groq
 
-app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado")
+app = FastAPI(title="Portal Imigrante PT - Ecossistema Unificado com Leads")
 
 # Configuração de CORS aberta para o GitHub Pages
 app.add_middleware(
@@ -23,6 +25,9 @@ TAVILY_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 historico_conversas = {}
 
+# Ficheiro onde os leads serão guardados no servidor
+LEADS_FILE = "leads_portal.csv"
+
 # =====================================================================
 # MODELOS DE DADOS PYDANTIC
 # =====================================================================
@@ -37,6 +42,58 @@ class SimRequest(BaseModel):
     perfil: str
     regiao: str
     meses: int
+    # Campos opcionais caso queiras capturar o lead direto no clique do simulador
+    nome: str = None
+    email: str = None
+    whatsapp: str = None
+
+class LeadRequest(BaseModel):
+    nome: str
+    email: str
+    whatsapp: str
+    origem: str = "geral"
+
+# =====================================================================
+# FUNÇÃO AUXILIAR: GUARDAR LEAD NO FICHEIRO CSV
+# =====================================================================
+def guardar_lead_local(nome: str, email: str, whatsapp: str, origem: str):
+    try:
+        ficheiro_existe = os.path.exists(LEADS_FILE)
+        with open(LEADS_FILE, mode="a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            if not ficheiro_existe:
+                # Cabeçalho do CSV
+                writer.writerow(["Data/Hora", "Nome", "Email", "WhatsApp", "Origem"])
+            
+            data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            writer.writerow([data_atual, nome, email, whatsapp, origem])
+        return True
+    except Exception as e:
+        print(f"Erro ao guardar lead: {str(e)}")
+        return False
+
+# =====================================================================
+# NOVO ENDPOINT: CAPTURA DE LEADS AVULSO (FORMULÁRIOS / POPUPS)
+# =====================================================================
+@app.post("/api/leads")
+async def capturar_lead(data: LeadRequest):
+    sucesso = guardar_lead_local(data.nome, data.email, data.whatsapp, data.origem)
+    if sucesso:
+        return {"status": "sucesso", "mensagem": "Lead capturado com sucesso!"}
+    return {"status": "erro", "mensagem": "Não foi possível salvar o lead."}
+
+# EXCLUSIVO: Endpoint secreto para tu descarregares os teus leads em tempo real
+@app.get("/api/leads/exportar")
+async def exportar_leads():
+    if not os.path.exists(LEADS_FILE):
+        return {"mensagem": "Nenhum lead capturado ainda."}
+    
+    leads = []
+    with open(LEADS_FILE, mode="r", encoding="utf-8") as f:
+        reader = csv.dictReader(f) if hasattr(csv, 'dictReader') else csv.Reader(f)
+        # Leitura simples para retorno JSON rápido
+        linhas = list(reader)
+    return {"leads": linhas}
 
 # =====================================================================
 # 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO CAMUFLADA DE VENDAS (INDEX.HTML)
@@ -90,14 +147,12 @@ async def obtener_noticias_tempo_real():
                     "tag": tag
                 })
 
-        # Fallback de segurança caso a API falhe ou venha curta
         if len(noticias_brutas) < 2:
             noticias_brutas = [
                 {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
                 {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
             ]
         
-        # [ANÚNCIO NATIVO]: Injeta o e-book camuflado como tendência de mercado real
         noticias_brutas.insert(2, {
             "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
@@ -164,7 +219,7 @@ async def obtener_guias_regionais(data: RegionRequest):
     regiao = data.regiao
     
     prompt_guia = f"""
-    Atue como um Specialist em Relocalização em Portugal. 
+    Atue como um Especialista em Relocalização em Portugal. 
     Analise a região: {regiao}.
     Retorne a resposta EXATAMENTE neste formato abaixo, sem introduções, cumprimentos, saudações ou explicações:
     ### Escreva aqui um resumo curto sobre o Custo de Vida, Arrendamento de habitação e contas fixas do mês.
@@ -222,10 +277,14 @@ async def obtener_guias_regionais(data: RegionRequest):
     }
 
 # =====================================================================
-# 4. ENDPOINT: SIMULADOR FINANCEIRO PADRONIZADO (SIMULADOR.HTML)
+# 4. ENDPOINT: SIMULADOR FINANCEIRO COM CAPTURA (SIMULADOR.HTML)
 # =====================================================================
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
+    # Se o formulário do simulador enviar dados do utilizador, guarda automaticamente
+    if data.nome and data.email:
+        guardar_lead_local(data.nome, data.email, data.whatsapp or "Não informado", "simulador")
+
     custos_base = {
         "Lisboa e Vale do Tejo": {"quarto": 750, "mercado": 450, "transp": 40},
         "Algarve": {"quarto": 550, "mercado": 420, "transp": 40},
