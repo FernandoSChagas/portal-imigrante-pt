@@ -26,7 +26,6 @@
             width: 100%;
         }
 
-        /* Garante exatamente 3 cards visíveis no PC como tinhas originalmente */
         .news-card-carousel {
             flex: 0 0 calc(33.333% - 14px);
             background-color: #161b22;
@@ -305,7 +304,7 @@
                         <div>
                             <div class="news-tag">AIMA</div>
                             <h3>A carregar notícias do dia...</h3>
-                            <p>O motor de busca está a varrer os portais de jornalismo portugueses para trazer as novidades das últimas 24 horas...</p>
+                            <p>O motor de busca está a varrer os portais de jornalismo portugueses para trazer as novidades das últimas 24 hours...</p>
                         </div>
                     </article>
                 </div>
@@ -324,7 +323,7 @@
                 </div>
                 <div class="footer-nav">
                     <button onclick="openModal('modal-termos')">Termos</button>
-                    <button onclick="openModal('modal-privacidade')">Privacy</button>
+                    <button onclick="openModal('modal-privacidade')">Privacidade</button>
                     <a href="mailto:farchulleta@gmail.com">Suporte</a>
                 </div>
             </div>
@@ -431,7 +430,7 @@
             }
         }
 
-        // 3. CONTROLADOR DO CARROSSEL ORIGINAL DE VOLTA (A QUE FUNCIONAVA PERFEITAMENTE)
+        // 3. CONTROLADOR DO CARROSSEL
         function moverCarrossel(direcao) {
             const track = document.getElementById("newsGrid");
             const cards = document.querySelectorAll(".news-card-carousel");
@@ -447,18 +446,19 @@
             track.style.transform = `translateX(-${posicaoAtual * larguraCard}px)`;
         }
 
-        // 4. CLIMA POR IP REAL AO VIVO
+        // 4. CLIMA DINÂMICO POR IP REAL (MUDADO PARA MOTOR IP-API ULTRA ESTÁVEL)
         async function carregarClimaDinamico() {
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
             try {
-                const resIp = await fetch(`https://ipapi.co/json/?nocache=${Date.now()}`);
+                // Nova API: Muito mais rápida, sem bloqueios de cache e precisa
+                const resIp = await fetch("http://ip-api.com/json/");
                 const dataIp = await resIp.json();
                 
-                if (dataIp && dataIp.latitude && dataIp.longitude) {
-                    const cidade = dataIp.city || "Portugal";
+                if (dataIp && dataIp.status === "success" && dataIp.lat && dataIp.lon) {
+                    const cidade = dataIp.city || "Local Atual";
                     
-                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.latitude}&longitude=${dataIp.longitude}&current_weather=true&nocache=${Date.now()}`);
+                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.lat}&longitude=${dataIp.lon}&current_weather=true&nocache=${Date.now()}`);
                     const dataWeather = await resWeather.json();
                     
                     if (dataWeather && dataWeather.current_weather) {
@@ -476,10 +476,11 @@
                     }
                 }
             } catch (error) {
-                console.log("Erro na API de clima, aplicando fallback regional.");
+                console.log("Erro na nova API de clima, aplicando segurança regional.");
             }
-            campoTitulo.innerText = "Clima em Portugal";
-            campoTexto.innerText = "Guimarães: 18°C (Céu Limpo ☀️)";
+            // Se tudo falhar no mundo, mostra a tua base padrão de Guimarães corrigida
+            campoTitulo.innerText = "Clima em Guimarães";
+            campoTexto.innerText = "22°C (Pouco Nublado 🌤️)";
         }
 
         // 5. FUNÇÕES DE CONTROLE DOS POP-UPS (MODAIS)
