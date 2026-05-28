@@ -58,9 +58,21 @@ async def exportar_leads():
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
+    # Criamos a lista padrão fora do bloco try para ser usada em qualquer falha
+    lista_seguranca = [
+        {"titulo": "AIMA lança mutirão digital para atualizar processos", "resumo": "Nova força-tarefa digital pretende agilizar a validação de dados de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial", "imagem": "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "Segurança Social adota novo sistema de agendamento", "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do NISS para novos residentes estrangeiros...", "url": "https://www.seg-social.pt", "tag": "Segurança Social", "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "Custo de arrendamento estabiliza em áreas metropolitanas", "resumo": "Dados do mercado imobiliário do Grande Porto e Centro indicam uma ligeira redução na pressão dos novos contratos...", "url": "https://dn.pt", "tag": "DN Portugal", "imagem": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "Novas regras do Espaço Schengen entram em vigor", "resumo": "Alterações no controlo de fronteiras prometem maior automatização e impacto nos vistos de turismo...", "url": "https://sicnoticias.pt", "tag": "SIC Notícias", "imagem": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "IRN abre novos balcões para emissão de passaportes", "resumo": "Iniciativa pretende descentralizar o atendimento em Lisboa e Porto, reduzindo os prazos médios de entrega...", "url": "https://irn.justica.gov.pt", "tag": "IRN Oficial", "imagem": "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "CPLP avalia novas facilidades para mobilidade laboral", "resumo": "Países membros discutem em cimeira novos acordos para simplificar a equivalência de diplomas...", "url": "https://www.rtp.pt", "tag": "RTP Notícias", "imagem": "https://images.unsplash.com/photo-1521791136368-1a46827d0505?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "Finanças simplificam emissão de faturas independentes", "resumo": "Autoridade Tributária atualiza portal com guias práticos focados em imigrantes que prestam serviços online...", "url": "https://portaldasfinancas.gov.pt", "tag": "Finanças", "imagem": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "Mercado imobiliário em Braga regista recorde de alojamentos", "resumo": "Aumento da oferta de quartos e apartamentos partilhados traz alívio financeiro para estudantes...", "url": "https://publico.pt", "tag": "Público", "imagem": "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600&auto=format&fit=crop"},
+        {"titulo": "Politécnicos abrem vagas para estudantes internacionais", "resumo": "Processo de candidatura simplificado atrai recorde de novos alunos da comunidade de língua portuguesa...", "url": "https://dges.gov.pt", "tag": "Educação", "imagem": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop"}
+    ]
+
     try:
         url = "https://api.tavily.com/search"
-        # Query simplificada para garantir resultados em português de Portugal
         query_focada = "notícias imigração Portugal AIMA vistos"
         
         payload = {
@@ -84,11 +96,9 @@ async def obtener_noticias_tempo_real():
                 site_url = item.get("url", "").lower()
                 titulo = item.get("title", "")
                 
-                # Ignorar redes sociais
                 if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]): 
                     continue
                 
-                # Classificação de Tags baseada nos sites de Portugal
                 tag = "Portugal"
                 if "sicnoticias" in site_url: tag = "SIC Notícias"
                 elif "dn.pt" in site_url: tag = "DN Portugal"
@@ -110,7 +120,6 @@ async def obtener_noticias_tempo_real():
                     "imagem": img_url
                 })
 
-        # Elimina duplicados por título
         noticias_limpas = []
         vistas = set()
         for n in noticias_brutas:
@@ -118,19 +127,9 @@ async def obtener_noticias_tempo_real():
                 vistas.add(n["titulo"])
                 noticias_limpas.append(n)
 
-        # Se não encontrar nada na API, usa o Fallback de Segurança (9 cards)
+        # Se a API do Tavily falhar em trazer dados novos, usa a lista padrão estável
         if len(noticias_limpas) < 8:
-            noticias_limpas = [
-                {"titulo": "AIMA lança mutirão digital para atualizar processos", "resumo": "Nova força-tarefa digital pretende agilizar a validação de dados de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial", "imagem": "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "Segurança Social adota novo sistema de agendamento", "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do NISS para novos residentes estrangeiros...", "url": "https://www.seg-social.pt", "tag": "Segurança Social", "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "Custo de arrendamento estabiliza em áreas metropolitanas", "resumo": "Dados do mercado imobiliário do Grande Porto e Centro indicam uma ligeira redução na pressão dos novos contratos...", "url": "https://dn.pt", "tag": "DN Portugal", "imagem": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "Novas regras do Espaço Schengen entram em vigor", "resumo": "Alterações no controlo de fronteiras prometem maior automatização e impacto nos vistos de turismo...", "url": "https://sicnoticias.pt", "tag": "SIC Notícias", "imagem": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "IRN abre novos balcões para emissão de passaportes", "resumo": "Iniciativa pretende descentralizar o atendimento em Lisboa e Porto, reduzindo os prazos médios de entrega...", "url": "https://irn.justica.gov.pt", "tag": "IRN Oficial", "imagem": "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "CPLP avalia novas facilidades para mobilidade laboral", "resumo": "Países membros discutem em cimeira novos acordos para simplificar a equivalência de diplomas...", "url": "https://www.rtp.pt", "tag": "RTP Notícias", "imagem": "https://images.unsplash.com/photo-1521791136368-1a46827d0505?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "Finanças simplificam emissão de faturas independentes", "resumo": "Autoridade Tributária atualiza portal com guias práticos focados em imigrantes que prestam serviços online...", "url": "https://portaldasfinancas.gov.pt", "tag": "Finanças", "imagem": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "Mercado imobiliário em Braga regista recorde de alojamentos", "resumo": "Aumento da oferta de quartos e apartamentos partilhados traz alívio financeiro para estudantes...", "url": "https://publico.pt", "tag": "Público", "imagem": "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600&auto=format&fit=crop"},
-                {"titulo": "Politécnicos abrem vagas para estudantes internacionais", "resumo": "Processo de candidatura simplificado atrai recorde de novos alunos da comunidade de língua portuguesa...", "url": "https://dges.gov.pt", "tag": "Educação", "imagem": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop"}
-            ]
+            noticias_limpas = lista_seguranca
 
         # INJEÇÃO ESTRATÉGICA DO E-BOOK (Posição 3)
         noticias_limpas.insert(2, {
@@ -144,7 +143,15 @@ async def obtener_noticias_tempo_real():
         return {"noticias": noticias_limpas[:9]}
         
     except Exception:
-        return {"noticias": []}
+        # Se houver um erro crítico no servidor, garante o envio dos 9 cards estruturados
+        lista_seguranca.insert(2, {
+            "titulo": "MERCADO: Cresce o trabalho online para brasileiros em Portugal",
+            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro...",
+            "url": "viver-do-digital.html",
+            "tag": "Tendência",
+            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
+        })
+        return {"noticias": lista_seguranca[:9]}
 
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
@@ -152,7 +159,7 @@ async def responder_chat(user_data: UserMessage):
     sessao_id = user_data.session_id 
     if sessao_id not in historico_conversas:
         historico_conversas[sessao_id] = [{"role": "system", "content": "Tu és o IMIGRANTE AI, assistente do Portal Imigrante PT. Responde de forma curta e direta em até 2 parágrafos. O ano é 2026."}]
-    historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
+    historico_conversas[sessao_id].append({"role": "user", "content": message_utilizador})
     try:
         completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=historico_conversas[sessao_id], temperature=0.2)
         resposta_final = completion.choices[0].message.content
