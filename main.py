@@ -46,7 +46,7 @@ def guardar_lead_local(nome: str, email: str, whatsapp: str, origin: str):
         return False
 
 # =====================================================================
-# ROTA DE NOTÍCIAS (APENAS PORTUGUÊS DE PORTUGAL E BRASIL)
+# ROTA DE NOTÍCIAS (FILTRO RIGOROSO DE IDIOMA PORTUGUÊS)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
@@ -64,8 +64,7 @@ async def obtener_noticias_tempo_real():
 
     try:
         url = "https://api.tavily.com/search"
-        # Query refinada e em português
-        query_focada = "notícias recentes imigração Portugal 2026 vistos AIMA"
+        query_focada = "últimas notícias imigração Portugal AIMA vistos 2026"
         
         payload = {
             "api_key": TAVILY_API_KEY,
@@ -73,11 +72,11 @@ async def obtener_noticias_tempo_real():
             "search_depth": "advanced",
             "topic": "news",
             "time_range": "week",
-            "max_results": 25,
+            "max_results": 20,
             "include_images": True
         }
         
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=8)
         noticias_brutas = []
         img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
 
@@ -87,36 +86,36 @@ async def obtener_noticias_tempo_real():
             imagens_tavily = data_json.get("images", [])
             
             for idx, item in enumerate(resultados):
-                titulo = item.get("title", "")
-                resumo = item.get("content", "")
                 site_url = item.get("url", "").lower()
-
-                # BLOQUEIO DE INGLÊS: Filtra se palavras extremamente comuns em inglês aparecerem no título
-                if any(word in f" {titulo.lower()} " for word in [" the ", " and ", " with ", " for ", " news ", " government "]):
+                titulo = item.get("title", "")
+                
+                # FILTRO DE IDIOMA: Se o título tiver palavras comuns de inglês, saltamos para a próxima
+                if any(word in f" {titulo.lower()} " for word in [" the ", " and ", " with ", " for ", " in ", " of "]):
                     continue
 
-                # Classificação de Tag baseada na URL
+                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]): 
+                    continue
+                
                 tag = "Portugal"
                 if "sicnoticias" in site_url: tag = "SIC Notícias"
                 elif "dn.pt" in site_url: tag = "DN Portugal"
                 elif "publico.pt" in site_url: tag = "Público"
                 elif "jn.pt" in site_url: tag = "Jornal de Notícias"
+                elif "aima" in site_url: tag = "AIMA Oficial"
                 elif "rtp.pt" in site_url: tag = "RTP Notícias"
-                elif "aima.gov" in site_url: tag = "AIMA Oficial"
-
+                
                 img_url = imagens_tavily[idx] if idx < len(imagens_tavily) else img_placeholder
                 if not img_url or not str(img_url).startswith("http"):
                     img_url = img_placeholder
 
                 noticias_brutas.append({
                     "titulo": titulo,
-                    "resumo": resumo[:110] + "...",
+                    "resumo": item.get("content", "Atualização recente sobre imigração em Portugal.")[:120] + "...",
                     "url": item.get("url", "#"),
                     "tag": tag,
                     "imagem": img_url
                 })
 
-        # Remove duplicados
         noticias_limpas = []
         vistas = set()
         for n in noticias_brutas:
@@ -124,43 +123,65 @@ async def obtener_noticias_tempo_real():
                 vistas.add(n["titulo"])
                 noticias_limpas.append(n)
 
-        # Se falhar ou vier pouco conteúdo em PT, usa a lista de segurança
+        # Se a busca falhar ou o filtro de inglês remover tudo, usamos o fallback em PT
         if len(noticias_limpas) < 8:
             noticias_limpas = lista_seguranca
 
-        # Injeta o teu e-book na 3ª posição
         noticias_limpas.insert(2, {
             "titulo": "MERCADO: Cresce o trabalho online para brasileiros em Portugal",
-            "resumo": "Trabalhar em Euro é a solução para muitos imigrantes em 2026. Veja como começar hoje mesmo...",
+            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro...",
             "url": "viver-do-digital.html",
-            "tag": "Destaque",
+            "tag": "Tendência",
             "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
         })
         
         return {"noticias": noticias_limpas[:9]}
         
     except Exception:
+        # Fallback de erro crítico (garante 9 cards em PT)
+        lista_seguranca.insert(2, {
+            "titulo": "MERCADO: Cresce o trabalho online para brasileiros em Portugal",
+            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro...",
+            "url": "viver-do-digital.html",
+            "tag": "Tendência",
+            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
+        })
         return {"noticias": lista_seguranca[:9]}
 
+# As outras rotas (chat, guias, simulador) permanecem iguais abaixo...
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
     sessao_id = user_data.session_id 
     if sessao_id not in historico_conversas:
-        historico_conversas[sessao_id] = [{"role": "system", "content": "Tu és o IMIGRANTE AI do Portal Imigrante PT. Responde em português de forma direta. O ano é 2026."}]
+        historico_conversas[sessao_id] = [{"role": "system", "content": "Tu és o IMIGRANTE AI, assistente do Portal Imigrante PT. Responde de forma curta e direta. O ano é 2026."}]
     historico_conversas[sessao_id].append({"role": "user", "content": user_data.message})
     try:
         completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=historico_conversas[sessao_id], temperature=0.2)
-        resposta = completion.choices[0].message.content
-        historico_conversas[sessao_id].append({"role": "assistant", "content": resposta})
-        return {"response": resposta}
+        resposta_final = completion.choices[0].message.content
+        historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        return {"response": f"Erro: {str(e)}"}
+        resposta_final = f"[Erro]: {str(e)}"
+    return {"response": resposta_final}
+
+@app.post("/api/guias")
+async def obtener_guias_regionais(data: RegionRequest):
+    regiao = data.regiao
+    prompt = f"Especialista em Relocalização. Analise a região: {regiao}. Use formato ### Custo de vida ### Empregos ### Clima ### Dica Prática."
+    guia_ia_texto = "###Dados em atualização..."
+    try:
+        completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=[{"role": "user", "content": prompt}], temperature=0.2)
+        guia_ia_texto = completion.choices[0].message.content
+    except Exception: pass
+    return {"guia_ia": guia_ia_texto, "artigos": [{"titulo": f"Métricas de Arrendamento em {regiao}", "resumo": "Análise sobre custos de habitação...", "url": "https://www.idealista.pt/news/"}]}
 
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
+    if not data.nome or not data.email or "@" not in data.email: raise HTTPException(status_code=400, detail="Dados inválidos.")
     guardar_lead_local(data.nome, data.email, data.whatsapp, "Simulador")
-    total_euro = (850 * data.meses) + 900
-    return {"total_euro": round(total_euro, 2), "total_real": round(total_euro * 6.2, 2), "insight_ia": "Plano sólido para Portugal!"}
+    custo_mensal = 850
+    total_euro = (custo_mensal * data.meses) + 900
+    total_real = total_euro * 6.2
+    return {"total_euro": round(total_euro, 2), "total_real": round(total_real, 2), "insight_ia": "Excelente planeamento financeiro para a sua mudança!"}
 
 @app.get("/")
 def home():
