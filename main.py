@@ -81,17 +81,13 @@ async def exportar_leads():
         return {"erro": f"Erro de conexão com o Google: {str(e)}"}
 
 # =====================================================================
-# 1. ENDPOINT: NOTÍCIAS COM INJEÇÃO CAMUFLADA DE VENDAS (INDEX.HTML)
+# 1. ENDPOINT: NOTÍCIAS COM IMAGENS REAL-TIME (INDEX.HTML)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
-        
-        # Query expandida e focada na linguagem para o Tavily trazer muito conteúdo bruto
-        query_focada = (
-            "notícias imigração visto AIMA CPLP autorização residência finanças segurança social Portugal"
-        )
+        query_focada = "notícias imigração visto AIMA CPLP autorização residência finanças segurança social Portugal"
         
         payload = {
             "api_key": TAVILY_API_KEY,
@@ -99,74 +95,70 @@ async def obtener_noticias_tempo_real():
             "search_depth": "advanced",
             "topic": "news",        
             "time_range": "week",   
-            "max_results": 25       # Puxamos bastantes para o filtro trabalhar com folga
+            "max_results": 25,
+            "include_images": True  # ATUALIZAÇÃO: Força o Tavily a trazer os links das imagens reais
         }
         
         response = requests.post(url, json=payload, timeout=6)
         noticias_brutas = []
 
+        # Imagem padrão caso algum portal de notícias não tenha uma imagem válida
+        img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
+
         if response.status_code == 200:
-            resultados = response.json().get("results", [])
-            for item in resultados:
+            data_json = response.json()
+            resultados = data_json.get("results", [])
+            imagens_tavily = data_json.get("images", []) # Lista de imagens capturadas na pesquisa
+            
+            for idx, item in enumerate(resultados):
                 site_url = item.get("url", "").lower()
                 titulo = item.get("title", "")
-                conteudo = item.get("content", "").lower()
                 
-                # Exclui redes sociais imediatamente
                 if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
                     continue
-                
-                # Tranca de Idioma: Elimina títulos que usem conectivos óbvios em inglês
                 if any(word in f" {titulo.lower()} " for word in [" the ", " with ", " and ", " in ", " for "]):
                     continue
                 
-                # Mapeamento e validação dos teus canais de referência favoritos
                 tag = "Portugal"
                 is_portal_referencia = False
                 
-                if "sicnoticias" in site_url: 
-                    tag = "SIC Notícias"; is_portal_referencia = True
-                elif "dn.pt" in site_url: 
-                    tag = "DN Portugal"; is_portal_referencia = True
-                elif "publico.pt" in site_url: 
-                    tag = "Público"; is_portal_referencia = True
-                elif "jn.pt" in site_url: 
-                    tag = "Jornal de Notícias"; is_portal_referencia = True
-                elif "aima" in site_url: 
-                    tag = "AIMA Oficial"; is_portal_referencia = True
-                elif "rtp.pt" in site_url: 
-                    tag = "RTP Notícias"; is_portal_referencia = True
-                elif "observador.pt" in site_url: 
-                    tag = "Observador"; is_portal_referencia = True
-                elif "record.pt" in site_url: 
-                    tag = "Record"; is_portal_referencia = True
-                elif "cmjornal.pt" in site_url or "correiomanha" in site_url: 
-                    tag = "Correio da Manhã"; is_portal_referencia = True
-                elif "cnnportugal" in site_url: 
-                    tag = "CNN Portugal"; is_portal_referencia = True
+                if "sicnoticias" in site_url: tag = "SIC Notícias"; is_portal_referencia = True
+                elif "dn.pt" in site_url: tag = "DN Portugal"; is_portal_referencia = True
+                elif "publico.pt" in site_url: tag = "Público"; is_portal_referencia = True
+                elif "jn.pt" in site_url: tag = "Jornal de Notícias"; is_portal_referencia = True
+                elif "aima" in site_url: tag = "AIMA Oficial"; is_portal_referencia = True
+                elif "rtp.pt" in site_url: tag = "RTP Notícias"; is_portal_referencia = True
+                elif "observador.pt" in site_url: tag = "Observador"; is_portal_referencia = True
+                elif "record.pt" in site_url: tag = "Record"; is_portal_referencia = True
+                elif "cmjornal.pt" in site_url or "correiomanha" in site_url: tag = "Correio da Manhã"; is_portal_referencia = True
+                elif "cnnportugal" in site_url: tag = "CNN Portugal"; is_portal_referencia = True
                 
-                # Se for de um dos teus portais ou contiver forte relação com Portugal na URL, aceitamos
                 if is_portal_referencia or ".pt" in site_url:
+                    # Atribui uma imagem da lista do Tavily de forma sequencial ou usa o placeholder
+                    img_url = imagens_tavily[idx] if idx < len(imagens_tavily) else img_placeholder
+                    if not img_url or not img_url.startswith("http"):
+                        img_url = img_placeholder
+
                     noticias_brutas.append({
                         "titulo": titulo,
                         "resumo": item.get("content", "Acompanhe os detalhes da cobertura completa nos canais oficiais.")[:135] + "...",
                         "url": item.get("url", "#"),
-                        "tag": tag
+                        "tag": tag,
+                        "imagem": img_url
                     })
 
-        # FALLBACK COMPLETO: Se a API falhar ou a semana for fraca, gera 8 notícias em PT para nunca quebrar o teu layout
+        # FALLBACK COM IMAGENS SE A API FALHAR
         if len(noticias_brutas) < 6:
             noticias_brutas = [
-                {"titulo": "AIMA lança mutirão digital para atualizar processos pendentes", "resumo": "Nova força-tarefa digital pretende agilizar a validação de dados de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
-                {"titulo": "Segurança Social adota novo sistema de agendamento consular", "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do NISS para novos residentes estrangeiros...", "url": "https://www.seg-social.pt", "tag": "Segurança Social"},
-                {"titulo": "Custo de arrendamento regista estabilização em áreas metropolitanas", "resumo": "Dados do mercado imobiliário do Grande Porto e Centro indicam uma ligeira redução na pressão dos novos contratos...", "url": "https://dn.pt", "tag": "DN Portugal"},
-                {"titulo": "Novas regras do Espaço Schengen entram em vigor este semestre", "resumo": "Alterações no controlo de fronteiras prometem maior automatização e impacto direto nos vistos de turismo e negócios...", "url": "https://sicnoticias.pt", "tag": "SIC Notícias"},
-                {"titulo": "IRN abre novos balcões para emissão urgente de passaportes", "resumo": "Iniciativa pretende descentralizar o atendimento em Lisboa e Porto, reduzindo os prazos médios de entrega...", "url": "https://irn.justica.gov.pt", "tag": "IRN Oficial"},
-                {"titulo": "Comunidade CPLP avalia novas facilidades para mobilidade laboral", "resumo": "Países membros discutem em cimeira novos acordos para simplificar a equivalência de diplomas e inserção no mercado...", "url": "https://www.rtp.pt", "tag": "RTP Notícias"},
-                {"titulo": "Finanças simplificam emissão de faturas para trabalhadores independentes", "resumo": "Autoridade Tributária atualiza portal com guias práticos focados em imigrantes que prestam serviços online...", "url": "https://portaldasfinancas.gov.pt", "tag": "Finanças"}
+                {"titulo": "AIMA lança mutirão digital para atualizar processos pendentes", "resumo": "Nova força-tarefa digital pretende agilizar a validação de dados de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial", "imagem": "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop"},
+                {"titulo": "Segurança Social adota novo sistema de agendamento consular", "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do NISS para novos residentes estrangeiros...", "url": "https://www.seg-social.pt", "tag": "Segurança Social", "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"},
+                {"titulo": "Custo de arrendamento regista estabilização em áreas metropolitanas", "resumo": "Dados do mercado imobiliário do Grande Porto e Centro indicam uma ligeira redução na pressão dos novos contratos...", "url": "https://dn.pt", "tag": "DN Portugal", "imagem": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=600&auto=format&fit=crop"},
+                {"titulo": "Novas regras do Espaço Schengen entram em vigor este semestre", "resumo": "Alterações no controlo de fronteiras prometem maior automatização e impacto direto nos vistos de turismo e negócios...", "url": "https://sicnoticias.pt", "tag": "SIC Notícias", "imagem": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=600&auto=format&fit=crop"},
+                {"titulo": "IRN abre novos balcões para emissão urgente de passaportes", "resumo": "Iniciativa pretende descentralizar o atendimento em Lisboa e Porto, reduzindo os prazos médios de entrega...", "url": "https://irn.justica.gov.pt", "tag": "IRN Oficial", "imagem": "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop"},
+                {"titulo": "Comunidade CPLP avalia novas facilidades para mobilidade laboral", "resumo": "Países membros discutem em cimeira novos acordos para simplificar a equivalência de diplomas e inserção no mercado...", "url": "https://www.rtp.pt", "tag": "RTP Notícias", "imagem": "https://images.unsplash.com/photo-1521791136368-1a46827d0505?q=80&w=600&auto=format&fit=crop"},
+                {"titulo": "Finanças simplificam emissão de faturas para trabalhadores independentes", "resumo": "Autoridade Tributária atualiza portal com guias práticos focados em imigrantes que prestam serviços online...", "url": "https://portaldasfinancas.gov.pt", "tag": "Finanças", "imagem": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop"}
             ]
         
-        # GARANTIA ABSOLUTA: Limpa duplicados se houver e injeta a tua estratégia do e-book exatamente no 3º Card (Index 2)
         noticias_limpas = []
         vistas = set()
         for n in noticias_brutas:
@@ -174,27 +166,22 @@ async def obtener_noticias_tempo_real():
                 vistas.add(n["titulo"])
                 noticias_limpas.append(n)
 
-        # Injeta o teu e-book na terceira posição (Index 2)
+        # ESTRATÉGIA CAMUFLADA FIXA: Injeta a tua publicidade no 3º Card com uma imagem brutal sobre o digital/euro
         noticias_limpas.insert(2, {
             "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
             "url": "viver-do-digital.html",
-            "tag": "Tendência"
+            "tag": "Tendência",
+            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop" # Imagem premium de trabalho digital
         })
         
-        # Devolve exatamente entre 8 a 9 cards para o carrossel ter muito conteúdo e deslizar perfeito
         return {"noticias": noticias_limpas[:9]}
         
     except Exception:
         return {"noticias": [
-            {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
-            {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"},
-            {"titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal", "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais...", "url": "viver-do-digital.html", "tag": "Tendência"},
-            {"titulo": "Custo de arrendamento regista estabilização em áreas metropolitanas", "resumo": "Dados do mercado imobiliário do Grande Porto e Centro indicam uma ligeira redução na pressão...", "url": "https://dn.pt", "tag": "DN Portugal"},
-            {"titulo": "Novas regras do Espaço Schengen entram em vigor este semestre", "resumo": "Alterações no controlo de fronteiras prometem maior automatização e impacto direto nos vistos...", "url": "https://sicnoticias.pt", "tag": "SIC Notícias"},
-            {"titulo": "IRN abre novos balcões para emissão urgente de passaportes", "resumo": "Iniciativa pretende descentralizar o atendimento em Lisboa e Porto, reduzindo os prazos médios...", "url": "https://irn.justica.gov.pt", "tag": "IRN Oficial"},
-            {"titulo": "Comunidade CPLP avalia novas facilidades para mobilidade laboral", "resumo": "Países membros discutem em cimeira novos acordos para simplificar a equivalência de diplomas...", "url": "https://www.rtp.pt", "tag": "RTP Notícias"},
-            {"titulo": "Finanças simplificam emissão de faturas para trabalhadores independentes", "resumo": "Autoridade Tributária atualiza portal com guias práticos focados em imigrantes...", "url": "https://portaldasfinancas.gov.pt", "tag": "Finanças"}
+            {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial", "imagem": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"},
+            {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular", "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"},
+            {"titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal", "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais...", "url": "viver-do-digital.html", "tag": "Tendência", "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"}
         ]}
 
 # =====================================================================
@@ -223,7 +210,6 @@ async def responder_chat(user_data: UserMessage):
         ]
     
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
-    
     if len(historico_conversas[sessao_id]) > 13:
         historico_conversas[sessao_id] = [historico_conversas[sessao_id][0]] + historico_conversas[sessao_id][-12:]
     
@@ -246,7 +232,6 @@ async def responder_chat(user_data: UserMessage):
 @app.post("/api/guias")
 async def obtener_guias_regionais(data: RegionRequest):
     regiao = data.regiao
-    
     prompt_guia = f"""
     Atue como um Specialist em Relocalização em Portugal. 
     Analise a região: {regiao}.
@@ -278,7 +263,6 @@ async def obtener_guias_regionais(data: RegionRequest):
             "time_range": "year",
             "max_results": 3
         }
-        
         response = requests.post(url_tavily, json=payload_tavily, timeout=6)
         if response.status_code == 200:
             resultados = response.json().get("results", [])
@@ -300,10 +284,7 @@ async def obtener_guias_regionais(data: RegionRequest):
             }
         ]
 
-    return {
-        "guia_ia": guia_ia_texto,
-        "artigos": artigos_resultados
-    }
+    return {"guia_ia": guia_ia_texto, "artigos": artigos_resultados}
 
 # =====================================================================
 # 4. ENDPOINT: SIMULADOR FINANCEIRO COM ENVIO PARA O SHEETS
