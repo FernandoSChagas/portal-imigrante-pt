@@ -89,9 +89,10 @@ async def exportar_leads():
 async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
-        # CORREÇÃO: Termos ultra focados em português para bloquear sites em inglês
+        # ATUALIZAÇÃO: Injetadas todas as tuas palavras-chave otimizadas para o robô de busca
         query_focada = (
-            "notícias imigração Portugal visto AIMA CPLP arrendamento regularização"
+            "notícias AIMA imigrantes imigração vistos Portugal autorização de residência "
+            "SEF finanças IRN segurança social arrendamento brasileiros CPLP passaporte"
         )
         
         payload = {
@@ -100,7 +101,7 @@ async def obtener_noticias_tempo_real():
             "search_depth": "advanced",
             "topic": "news",        
             "time_range": "week",   
-            "max_results": 12       # Puxamos um pouco mais para ter margem de filtragem
+            "max_results": 15       # Puxamos mais resultados para aplicar os filtros de idioma com segurança
         }
         
         response = requests.post(url, json=payload, timeout=6)
@@ -113,15 +114,13 @@ async def obtener_noticias_tempo_real():
                 titulo = item.get("title", "")
                 conteudo = item.get("content", "").lower()
                 
-                # Filtros de exclusão para redes sociais
-                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
+                # Bloqueio estrito de redes sociais e portais em inglês conhecidos
+                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube", "theportugalnews", "reuters", "bloomberg"]):
                     continue
-                # Filtro extra: se o link contiver "theportugalnews", ignora para não vir em inglês
-                if "theportugalnews" in site_url:
+                # Filtro inteligente: descarta se o título contiver palavras comuns de ligação em inglês
+                if any(word in f" {titulo.lower()} " for word in [" the ", " in ", " for ", " with ", " und ", " and "]):
                     continue
                 if "estados unidos" in titulo.lower() or " eua " in f" {titulo.lower()} ":
-                    continue
-                if "estados unidos" in conteudo or " eua " in f" {conteudo} ":
                     continue
                 
                 tag = "Portugal"
@@ -146,6 +145,7 @@ async def obtener_noticias_tempo_real():
                 {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
             ]
         
+        # Injeção nativa do teu link de afiliado/vendas
         noticias_brutas.insert(2, {
             "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
