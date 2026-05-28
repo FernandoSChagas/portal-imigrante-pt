@@ -180,7 +180,8 @@ async def responder_chat(user_data: UserMessage):
             }
         ]
     
-    historico_conversas[sessao_id].append({"role": "user", "content": message_utilizador})
+    # CORREÇÃO: Variável ajustada de 'message_utilizador' para 'mensagem_utilizador'
+    historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
     
     if len(historico_conversas[sessao_id]) > 13:
         historico_conversas[sessao_id] = [historico_conversas[sessao_id][0]] + historico_conversas[sessao_id][-12:]
@@ -206,7 +207,7 @@ async def obtener_guias_regionais(data: RegionRequest):
     regiao = data.regiao
     
     prompt_guia = f"""
-    Atue como um Especialista em Relocalização em Portugal. 
+    Atue como um Specialist em Relocalização em Portugal. 
     Analise a região: {regiao}.
     Retorne a resposta EXATAMENTE neste formato abaixo, sem introduções, cumprimentos, saudações ou explicações:
     ### Escreva aqui um resumo curto sobre o Custo de Vida, Arrendamento de habitação e contas fixas do mês.
