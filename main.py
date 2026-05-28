@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
 
-app = FastAPI(title="Portal Imigrante PT - Notícias Estáveis")
+app = FastAPI(title="Portal Imigrante PT - Notícias em Português")
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,16 +45,8 @@ def guardar_lead_local(nome: str, email: str, whatsapp: str, origin: str):
     except Exception:
         return False
 
-@app.get("/api/leads/exportar")
-async def exportar_leads():
-    try:
-        response = requests.get(GOOGLE_SCRIPT_URL, timeout=8)
-        return response.json()
-    except Exception as e:
-        return {"erro": str(e)}
-
 # =====================================================================
-# ROTA DE NOTÍCIAS COMPLETA (NOTÍCIAS REAIS E SUPER RECENTES)
+# ROTA DE NOTÍCIAS (APENAS PORTUGUÊS DE PORTUGAL E BRASIL)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
@@ -72,19 +64,20 @@ async def obtener_noticias_tempo_real():
 
     try:
         url = "https://api.tavily.com/search"
-        query_focada = "notícias imigração visto AIMA Portugal autorização residência"
+        # Query refinada e em português
+        query_focada = "notícias recentes imigração Portugal 2026 vistos AIMA"
         
         payload = {
             "api_key": TAVILY_API_KEY,
             "query": query_focada,
             "search_depth": "advanced",
-            "topic": "news",          # Força a API a focar apenas em portais de jornalismo reais
-            "time_range": "week",      # OBRIGA A API A BUSCAR APENAS COISAS DESTA SEMANA (2026)
-            "max_results": 20,
+            "topic": "news",
+            "time_range": "week",
+            "max_results": 25,
             "include_images": True
         }
         
-        response = requests.post(url, json=payload, timeout=8)
+        response = requests.post(url, json=payload, timeout=10)
         noticias_brutas = []
         img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
 
@@ -94,33 +87,36 @@ async def obtener_noticias_tempo_real():
             imagens_tavily = data_json.get("images", [])
             
             for idx, item in enumerate(resultados):
-                site_url = item.get("url", "").lower()
                 titulo = item.get("title", "")
-                
-                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]): 
+                resumo = item.get("content", "")
+                site_url = item.get("url", "").lower()
+
+                # BLOQUEIO DE INGLÊS: Filtra se palavras extremamente comuns em inglês aparecerem no título
+                if any(word in f" {titulo.lower()} " for word in [" the ", " and ", " with ", " for ", " news ", " government "]):
                     continue
-                
+
+                # Classificação de Tag baseada na URL
                 tag = "Portugal"
                 if "sicnoticias" in site_url: tag = "SIC Notícias"
                 elif "dn.pt" in site_url: tag = "DN Portugal"
                 elif "publico.pt" in site_url: tag = "Público"
                 elif "jn.pt" in site_url: tag = "Jornal de Notícias"
-                elif "aima" in site_url: tag = "AIMA Oficial"
                 elif "rtp.pt" in site_url: tag = "RTP Notícias"
-                elif "cnnportugal" in site_url: tag = "CNN Portugal"
-                
+                elif "aima.gov" in site_url: tag = "AIMA Oficial"
+
                 img_url = imagens_tavily[idx] if idx < len(imagens_tavily) else img_placeholder
                 if not img_url or not str(img_url).startswith("http"):
                     img_url = img_placeholder
 
                 noticias_brutas.append({
                     "titulo": titulo,
-                    "resumo": item.get("content", "Atualização recente sobre imigração em Portugal.")[:120] + "...",
+                    "resumo": resumo[:110] + "...",
                     "url": item.get("url", "#"),
                     "tag": tag,
                     "imagem": img_url
                 })
 
+        # Remove duplicados
         noticias_limpas = []
         vistas = set()
         for n in noticias_brutas:
@@ -128,64 +124,43 @@ async def obtener_noticias_tempo_real():
                 vistas.add(n["titulo"])
                 noticias_limpas.append(n)
 
+        # Se falhar ou vier pouco conteúdo em PT, usa a lista de segurança
         if len(noticias_limpas) < 8:
             noticias_limpas = lista_seguranca
 
-        # INJEÇÃO ESTRATÉGICA DO E-BOOK (Posição 3)
+        # Injeta o teu e-book na 3ª posição
         noticias_limpas.insert(2, {
             "titulo": "MERCADO: Cresce o trabalho online para brasileiros em Portugal",
-            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro...",
+            "resumo": "Trabalhar em Euro é a solução para muitos imigrantes em 2026. Veja como começar hoje mesmo...",
             "url": "viver-do-digital.html",
-            "tag": "Tendência",
+            "tag": "Destaque",
             "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
         })
         
         return {"noticias": noticias_limpas[:9]}
         
     except Exception:
-        lista_seguranca.insert(2, {
-            "titulo": "MERCADO: Cresce o trabalho online para brasileiros em Portugal",
-            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro...",
-            "url": "viver-do-digital.html",
-            "tag": "Tendência",
-            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
-        })
         return {"noticias": lista_seguranca[:9]}
 
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
-    mensagem_utilizador = user_data.message
     sessao_id = user_data.session_id 
     if sessao_id not in historico_conversas:
-        historico_conversas[sessao_id] = [{"role": "system", "content": "Tu és o IMIGRANTE AI, assistente do Portal Imigrante PT. Responde de forma curta e direta em até 2 parágrafos. O ano é 2026."}]
-    historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
+        historico_conversas[sessao_id] = [{"role": "system", "content": "Tu és o IMIGRANTE AI do Portal Imigrante PT. Responde em português de forma direta. O ano é 2026."}]
+    historico_conversas[sessao_id].append({"role": "user", "content": user_data.message})
     try:
         completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=historico_conversas[sessao_id], temperature=0.2)
-        resposta_final = completion.choices[0].message.content
-        historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
+        resposta = completion.choices[0].message.content
+        historico_conversas[sessao_id].append({"role": "assistant", "content": resposta})
+        return {"response": resposta}
     except Exception as e:
-        resposta_final = f"[Erro]: {str(e)}"
-    return {"response": resposta_final}
-
-@app.post("/api/guias")
-async def obtener_guias_regionais(data: RegionRequest):
-    regiao = data.regiao
-    prompt = f"Especialista em Relocalização. Analise a região: {regiao}. Use formato ### Custo de vida ### Empregos ### Clima ### Dica Prática."
-    guia_ia_texto = "###Dados em atualização..."
-    try:
-        completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=[{"role": "user", "content": prompt}], temperature=0.2)
-        guia_ia_texto = completion.choices[0].message.content
-    except Exception: pass
-    return {"guia_ia": guia_ia_texto, "artigos": [{"titulo": f"Métricas de Arrendamento em {regiao}", "resumo": "Análise sobre custos de habitação...", "url": "https://www.idealista.pt/news/"}]}
+        return {"response": f"Erro: {str(e)}"}
 
 @app.post("/api/simulador")
 async def calcular_simulacao(data: SimRequest):
-    if not data.nome or not data.email or "@" not in data.email: raise HTTPException(status_code=400, detail="Dados inválidos.")
     guardar_lead_local(data.nome, data.email, data.whatsapp, "Simulador")
-    custo_mensal = 850
-    total_euro = (custo_mensal * data.meses) + 900
-    total_real = total_euro * 6.2
-    return {"total_euro": round(total_euro, 2), "total_real": round(total_real, 2), "insight_ia": "Excelente planeamento financeiro para a sua mudança!"}
+    total_euro = (850 * data.meses) + 900
+    return {"total_euro": round(total_euro, 2), "total_real": round(total_euro * 6.2, 2), "insight_ia": "Plano sólido para Portugal!"}
 
 @app.get("/")
 def home():
