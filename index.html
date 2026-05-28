@@ -23,12 +23,12 @@
             display: flex;
             gap: 20px;
             transition: transform 0.4s ease-in-out;
-            width: 100%;
+            width: max-content; /* MELHORIA: Garante que a linha cresce para abrigar todos os cards enviados */
         }
 
         /* Garante exatamente 3 cards visíveis no PC */
         .news-card-carousel {
-            flex: 0 0 calc(33.333% - 14px);
+            width: 350px; /* MELHORIA: Tamanho fixo ideal para os cards fluírem bem no carrossel */
             background-color: #161b22;
             border: 1px solid #21262d;
             border-radius: 12px;
@@ -36,7 +36,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 220px;
+            min-height: 240px;
             transition: border-color 0.3s;
         }
 
@@ -250,7 +250,7 @@
             .nav-links a.nav-btn-ia { padding: 6px 12px !important; }
             .main-container { padding-top: 130px !important; }
             
-            .news-card-carousel { flex: 0 0 100% !important; }
+            .news-card-carousel { width: 100% !important; flex: 0 0 100% !important; }
             .carousel-container { padding: 10px 35px; }
 
             .footer-main { flex-direction: column; text-align: center; }
@@ -352,7 +352,7 @@
                 <p>Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente aceitáveis ​​para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou modificação não autorizados.</p>
                 <p>Não compartilhamos informações de identificação pessoal publicamente ou com terceiros, exceto quando exigido por lei.</p>
                 <p>O nosso site pode tel links para sites externos que não são operados por nós. Esteja ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos aceitar responsabilidade por suas respectivas políticas de privacidade.</p>
-                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer alguns dos serviços desejados.</p>
+                <p>Você é livre para recusar a nossa solicitud de informações pessoais, entendendo que talvez não possamos fornecer alguns dos serviços desejados.</p>
                 <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
                 <h3>Compromisso do Usuário</h3>
                 <ul>
@@ -399,7 +399,7 @@
             }
         }
 
-        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (INCLUINDO O CARD EXCLUSIVO DE VENDAS INJETADO NO BACKEND)
+        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA
         async function carregarNoticiasVivas() {
             const grid = document.getElementById("newsGrid");
             try {
@@ -410,8 +410,6 @@
                     grid.innerHTML = ""; 
                     data.noticias.forEach(noticia => {
                         const fonte = noticia.tag || "Ao Vivo";
-                        
-                        // Diferencia visualmente se o link for para a nossa própria Landing Page externa/interna
                         const targetAttr = noticia.url.includes("viver-do-digital") ? "" : 'target="_blank"';
                         
                         grid.innerHTML += `
@@ -425,29 +423,38 @@
                             </article>
                         `;
                     });
+                    
+                    // Reseta o posicionamento inicial do carrossel após carregar as notícias em tempo real
+                    posicaoAtual = 0;
+                    grid.style.transform = `translateX(0px)`;
                 }
             } catch (error) {
                 console.log("Erro ao carregar plantão de notícias.");
             }
         }
 
-        // CONTROLADOR DO CARROSSEL
+        // 3. CONTROLADOR DO CARROSSEL ATUALIZADO
         function moverCarrossel(direcao) {
             const track = document.getElementById("newsGrid");
             const cards = document.querySelectorAll(".news-card-carousel");
-            if (cards.length <= 3 && window.innerWidth > 768) return; 
+            if (cards.length === 0) return;
             
-            const maxPos = cards.length - (window.innerWidth <= 768 ? 1 : 3);
+            // Define quantos cards avançam com base na largura da janela
+            const cardsVisiveis = window.innerWidth <= 768 ? 1 : 3;
+            const maxPos = cards.length - cardsVisiveis;
+            
             posicaoAtual += direcao;
             
+            // Trava as pontas do carrossel para não rolar no vazio
             if (posicaoAtual < 0) posicaoAtual = 0;
             if (posicaoAtual > maxPos) posicaoAtual = maxPos;
             
-            const larguraCard = cards[0].clientWidth + 20;
+            // Calcula o deslocamento correto incluindo o gap de 20px
+            const larguraCard = cards[0].offsetWidth + 20;
             track.style.transform = `translateX(-${posicaoAtual * larguraCard}px)`;
         }
 
-        // 3. CLIMA POR IP REAL AO VIVO
+        // 4. CLIMA POR IP REAL AO VIVO
         async function carregarClimaDinamico() {
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
@@ -482,7 +489,7 @@
             campoTexto.innerText = "Guimarães: 18°C (Céu Limpo ☀️)";
         }
 
-        // 4. FUNÇÕES DE CONTROLE DOS POP-UPS (MODAIS)
+        // 5. FUNÇÕES DE CONTROLE DOS POP-UPS (MODAIS)
         function openModal(modalId) {
             document.getElementById(modalId).classList.add('active');
             document.body.style.overflow = 'hidden';
