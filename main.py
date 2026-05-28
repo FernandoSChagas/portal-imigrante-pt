@@ -89,17 +89,18 @@ async def exportar_leads():
 async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
+        # CORREÇÃO: Termos ultra focados em português para bloquear sites em inglês
         query_focada = (
-            "notícias imigração Portugal visto AIMA CPLP regularização"
+            "notícias imigração Portugal visto AIMA CPLP arrendamento regularização"
         )
         
         payload = {
             "api_key": TAVILY_API_KEY,
             "query": query_focada,
             "search_depth": "advanced",
-            "topic": "news",        # Foca estritamente em canais de imprensa e jornalismo
-            "time_range": "week",   # Alargado para varrer os últimos 7 dias atrás de novidades
-            "max_results": 10
+            "topic": "news",        
+            "time_range": "week",   
+            "max_results": 12       # Puxamos um pouco mais para ter margem de filtragem
         }
         
         response = requests.post(url, json=payload, timeout=6)
@@ -112,7 +113,11 @@ async def obtener_noticias_tempo_real():
                 titulo = item.get("title", "")
                 conteudo = item.get("content", "").lower()
                 
+                # Filtros de exclusão para redes sociais
                 if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
+                    continue
+                # Filtro extra: se o link contiver "theportugalnews", ignora para não vir em inglês
+                if "theportugalnews" in site_url:
                     continue
                 if "estados unidos" in titulo.lower() or " eua " in f" {titulo.lower()} ":
                     continue
@@ -195,7 +200,7 @@ async def responder_chat(user_data: UserMessage):
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        resposta_final = f"[Erro de Conexão]: Ocorreu um problem no motor inteligente. Detalhe: {str(e)}"
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
     return {"response": resposta_final}
 
@@ -295,7 +300,7 @@ async def calcular_simulacao(data: SimRequest):
         f"Atue como um Consultor Financeiro de Imigração. Escreva um insight de exatamente duas frases "
         f"para um perfil '{data.perfil}' que planeia mudar-se para a região '{data.regiao}' com uma reserva "
         f"de segurança de {data.meses} meses. O orçamento estimado total é de €{round(total_euro, 2)}. "
-        f"Dê uma dica prática de economia ou incentivo real. Seja direto, não use saudações."
+        f"Dê uma dica prática de economia ou incentive real. Seja direto, não use saudações."
     )
     
     try:
