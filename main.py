@@ -90,7 +90,7 @@ async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
         
-        # ESTRATÉGIA DE CHOQUE: Forçamos a busca a focar apenas em grandes portais de referência em PT
+        # Foco total nos teus portais de referência em PT
         query_focada = (
             "imigração vistos AIMA CPLP site:sicnoticias.pt OR site:dn.pt OR "
             "site:jn.pt OR site:rtp.pt OR site:observador.pt OR site:record.pt OR "
@@ -103,7 +103,7 @@ async def obtener_noticias_tempo_real():
             "search_depth": "advanced",
             "topic": "news",        
             "time_range": "week",   
-            "max_results": 15       
+            "max_results": 25       # MELHORIA: Puxamos muito mais notícias brutas para ter volume
         }
         
         response = requests.post(url, json=payload, timeout=6)
@@ -116,15 +116,15 @@ async def obtener_noticias_tempo_real():
                 titulo = item.get("title", "")
                 conteudo = item.get("content", "").lower()
                 
-                # Bloqueio de segurança contra lixo/redes sociais
+                # Bloqueio de segurança contra redes sociais
                 if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
                     continue
                 
-                # Filtro extra: Descarta títulos que tenham palavras óbvias em inglês
-                if any(word in f" {titulo.lower()} " for word in [" the ", " in ", " for ", " with ", " and "]):
+                # Filtro de idioma inteligente: apenas remove se houver forte indício de inglês no título
+                if any(word in f" {titulo.lower()} " for word in [" the ", " with ", " and "]):
                     continue
                 
-                # Mapeamento dinâmico das tags com os nomes dos teus portais de referência favoritos
+                # Mapeamento dinâmico das tags com os nomes dos portais portugueses
                 tag = "Portugal"
                 if "sicnoticias" in site_url: tag = "SIC Notícias"
                 elif "dn.pt" in site_url: tag = "DN Portugal"
@@ -144,7 +144,7 @@ async def obtener_noticias_tempo_real():
                     "tag": tag
                 })
 
-        # Fallback de segurança se o Tavily falhar por segundos
+        # Fallback de segurança estruturado se a busca falhar
         if len(noticias_brutas) < 2:
             noticias_brutas = [
                 {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
@@ -159,7 +159,9 @@ async def obtener_noticias_tempo_real():
             "tag": "Tendência"
         })
         
-        return {"noticias": noticias_brutas[:6]}
+        # MELHORIA: Expandido o retorno para até 12 cards, garantindo um feed muito mais cheio
+        return {"noticias": noticias_brutas[:12]}
+        
     except Exception:
         return {"noticias": [
             {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
