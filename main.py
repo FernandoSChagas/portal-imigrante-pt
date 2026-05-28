@@ -54,11 +54,10 @@ async def exportar_leads():
         return {"erro": str(e)}
 
 # =====================================================================
-# ROTA DE NOTÍCIAS COMPLETA (NOTÍCIAS REAIS DE PORTUGAL)
+# ROTA DE NOTÍCIAS COMPLETA (NOTÍCIAS REAIS E SUPER RECENTES)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    # Criamos a lista padrão fora do bloco try para ser usada em qualquer falha
     lista_seguranca = [
         {"titulo": "AIMA lança mutirão digital para atualizar processos", "resumo": "Nova força-tarefa digital pretende agilizar a validação de dados de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial", "imagem": "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop"},
         {"titulo": "Segurança Social adota novo sistema de agendamento", "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do NISS para novos residentes estrangeiros...", "url": "https://www.seg-social.pt", "tag": "Segurança Social", "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"},
@@ -73,12 +72,14 @@ async def obtener_noticias_tempo_real():
 
     try:
         url = "https://api.tavily.com/search"
-        query_focada = "notícias imigração Portugal AIMA vistos"
+        query_focada = "notícias imigração visto AIMA Portugal autorização residência"
         
         payload = {
             "api_key": TAVILY_API_KEY,
             "query": query_focada,
             "search_depth": "advanced",
+            "topic": "news",          # Força a API a focar apenas em portais de jornalismo reais
+            "time_range": "week",      # OBRIGA A API A BUSCAR APENAS COISAS DESTA SEMANA (2026)
             "max_results": 20,
             "include_images": True
         }
@@ -127,7 +128,6 @@ async def obtener_noticias_tempo_real():
                 vistas.add(n["titulo"])
                 noticias_limpas.append(n)
 
-        # Se a API do Tavily falhar em trazer dados novos, usa a lista padrão estável
         if len(noticias_limpas) < 8:
             noticias_limpas = lista_seguranca
 
@@ -143,7 +143,6 @@ async def obtener_noticias_tempo_real():
         return {"noticias": noticias_limpas[:9]}
         
     except Exception:
-        # Se houver um erro crítico no servidor, garante o envio dos 9 cards estruturados
         lista_seguranca.insert(2, {
             "titulo": "MERCADO: Cresce o trabalho online para brasileiros em Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro...",
@@ -159,7 +158,7 @@ async def responder_chat(user_data: UserMessage):
     sessao_id = user_data.session_id 
     if sessao_id not in historico_conversas:
         historico_conversas[sessao_id] = [{"role": "system", "content": "Tu és o IMIGRANTE AI, assistente do Portal Imigrante PT. Responde de forma curta e direta em até 2 parágrafos. O ano é 2026."}]
-    historico_conversas[sessao_id].append({"role": "user", "content": message_utilizador})
+    historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
     try:
         completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=historico_conversas[sessao_id], temperature=0.2)
         resposta_final = completion.choices[0].message.content
