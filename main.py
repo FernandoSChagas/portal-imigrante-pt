@@ -90,15 +90,15 @@ async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
         query_focada = (
-            "notícias imigração Portugal visto AIMA CPLP "
-            "-site:instagram.com -site:facebook.com -site:twitter.com -site:tiktok.com -\"EUA\" -\"Estados Unidos\""
+            "notícias imigração Portugal visto AIMA CPLP regularização"
         )
         
         payload = {
             "api_key": TAVILY_API_KEY,
             "query": query_focada,
             "search_depth": "advanced",
-            "time_range": "day",
+            "topic": "news",        # Foca estritamente em canais de imprensa e jornalismo
+            "time_range": "week",   # Alargado para varrer os últimos 7 dias atrás de novidades
             "max_results": 10
         }
         
@@ -126,6 +126,7 @@ async def obtener_noticias_tempo_real():
                 elif "jn.pt" in site_url: tag = "Jornal de Notícias"
                 elif "aima" in site_url: tag = "AIMA Oficial"
                 elif "rtp" in site_url: tag = "RTP Notícias"
+                elif "observador" in site_url: tag = "Observador"
                 
                 noticias_brutas.append({
                     "titulo": titulo,
@@ -180,7 +181,6 @@ async def responder_chat(user_data: UserMessage):
             }
         ]
     
-    # CORREÇÃO: Variável ajustada de 'message_utilizador' para 'mensagem_utilizador'
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
     
     if len(historico_conversas[sessao_id]) > 13:
@@ -195,7 +195,7 @@ async def responder_chat(user_data: UserMessage):
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problem no motor inteligente. Detalhe: {str(e)}"
 
     return {"response": resposta_final}
 
