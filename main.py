@@ -89,10 +89,12 @@ async def exportar_leads():
 async def obtener_noticias_tempo_real():
     try:
         url = "https://api.tavily.com/search"
-        # ATUALIZAÇÃO: Injetadas todas as tuas palavras-chave otimizadas para o robô de busca
+        
+        # ESTRATÉGIA DE CHOQUE: Forçamos a busca a focar apenas em grandes portais de referência em PT
         query_focada = (
-            "notícias AIMA imigrantes imigração vistos Portugal autorização de residência "
-            "SEF finanças IRN segurança social arrendamento brasileiros CPLP passaporte"
+            "imigração vistos AIMA CPLP site:sicnoticias.pt OR site:dn.pt OR "
+            "site:jn.pt OR site:rtp.pt OR site:observador.pt OR site:record.pt OR "
+            "site:cmjornal.pt OR site:correiomanha.pt OR site:cnnportugal.iol.pt"
         )
         
         payload = {
@@ -101,7 +103,7 @@ async def obtener_noticias_tempo_real():
             "search_depth": "advanced",
             "topic": "news",        
             "time_range": "week",   
-            "max_results": 15       # Puxamos mais resultados para aplicar os filtros de idioma com segurança
+            "max_results": 15       
         }
         
         response = requests.post(url, json=payload, timeout=6)
@@ -114,15 +116,15 @@ async def obtener_noticias_tempo_real():
                 titulo = item.get("title", "")
                 conteudo = item.get("content", "").lower()
                 
-                # Bloqueio estrito de redes sociais e portais em inglês conhecidos
-                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube", "theportugalnews", "reuters", "bloomberg"]):
-                    continue
-                # Filtro inteligente: descarta se o título contiver palavras comuns de ligação em inglês
-                if any(word in f" {titulo.lower()} " for word in [" the ", " in ", " for ", " with ", " und ", " and "]):
-                    continue
-                if "estados unidos" in titulo.lower() or " eua " in f" {titulo.lower()} ":
+                # Bloqueio de segurança contra lixo/redes sociais
+                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube"]):
                     continue
                 
+                # Filtro extra: Descarta títulos que tenham palavras óbvias em inglês
+                if any(word in f" {titulo.lower()} " for word in [" the ", " in ", " for ", " with ", " and "]):
+                    continue
+                
+                # Mapeamento dinâmico das tags com os nomes dos teus portais de referência favoritos
                 tag = "Portugal"
                 if "sicnoticias" in site_url: tag = "SIC Notícias"
                 elif "dn.pt" in site_url: tag = "DN Portugal"
@@ -131,6 +133,9 @@ async def obtener_noticias_tempo_real():
                 elif "aima" in site_url: tag = "AIMA Oficial"
                 elif "rtp" in site_url: tag = "RTP Notícias"
                 elif "observador" in site_url: tag = "Observador"
+                elif "record" in site_url: tag = "Record"
+                elif "cmjornal" in site_url or "correiomanha" in site_url: tag = "Correio da Manhã"
+                elif "cnnportugal" in site_url: tag = "CNN Portugal"
                 
                 noticias_brutas.append({
                     "titulo": titulo,
@@ -139,13 +144,14 @@ async def obtener_noticias_tempo_real():
                     "tag": tag
                 })
 
+        # Fallback de segurança se o Tavily falhar por segundos
         if len(noticias_brutas) < 2:
             noticias_brutas = [
                 {"titulo": "AIMA reforça atendimento digital para agendamentos de vistos", "resumo": "Novas plataformas digitais prometem acelerar a regularização de processos pendentes de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial"},
                 {"titulo": "Consulados portugueses registam alta na procura por Visto de Trabalho", "resumo": "Procura por vistos de residência e procura de trabalho em Portugal mantém tendência de alta no primeiro semestre deste ano...", "url": "https://portaldascomunidades.mne.gov.pt", "tag": "Consular"}
             ]
         
-        # Injeção nativa do teu link de afiliado/vendas
+        # Injeção nativa do teu card de vendas estrategicamente posicionado
         noticias_brutas.insert(2, {
             "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
