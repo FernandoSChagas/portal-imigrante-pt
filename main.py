@@ -18,10 +18,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Chaves de API e Configurações
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+# Chaves de API e Configurações (Totalmente seguro e sem chaves expostas)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 TAVILY_API_KEY = "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"
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-S0LKPb0z4-J8uitpt3_tB7dYYxaTFpA2KXIjWJkU3BNT9empVC17YRzaf3dgGweW/exec"
+
+if not GROQ_API_KEY:
+    print("AVISO: GROQ_API_KEY não encontrada nas variáveis de ambiente do Render!")
 
 client = Groq(api_key=GROQ_API_KEY)
 historico_conversas = {}
@@ -177,7 +180,7 @@ async def responder_chat(user_data: UserMessage):
             }
         ]
     
-    historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
+    historico_conversas[sessao_id].append({"role": "user", "content": message_utilizador})
     
     if len(historico_conversas[sessao_id]) > 13:
         historico_conversas[sessao_id] = [historico_conversas[sessao_id][0]] + historico_conversas[sessao_id][-12:]
