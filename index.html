@@ -318,11 +318,10 @@
             <div class="carousel-container">
                 <button class="carousel-btn btn-left" onclick="moverCarrossel(-1)">❮</button>
                 <div class="news-carousel-track" id="newsGrid">
-                    <article class="news-card-carousel">
-                        <div class="news-card-content">
-                            <div class="news-tag">AIMA</div>
-                            <h3>A carregar notícias do dia...</h3>
-                            <p>O motor de busca está a varrer os portais de jornalismo portugueses para trazer as novidades das últimas 24 horas...</p>
+                    <article class="news-card-carousel" style="flex: 0 0 100% !important;">
+                        <div class="news-card-content" style="text-align: center; justify-content: center; min-height: 200px;">
+                            <h3>A carregar notícias dinâmicas...</h3>
+                            <p>O sistema está a conectar-se ao servidor central para extrair as atualizações das últimas 24h em Portugal.</p>
                         </div>
                     </article>
                 </div>
@@ -404,6 +403,7 @@
     <script>
         const SERVIDOR_URL = "https://portal-imigrante-pt.onrender.com/api";
         let posicaoAtual = 0;
+        let tentativasConexao = 0;
 
         // 1. CÂMBIO DO EURO DO DIA
         async function buscarEuro() {
@@ -416,7 +416,7 @@
             }
         }
 
-        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA
+        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (Com gestão de Standby do Render)
         async function carregarNoticiasVivas() {
             const grid = document.getElementById("newsGrid");
             try {
@@ -446,9 +446,26 @@
                     });
                     posicaoAtual = 0;
                     grid.style.transform = `translateX(0px)`;
+                    tentativasConexao = 0; // Reseta o contador ao ter sucesso
                 }
             } catch (error) {
-                console.log("Erro ao carregar plantão de notícias.");
+                console.log("Servidor em Standby. A tentar acordar a API...");
+                tentativasConexao++;
+                
+                // Na primeira falha, altera o ecrã avisando que o Render está a acordar
+                if (tentativasConexao === 1) {
+                    grid.innerHTML = `
+                        <article class="news-card-carousel" style="flex: 0 0 100% !important; min-height: 200px;">
+                            <div class="news-card-content" style="text-align: center; justify-content: center;">
+                                <div class="news-tag" style="background: #e1b12c; margin: 0 auto 10px auto; color: #000;">Servidor em Standby</div>
+                                <h3>A estabelecer ligação segura...</h3>
+                                <p>O servidor gratuito do Render está a iniciar os motores. Isto acontece após alguns minutos de inatividade e pode demorar cerca de 30 segundos. Atualização automática em curso...</p>
+                            </div>
+                        </article>
+                    `;
+                }
+                // Tenta novamente a cada 10 segundos até o Render responder
+                setTimeout(carregarNoticiasVivas, 10000);
             }
         }
 
@@ -473,13 +490,13 @@
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
             try {
-                const resIp = await fetch("http://ip-api.com/json/");
+                const resIp = await fetch("https://ipapi.co/json/");
                 const dataIp = await resIp.json();
                 
-                if (dataIp && dataIp.status === "success" && dataIp.lat && dataIp.lon) {
+                if (dataIp && !dataIp.error && dataIp.latitude && dataIp.longitude) {
                     const cidade = dataIp.city || "Local Atual";
                     
-                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.lat}&longitude=${dataIp.lon}&current_weather=true&nocache=${Date.now()}`);
+                    const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.latitude}&longitude=${dataIp.longitude}&current_weather=true&nocache=${Date.now()}`);
                     const dataWeather = await resWeather.json();
                     
                     if (dataWeather && dataWeather.current_weather) {
