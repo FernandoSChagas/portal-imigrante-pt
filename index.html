@@ -26,21 +26,39 @@
             width: 100%;
         }
 
+        /* Ajuste de tamanho para abrigar a imagem com folga */
         .news-card-carousel {
             flex: 0 0 calc(33.333% - 14px);
             background-color: #161b22;
             border: 1px solid #21262d;
             border-radius: 12px;
-            padding: 20px;
+            padding: 0; /* Remove padding total para a imagem colar nas bordas do topo */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 220px;
+            min-height: 340px; /* Aumentado para dar espaço à imagem */
+            overflow: hidden;
             transition: border-color 0.3s;
         }
 
         .news-card-carousel:hover {
             border-color: #00a3a3;
+        }
+
+        /* Container do texto dentro do card */
+        .news-card-content {
+            padding: 15px 20px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        /* Estilização da Imagem de Capa do Card */
+        .news-card-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-bottom: 1px solid #21262d;
         }
 
         .carousel-btn {
@@ -67,7 +85,7 @@
         .btn-right { right: 0; }
 
         /* =====================================================================
-           RODAPÉ MODULAR, COMPACTO E RESPONSIVO (ALINHADO COM A LANDING PAGE)
+           RODAPÉ MODULAR, COMPACTO E RESPONSIVO
            ===================================================================== */
         footer {
             background-color: #0d1117;
@@ -249,7 +267,7 @@
             .nav-links a.nav-btn-ia { padding: 6px 12px !important; }
             .main-container { padding-top: 130px !important; }
             
-            .news-card-carousel { flex: 0 0 100% !important; }
+            .news-card-carousel { flex: 0 0 100% !important; min-height: 320px; }
             .carousel-container { padding: 10px 35px; }
 
             .footer-main { flex-direction: column; text-align: center; }
@@ -301,10 +319,10 @@
                 <button class="carousel-btn btn-left" onclick="moverCarrossel(-1)">❮</button>
                 <div class="news-carousel-track" id="newsGrid">
                     <article class="news-card-carousel">
-                        <div>
+                        <div class="news-card-content">
                             <div class="news-tag">AIMA</div>
                             <h3>A carregar notícias do dia...</h3>
-                            <p>O motor de busca está a varrer os portais de jornalismo portugueses para trazer as novidades das últimas 24 hours...</p>
+                            <p>O motor de busca está a varrer os portais de jornalismo portugueses para trazer as novidades das últimas 24 horas...</p>
                         </div>
                     </article>
                 </div>
@@ -351,7 +369,7 @@
                 <p>Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente aceitáveis ​​para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou modificação não autorizados.</p>
                 <p>Não compartilhamos informações de identificação pessoal publicamente ou com terceiros, exceto quando exigido por lei.</p>
                 <p>O nosso site pode tel links para sites externos que não são operados por nós. Esteja ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos aceitar responsabilidade por suas respectivas políticas de privacidade.</p>
-                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer alguns dos serviços desejados.</p>
+                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer some dos serviços desejados.</p>
                 <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
                 <h3>Compromisso do Usuário</h3>
                 <ul>
@@ -410,15 +428,19 @@
                     data.noticias.forEach(noticia => {
                         const fonte = noticia.tag || "Ao Vivo";
                         const targetAttr = noticia.url.includes("viver-do-digital") ? "" : 'target="_blank"';
+                        const linkImagem = noticia.imagem || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop";
                         
                         grid.innerHTML += `
                             <article class="news-card-carousel">
-                                <div>
-                                    <div class="news-tag">${fonte}</div>
-                                    <h3 style="font-size:1.05rem; margin: 10px 0; color:#fff;">${noticia.titulo}</h3>
-                                    <p style="font-size:0.85rem; color:#8b949e; line-height:1.4;">${noticia.resumo}</p>
+                                <img src="${linkImagem}" class="news-card-img" alt="Capa da Notícia" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop'">
+                                <div class="news-card-content">
+                                    <div>
+                                        <div class="news-tag">${fonte}</div>
+                                        <h3 style="font-size:1.05rem; margin: 10px 0; color:#fff; line-height:1.3;">${noticia.titulo}</h3>
+                                        <p style="font-size:0.85rem; color:#8b949e; line-height:1.4; margin-bottom:10px;">${noticia.resumo}</p>
+                                    </div>
+                                    <a href="${noticia.url}" ${targetAttr} class="read-more" style="margin-top:auto; display:inline-block; font-size:0.85rem; color:#00a3a3; text-decoration:none;">Ler artigo completo →</a>
                                 </div>
-                                <a href="${noticia.url}" ${targetAttr} class="read-more" style="margin-top:15px; display:inline-block; font-size:0.85rem; color:#00a3a3; text-decoration:none;">Ler artigo completo →</a>
                             </article>
                         `;
                     });
@@ -446,12 +468,11 @@
             track.style.transform = `translateX(-${posicaoAtual * larguraCard}px)`;
         }
 
-        // 4. CLIMA DINÂMICO POR IP REAL (MUDADO PARA MOTOR IP-API ULTRA ESTÁVEL)
+        // 4. CLIMA DINÂMICO POR IP REAL
         async function carregarClimaDinamico() {
             const campoTexto = document.getElementById("info-clima");
             const campoTitulo = document.getElementById("titulo-clima");
             try {
-                // Nova API: Muito mais rápida, sem bloqueios de cache e precisa
                 const resIp = await fetch("http://ip-api.com/json/");
                 const dataIp = await resIp.json();
                 
@@ -476,9 +497,8 @@
                     }
                 }
             } catch (error) {
-                console.log("Erro na nova API de clima, aplicando segurança regional.");
+                console.log("Erro na API de clima, aplicando segurança regional.");
             }
-            // Se tudo falhar no mundo, mostra a tua base padrão de Guimarães corrigida
             campoTitulo.innerText = "Clima em Guimarães";
             campoTexto.innerText = "22°C (Pouco Nublado 🌤️)";
         }
