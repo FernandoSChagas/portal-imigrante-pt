@@ -1,12 +1,12 @@
 import os
-import requests
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from groq import Groq
 
-app = FastAPI(title="Portal Imigrante PT - Notícias em Português")
+app = FastAPI(title="Portal Imigrante PT - IA Humana e Abrangente")
 
+# Configuração de CORS para o teu link do GitHub Pages
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,184 +15,60 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-TAVILY_API_KEY = "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"
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-S0LKPb0z4-J8uitpt3_tB7dYYxaTFpA2KXIjWJkU3BNT9empVC17YRzaf3dgGweW/exec"
+# Puxa a chave da Groq guardada no Render
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+client = Groq(api_key=GROQ_API_KEY)
 
-client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 historico_conversas = {}
 
 class UserMessage(BaseModel):
     message: str
-    session_id: str = "comum"
 
-class RegionRequest(BaseModel):
-    regiao: str
-
-class SimRequest(BaseModel):
-    perfil: str
-    regiao: str
-    meses: int
-    nome: str  
-    email: str 
-    whatsapp: str = "Não informado"
-
-def guardar_lead_local(nome: str, email: str, whatsapp: str, origin: str):
-    try:
-        payload = {"nome": nome, "email": email, "whatsapp": whatsapp, "origem": origin}
-        requests.post(GOOGLE_SCRIPT_URL, json=payload, timeout=8)
-        return True
-    except Exception:
-        return False
-
-# =====================================================================
-# ROTA DE NOTÍCIAS (FOCO TOTAL EM SITES .PT E LÍNGUA PORTUGUESA)
-# =====================================================================
-@app.get("/api/noticias")
-async def obtener_noticias_tempo_real():
-    # Lista de segurança 100% em português caso a API falhe
-    lista_seguranca = [
-        {"titulo": "AIMA lança mutirão digital para atualizar processos", "resumo": "Nova força-tarefa digital pretende agilizar a validação de dados de manifestações de interesse antigas...", "url": "https://aima.gov.pt", "tag": "AIMA Oficial", "imagem": "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "Segurança Social adota novo sistema de agendamento", "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do NISS para novos residentes estrangeiros...", "url": "https://www.seg-social.pt", "tag": "Segurança Social", "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "Custo de arrendamento estabiliza em áreas metropolitanas", "resumo": "Dados do mercado imobiliário do Grande Porto e Centro indicam uma ligeira redução na pressão dos novos contratos...", "url": "https://dn.pt", "tag": "DN Portugal", "imagem": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "Novas regras do Espaço Schengen entram em vigor", "resumo": "Alterações no controlo de fronteiras prometem maior automatização e impacto nos vistos de turismo...", "url": "https://sicnoticias.pt", "tag": "SIC Notícias", "imagem": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "IRN abre novos balcões para emission de passaportes", "resumo": "Iniciativa pretende descentralizar o atendimento em Lisboa e Porto, reduzindo os prazos médios de entrega...", "url": "https://irn.justica.gov.pt", "tag": "IRN Oficial", "imagem": "https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "CPLP avalia novas facilidades para mobilidade laboral", "resumo": "Países membros discutem em cimeira novos acordos para simplificar a equivalência de diplomas...", "url": "https://www.rtp.pt", "tag": "RTP Notícias", "imagem": "https://images.unsplash.com/photo-1521791136368-1a46827d0505?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "Finanças simplificam emissão de faturas independentes", "resumo": "Autoridade Tributária atualiza portal com guias práticos focados em imigrantes que prestam serviços online...", "url": "https://portaldasfinancas.gov.pt", "tag": "Finanças", "imagem": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "Mercado imobiliário em Braga regista recorde de alojamentos", "resumo": "Aumento da oferta de quartos e apartamentos partilhados traz alívio financeiro para estudantes...", "url": "https://publico.pt", "tag": "Público", "imagem": "https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600&auto=format&fit=crop"},
-        {"titulo": "Politécnicos abrem vagas para estudantes internacionais", "resumo": "Processo de candidatura simplificado atrai recorde de novos alunos da comunidade de língua portuguesa...", "url": "https://dges.gov.pt", "tag": "Educação", "imagem": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop"}
-    ]
-
-    try:
-        url = "https://api.tavily.com/search"
-        
-        # O truque está aqui: Forçamos o Tavily a buscar termos em português dentro de sites com terminação site:.pt
-        query_focada = "site:.pt notícias imigração vistos AIMA Portugal"
-        
-        payload = {
-            "api_key": TAVILY_API_KEY,
-            "query": query_focada,
-            "search_depth": "advanced",
-            "topic": "news",
-            "time_range": "week",
-            "max_results": 20,
-            "include_images": True
-        }
-        
-        response = requests.post(url, json=payload, timeout=8)
-        noticias_brutas = []
-        img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
-
-        if response.status_code == 200:
-            data_json = response.json()
-            resultados = data_json.get("results", [])
-            imagens_tavily = data_json.get("images", [])
-            
-            for idx, item in enumerate(resultados):
-                site_url = item.get("url", "").lower()
-                titulo = item.get("title", "")
-                
-                # Segunda barreira: Se ainda assim o título contiver conectores óbvios de inglês, ignora
-                if any(word in f" {titulo.lower()} " for word in [" the ", " and ", " with ", " for ", " news "]):
-                    continue
-
-                if any(x in site_url for x in ["instagram", "tiktok", "facebook", "twitter", "youtube", "linkedin"]): 
-                    continue
-                
-                # Mapeamento limpo das fontes de Portugal
-                tag = "Portugal"
-                if "sicnoticias" in site_url: tag = "SIC Notícias"
-                elif "dn.pt" in site_url: tag = "DN Portugal"
-                elif "publico.pt" in site_url: tag = "Público"
-                elif "jn.pt" in site_url: tag = "Jornal de Notícias"
-                elif "aima" in site_url: tag = "AIMA Oficial"
-                elif "rtp.pt" in site_url: tag = "RTP Notícias"
-                elif "observador" in site_url: tag = "Observador"
-                elif "cnnportugal" in site_url: tag = "CNN Portugal"
-                
-                img_url = imagens_tavily[idx] if idx < len(imagens_tavily) else img_placeholder
-                if not img_url or not str(img_url).startswith("http"):
-                    img_url = img_placeholder
-
-                noticias_brutas.append({
-                    "titulo": titulo,
-                    "resumo": item.get("content", "Acompanhe as últimas atualizações sobre os processos legislativos e vistos em Portugal.")[:120] + "...",
-                    "url": item.get("url", "#"),
-                    "tag": tag,
-                    "imagem": img_url
-                })
-
-        # Remove duplicados por título
-        noticias_limpas = []
-        vistas = set()
-        for n in noticias_brutas:
-            if n["titulo"] not in vistas:
-                vistas.add(n["titulo"])
-                noticias_limpas.append(n)
-
-        # Se a busca falhar ou ficar curta, ativa o fallback nativo em português
-        if len(noticias_limpas) < 8:
-            noticias_limpas = lista_seguranca
-
-        # Injeta o teu e-book na 3ª posição (índice 2)
-        noticias_limpas.insert(2, {
-            "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
-            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
-            "url": "viver-do-digital.html",
-            "tag": "Tendência",
-            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
-        })
-        
-        return {"noticias": noticias_limpas[:9]}
-        
-    except Exception:
-        lista_seguranca.insert(2, {
-            "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
-            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
-            "url": "viver-do-digital.html",
-            "tag": "Tendência",
-            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
-        })
-        return {"noticias": lista_seguranca[:9]}
-
-# =====================================================================
-# RESTANTES ROTAS DO SISTEMA (MANTIDAS 100% INTATAS)
-# =====================================================================
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
-    sessao_id = user_data.session_id 
+    sessao_id = "utilizador_atual"
+    
     if sessao_id not in historico_conversas:
-        historico_conversas[sessao_id] = [{"role": "system", "content": "Tu és o IMIGRANTE AI, assistente do Portal Imigrante PT. Responde de forma curta e direta em até 2 parágrafos. O ano é 2026."}]
+        historico_conversas[sessao_id] = [
+            {
+                "role": "system",
+                "content": (
+                    "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
+                    "- Tu és o IMIGRANTE AI, o assistente virtual oficial e conselheiro humano do Portal Imigrante PT.\n"
+                    "- A tua personalidade é acolhedora, prática, experiente e muito realista. Tu falas como um imigrante veterano que já passou por tudo e quer ajudar um recém-chegado.\n"
+                    "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'MIRA'.\n\n"
+                    
+                    "ESCOPO DE ATUAÇÃO ABRANGENTE (SABER SOBRE TUDO):\n"
+                    "Tu deves responder com propriedade sobre três grandes pilares:\n"
+                    "1. LOGÍSTICA DE VIAGEM E VOOS: Dicas sobre escolha de passagens, controlo de bagagem, conexões e escalas em aeroportos, direitos do passageiro e organização de documentos de viagem.\n"
+                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA: Como é o processo psicológico da mudança, como fazer as primeiras compras de supermercado, como funciona o arrendamento real (e a procura de quartos), o clima nas diferentes estações, e como se adaptar à cultura local.\n"
+                    "3. BUROCRACIA LEGAL: Mantém a regra dos 7 anos de residência legal para nacionalidade via CPLP/UE (Lei de 2026), NIF, NISS e papel da AIMA.\n\n"
+                    
+                    "TONALIDADE E REGRAS DE RESPOSTA:\n"
+                    "- Junta conselhos práticos às respostas burocráticas. Se te perguntarem sobre o Porto ou Guimarães, fala sobre os transportes locais ou o custo prático da zona.\n"
+                    "- Sê extremamente direto. Responde logo no primeiro parágrafo.\n"
+                    "- Mantém as respostas curtas e fáceis de ler no telemóvel (máximo 3 parágrafos).\n"
+                    "- Para listas, usa unicamente o hífen (-) como marcador (limite de 5 pontos)."
+                )
+            }
+        ]
+    
     historico_conversas[sessao_id].append({"role": "user", "content": mensagem_utilizador})
+    
     try:
-        completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=historico_conversas[sessao_id], temperature=0.2)
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=historico_conversas[sessao_id],
+            temperature=0.4 # Aumentado ligeiramente para dar mais naturalidade e fluidez humana
+        )
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        resposta_final = f"[Erro]: {str(e)}"
-    return {"response": resposta_final}
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
-@app.post("/api/guias")
-async def obtener_guias_regionais(data: RegionRequest):
-    regiao = data.regiao
-    prompt = f"Especialista em Relocalização. Analise a região: {regiao}. Use formato ### Custo de vida ### Empregos ### Clima ### Dica Prática."
-    guia_ia_texto = "###Dados em atualização..."
-    try:
-        completion = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=[{"role": "user", "content": prompt}], temperature=0.2)
-        guia_ia_texto = completion.choices[0].message.content
-    except Exception: pass
-    return {"guia_ia": guia_ia_texto, "artigos": [{"titulo": f"Métricas de Arrendamento em {regiao}", "resumo": "Análise sobre custos de habitação...", "url": "https://www.idealista.pt/news/"}]}
-
-@app.post("/api/simulador")
-async def calcular_simulacao(data: SimRequest):
-    if not data.nome or not data.email or "@" not in data.email: raise HTTPException(status_code=400, detail="Dados inválidos.")
-    guardar_lead_local(data.nome, data.email, data.whatsapp, "Simulador")
-    custo_mensal = 850
-    total_euro = (custo_mensal * data.meses) + 900
-    total_real = total_euro * 6.2
-    return {"total_euro": round(total_euro, 2), "total_real": round(total_real, 2), "insight_ia": "Excelente planeamento financeiro para a sua mudança!"}
+    return {"response": reply_final} if 'reply_final' in locals() else {"response": resposta_final}
 
 @app.get("/")
 def home():
-    return {"status": "Online"}
+    return {"status": "Servidor com IA abrangente de viagens e sobrevivência humana online!"}
