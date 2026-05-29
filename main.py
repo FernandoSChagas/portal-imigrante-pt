@@ -208,7 +208,7 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     })
 
-    return {"noticias": noticias_final[:10]}
+    return {"noticias": noticias_final[:15]}
 
 # =====================================================================
 # 5. ROTA: ASSISTENTE VIRTUAL (CHAT IA)
