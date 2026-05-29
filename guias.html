@@ -19,7 +19,7 @@
         .btn-gerar { background-color: #008080; color: white; border: none; padding: 0 35px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; height: 50px; }
         .btn-gerar:hover { background-color: #00a3a3; transform: translateY(-2px); }
 
-        /* NOVO DESIGN DO DOSSIÊ (CARDS) */
+        /* DESIGN DO DOSSIÊ (CARDS) */
         .dossier-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; display: none; margin-top: 20px; }
         .dossier-card { background-color: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 25px; position: relative; overflow: hidden; transition: 0.3s; }
         .dossier-card:hover { border-color: #00e5ff; }
@@ -39,9 +39,7 @@
         .loading-pulse { display: none; text-align: center; color: #00e5ff; font-weight: bold; padding: 30px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        /* =====================================================================
-           RODAPÉ COMPACTO E RESPONSIVO (PADRONIZADO)
-           ===================================================================== */
+        /* RODAPÉ COMPACTO E RESPONSIVO */
         footer { background-color: #0d1117; border-top: 1px solid #21262d; padding: 40px 20px; margin-top: 80px; }
         .footer-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
@@ -84,8 +82,8 @@
     </div>
     <div class="nav-links">
         <a href="index.html">Notícias ao Vivo</a>
-        <a href="guias.html">Guias Regionais</a>
-        <a href="simulador.html" class="active">Simulador</a>
+        <a href="guias.html" class="active">Guias Regionais</a>
+        <a href="simulador.html">Simulador</a>
         <a href="viver-do-digital.html" style="color: #00e5ff; font-weight: bold; border: 1px dashed rgba(0, 229, 255, 0.4); padding: 5px 10px; border-radius: 4px;">Ganhar em Euro 💶</a>
         <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
     </div>
@@ -215,10 +213,10 @@
 
                 if(data.guia_ia) {
                     const partes = data.guia_ia.split('###'); 
-                    document.getElementById("txt-custo").innerText = partes[1] || "Dados em atualização...";
-                    document.getElementById("txt-emprego").innerText = partes[2] || "Dados em atualização...";
-                    document.getElementById("txt-clima").innerText = partes[3] || "Dados em atualização...";
-                    document.getElementById("txt-dica").innerText = partes[4] || "Dados em atualização...";
+                    document.getElementById("txt-custo").innerText = (partes[1] || "Dados em atualização...").trim();
+                    document.getElementById("txt-emprego").innerText = (partes[2] || "Dados em atualização...").trim();
+                    document.getElementById("txt-clima").innerText = (partes[3] || "Dados em atualização...").trim();
+                    document.getElementById("txt-dica").innerText = (partes[4] || "Dados em atualização...").trim();
                     
                     gridIA.style.display = "grid";
                 }
@@ -243,7 +241,6 @@
             }
         }
 
-        // CONTROLE DOS MODAIS
         function openModal(modalId) { document.getElementById(modalId).classList.add('active'); document.body.style.overflow = 'hidden'; }
         function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); document.body.style.overflow = ''; }
         function closeModalOnOverlay(event) { if (event.target.classList.contains('modal-overlay')) { event.target.classList.remove('active'); document.body.style.overflow = ''; } }
