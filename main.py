@@ -261,11 +261,9 @@ async def responder_chat(user_data: UserMessage):
 # =====================================================================
 @app.get("/api/vagas")
 async def obter_vagas_emprego():
-    # URL focada estritamente em listagens de portais de emprego
-    # Removemos palavras genéricas como "imigrantes" que atraem notícias
     url_vagas_agregadas = (
         "https://news.google.com/rss/search?q="
-        "\"oferta+de+emprego\"+OR+\"vaga+de+emprego\"+OR+\"recrutamento\"+Portugal+"
+        "(\"oferta+de+emprego\"+OR+\"vaga+de+emprego\"+OR+\"recrutamento\")+Portugal+"
         "(site:indeed.com+OR+site:net-empregos.com+OR+site:itjobs.pt+OR+site:sapo.pt)"
         "&hl=pt-PT&gl=PT&ceid=PT:pt-pt"
     )
@@ -274,24 +272,32 @@ async def obter_vagas_emprego():
     try:
         feed = feedparser.parse(url_vagas_agregadas)
         for entry in feed.entries[:12]:
-            titulo = entry.get("title", "")
+            titulo_raw = entry.get("title", "Vaga Recente")
             link = entry.get("link", "#")
             
-            # Filtro de segurança: Se o título parecer uma notícia de jornal, ignoramos
-            if any(termo in titulo.lower() for termo in ["notícia", "opinião", "coluna", "análise"]):
-                continue
-                
+            # Limpeza cirúrgica do título
+            limpeza = ["oferta de emprego", "vaga de emprego", "recrutamento", "em portugal", " - sapo", " - indeed", " - itjobs"]
+            titulo_limpo = titulo_raw
+            for termo in limpeza:
+                titulo_raw = titulo_raw.replace(termo, "").replace(termo.title(), "").strip(" -:")
+            
+            # Identificação da fonte para o campo "local"
+            fonte = "Portal de Empregos"
+            if "sapo" in link.lower(): fonte = "SAPO Emprego"
+            elif "indeed" in link.lower(): fonte = "Indeed"
+            elif "net-empregos" in link.lower(): fonte = "Net-Empregos"
+            elif "itjobs" in link.lower(): fonte = "ITJobs"
+            
             vagas_resultado.append({
-                "titulo": titulo,
-                "local": "Portugal",
-                "descricao": "Vaga detetada em canal de recrutamento oficial. Clique para ver detalhes.",
+                "titulo": titulo_raw.strip(),
+                "local": fonte,
+                "descricao": "Vaga ativa. Clique para verificar requisitos e candidatar-se.",
                 "url": link
             })
     except Exception as e:
-        print(f"Erro ao filtrar vagas: {e}")
+        print(f"Erro ao processar vagas: {e}")
         
     return {"vagas": vagas_resultado}
-
 @app.get("/")
 def home():
     return {"status": "Servidor online!"}
