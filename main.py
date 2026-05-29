@@ -1,5 +1,7 @@
 import os
 import feedparser
+import requests
+from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -37,7 +39,7 @@ async def responder_chat(user_data: UserMessage):
                 "content": (
                     "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
                     "- Tu és o IMIGRANTE AI, o assistente virtual oficial e conselheiro humano do Portal Imigrante PT.\n"
-                    "- A tua personalidade é acolhedora, prática, experiente e muito realista. Tu falas como um imigrante veterano que já passou por tudo e quer ajudar um recém-chegado.\n"
+                    "- A tua personalidade é acolhedora, practical, experiente e muito realista. Tu falas como um imigrante veterano que já passou por tudo e quer ajudar um recém-chegado.\n"
                     "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'MIRA'.\n\n"
                     
                     "ESCOPO DE ATUAÇÃO ABRANGENTE (SABER SOBRE TUDO):\n"
@@ -66,72 +68,68 @@ async def responder_chat(user_data: UserMessage):
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        resposta_final = f"[Erro de Conexão]: Ocorreu um problem no motor inteligente. Detalhe: {str(e)}"
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
     return {"response": resposta_final}
 
+# Função interna para varrer o site do jornal e capturar a imagem de destaque real
+def extrair_imagem_real(url_artigo, placeholder):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    try:
+        # Faz uma requisição rápida para não travar o carregamento do carrossel
+        r = requests.get(url_artigo, headers=headers, timeout=2)
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, 'html.parser')
+            # Captura a tag que guarda a imagem principal da notícia
+            meta_img = soup.find("meta", property="og:image") or soup.find("meta", attrs={"name": "twitter:image"})
+            if meta_img and meta_img.get("content"):
+                return meta_img["content"]
+    except:
+        pass
+    return placeholder
+
 # =====================================================================
-# ROTA DE NOTÍCIAS OTIMIZADA E PARALELA (Fontes Estáveis)
+# ROTA DE NOTÍCIAS AUTOMÁTICA (INTEGRAÇÃO COMPLETA GOOGLE NEWS + IMAGENS)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    # Feeds estratégicos e agregadores que evitam bloqueios de CORS e rede
-    fontes_rss = [
-        {"url": "https://news.google.com/rss/search?q=imigra%C3%A7%C3%A3o+portugal&hl=pt-PT&gl=PT&ceid=PT:pt-pt", "tag": "Destaque PT"},
-        {"url": "https://www.jn.pt/rss/portugal.xml", "tag": "JN Portugal"},
-        {"url": "https://rss.rtp.pt/noticias/index.xml", "tag": "RTP Notícias"},
-        {"url": "https://www.publico.pt/feed/ultimo", "tag": "Público"}
-    ]
-    noticias_brutas = []
+    # Agregador configurado para colher atualizações da SIC e DN sem sofrer bloqueios de rede
+    url_google_news = "https://news.google.com/rss/search?q=imigra%C3%A7%C3%A3o+portugal+site:sicnoticias.pt+OR+site:dn.pt&hl=pt-PT&gl=PT&ceid=PT:pt-pt"
+    
+    noticias_final = []
     img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
 
-    for fonte in fontes_rss:
-        try:
-            feed = feedparser.parse(fonte["url"])
-            if not feed.entries:
-                continue
-                
-            for entry in feed.entries[:4]:
-                img_url = img_placeholder
-                
-                # Sistema de varredura profunda de imagens em destaque nos XMLs
-                if 'media_content' in entry and len(entry.media_content) > 0:
-                    img_url = entry.media_content[0].get('url', img_placeholder)
-                elif 'links' in entry:
-                    for link in entry.links:
-                        if 'image' in link.get('type', ''):
-                            img_url = link.get('href', img_placeholder)
-                elif 'enclosure' in entry:
-                    img_url = entry.enclosure.get('url', img_placeholder)
+    try:
+        feed = feedparser.parse(url_google_news)
+        
+        # Filtra as 5 notícias mais recentes publicadas
+        for entry in feed.entries[:5]:
+            titulo = entry.get("title", "")
+            if " - " in titulo:
+                titulo = titulo.split(" - ")[0] # Remove o nome do jornal anexado pelo Google no fim do título
 
-                resumo_limpo = entry.get("summary", "Acompanhe os detalhes da atualização no artigo completo.")
-                if resumo_limpo and "<" in resumo_limpo:
-                    resumo_limpo = resumo_limpo.split("<")[0]
-                
-                if not resumo_limpo or len(resumo_limpo.strip()) < 10:
-                    resumo_limpo = "Clique para ler os detalhes completos da atualização oficial em Portugal."
+            link_original = entry.get("link", "#")
+            
+            # Identificação dinâmica da Tag do Card
+            tag = "Portugal"
+            if "sicnoticias" in link_original.lower(): tag = "SIC Notícias"
+            elif "dn.pt" in link_original.lower(): tag = "DN Portugal"
 
-                noticias_brutas.append({
-                    "titulo": entry.get("title", ""),
-                    "resumo": resumo_limpo[:110] + "...",
-                    "url": entry.get("link", "#"),
-                    "tag": fonte["tag"],
-                    "imagem": img_url
-                })
-        except Exception as e:
-            print(f"Erro na fonte {fonte['tag']}: {e}")
-            continue
+            # Executa a varredura em segundo plano para extrair a foto real da notícia
+            imagem_capa = extrair_imagem_real(link_original, img_placeholder)
 
-    # Remove duplicados por título
-    noticias_limpas = []
-    vistas = set()
-    for n in noticias_brutas:
-        if n["titulo"] not in vistas:
-            vistas.add(n["titulo"])
-            noticias_limpas.append(n)
+            noticias_final.append({
+                "titulo": titulo,
+                "resumo": "Clique no link abaixo para acompanhar a cobertura completa desta atualização diretamente no portal oficial.",
+                "url": link_original,
+                "tag": tag,
+                "imagem": imagem_capa
+            })
+    except Exception as e:
+        print(f"Erro ao processar agregador: {e}")
 
-    # Injeta o teu e-book SEMPRE na terceira posição (índice 2)
-    noticias_limpas.insert(2, {
+    # Injeta a estratégia do seu e-book de negócios digitais perfeitamente na 3ª posição
+    noticias_final.insert(2, {
         "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
         "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
         "url": "viver-do-digital.html",
@@ -139,24 +137,17 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     })
 
-    # Se as fontes falharem totalmente, garante estes cards de segurança mínimos na tela
-    if len(noticias_limpas) < 3:
-        noticias_limpas.append({
+    # Backup caso o agregador falhe e o carrossel precise de dados mínimos
+    if len(noticias_final) < 2:
+        noticias_final.append({
             "titulo": "AIMA otimiza plataforma digital para atualização de processos",
             "resumo": "Nova atualização pretende agilizar a validação de dados de manifestações de interesse antigas...",
             "url": "https://aima.gov.pt",
             "tag": "AIMA Oficial",
             "imagem": "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop"
         })
-        noticias_limpas.append({
-            "titulo": "Segurança Social adota novo sistema de agendamento para o NISS",
-            "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do número para novos residentes estrangeiros...",
-            "url": "https://www.seg-social.pt",
-            "tag": "Segurança Social",
-            "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"
-        })
 
-    return {"noticias": noticias_limpas[:10]}
+    return {"noticias": noticias_final[:10]}
 
 @app.get("/")
 def home():
