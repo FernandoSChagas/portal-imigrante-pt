@@ -178,7 +178,7 @@ async def obtener_noticias_tempo_real():
 
     try:
         feed = feedparser.parse(url_google_news)
-        for entry in feed.entries[:5]:
+        for entry in feed.entries[:15]:
             titulo = entry.get("title", "")
             if " - " in titulo:
                 titulo = titulo.split(" - ")[0]
