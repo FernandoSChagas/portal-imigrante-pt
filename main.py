@@ -139,7 +139,7 @@ async def gerar_analise_regional(data: RegionRequest):
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": "Cria uma análise corta dividida estritamente por três marcadores '###' sem títulos. Exemplo: ### custo ### emprego ### clima ### dica"},
+                {"role": "system", "content": "Cria uma análise curta dividida estritamente por três marcadores '###' sem títulos. Exemplo: ### custo ### emprego ### clima ### dica"},
                 {"role": "user", "content": f"Gera dados para: {regiao_selecionada}"}
             ],
             temperature=0.3
@@ -178,7 +178,8 @@ async def obtener_noticias_tempo_real():
 
     try:
         feed = feedparser.parse(url_google_news)
-        for entry in feed.entries[:15]:
+        # 1. Puxa as 14 notícias mais recentes direto do feed organizado do Google
+        for entry in feed.entries[:14]:
             titulo = entry.get("title", "")
             if " - " in titulo:
                 titulo = titulo.split(" - ")[0]
@@ -200,6 +201,7 @@ async def obtener_noticias_tempo_real():
     except:
         pass
 
+    # 2. Insere estritamente na 3ª posição (Índice 2) de forma fixa para manter o nobre espaço de conversão
     noticias_final.insert(2, {
         "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
         "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
@@ -208,6 +210,7 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     })
 
+    # 3. Garante a trava de teto limite estrito em 15 cards
     return {"noticias": noticias_final[:15]}
 
 # =====================================================================
@@ -230,7 +233,7 @@ async def responder_chat(user_data: UserMessage):
                     "ESCOPO DE ATUAÇÃO ABRANGENTE (SABER SOBRE TUDO):\n"
                     "Tu deves responder com propriedade sobre três grandes pilares:\n"
                     "1. LOGÍSTICA DE VIAGEM E VOOS: Dicas sobre escolha de passagens, controlo de bagagem, conexões e escalas em aeroportos, direitos do passageiro e organização de documentos de viagem.\n"
-                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA: Como é o processo psicológico da mudança, como fazer as primeiras compras de supermercado, como funciona o arrendamento real (e a procura de quartos), o clima nas diferentes estações, e como se adaptar à cultura local.\n"
+                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA: Como é o processo psicológico da mudança, como fazer as primeiras compras de supermercado, como funciona o arrendamento real (e a procura de quartos), o clima nas Different estações, e como se adaptar à cultura local.\n"
                     "3. BUROCRACIA LEGAL: Mantém a regra dos 7 anos de residência legal para nacionalidade via CPLP/UE (Lei de 2026), NIF, NISS e papel da AIMA.\n\n"
                     "TONALIDADE E REGRAS DE RESPOSTA:\n"
                     "- Junta conselhos práticos às respostas burocráticas. Se te perguntarem sobre o Porto ou Guimarães, fala sobre os transportes locais ou o custo prático da zona.\n"
