@@ -261,37 +261,35 @@ async def responder_chat(user_data: UserMessage):
 # =====================================================================
 @app.get("/api/vagas")
 async def obter_vagas_emprego():
-    vagas_resultado = []
-    # Usando um feed RSS público padrão de vagas de tecnologia e suporte em Portugal
-    url_feed_empregos = "https://www.itjobs.pt/emprego/rss"
+    # URL de busca inteligente focada em anúncios de emprego recentes em Portugal
+    # Usamos o Google News para captar as publicações mais recentes dos portais (Sapo, Indeed, etc)
+    url_vagas_agregadas = (
+        "https://news.google.com/rss/search?q=vagas+emprego+Portugal+imigrantes+"
+        "(Sapo+OR+Indeed+OR+NetEmpregos+OR+ofertas)+after:2026-05-25"
+        "&hl=pt-PT&gl=PT&ceid=PT:pt-pt"
+    )
     
+    vagas_resultado = []
     try:
-        feed = feedparser.parse(url_feed_empregos)
+        feed = feedparser.parse(url_vagas_agregadas)
         for entry in feed.entries[:12]:
-            titulo = entry.get("title", "Vaga de Emprego")
+            titulo = entry.get("title", "Vaga Recente")
             link = entry.get("link", "#")
             
-            # Limpa e extrai uma descrição curta amigável
-            descricao_crua = entry.get("summary", "")
-            if len(descricao_crua) > 130:
-                descricao_crua = BeautifulSoup(descricao_crua, "html.parser").get_text()[:130] + "..."
+            # Extrair a fonte do título ou link
+            fonte = "Portal de Empregos"
+            if "sapo" in link.lower(): fonte = "Sapo Emprego"
+            elif "indeed" in link.lower(): fonte = "Indeed"
+            elif "net-empregos" in link.lower(): fonte = "Net-Empregos"
             
             vagas_resultado.append({
                 "titulo": titulo,
-                "local": "Portugal (Lisboa / Porto / Remoto)",
-                "descricao": descricao_crua if descricao_crua else "Consulte os requisitos completos e envie a sua candidatura diretamente no portal oficial.",
+                "local": fonte,
+                "descricao": "Clique abaixo para verificar os requisitos atualizados e enviar a sua candidatura diretamente na plataforma oficial.",
                 "url": link
             })
     except Exception as e:
-        print(f"Erro ao processar vagas: {e}")
-        
-    # Fallback estático inteligente caso o feed externo falhe para a tela nunca ficar vazia
-    if not vagas_resultado:
-        vagas_resultado = [
-            {"titulo": "Customer Support Representative (Língua Portuguesa)", "local": "Lisboa / Remoto", "descricao": "Apoio ao cliente internacional. Requisitos: Excelente comunicação e destreza digital.", "url": "https://www.net-empregos.com"},
-            {"titulo": "Assistente Administrativo e Logística", "local": "Porto / Presencial", "descricao": "Gestão de inventário, recepção de mercadorias e suporte documental a equipas de vendas.", "url": "https://www.net-empregos.com"},
-            {"titulo": "Operador de Atendimento e Vendas Digitais", "local": "Braga / Híbrido", "descricao": "Tratamento de leads online e suporte direto via canais de chat e e-mail corporativo.", "url": "https://www.net-empregos.com"}
-        ]
+        print(f"Erro ao agregar vagas: {e}")
         
     return {"vagas": vagas_resultado}
 
