@@ -124,52 +124,64 @@
     </main>
 
     <script>
-        const API_URL = "https://portal-imigrante-pt.onrender.com/api/leads/exportar";
+        // Corrigido para apontar para a rota certa do Render que criámos no main.py
+        const API_URL = "https://portal-imigrante-pt.onrender.com/api/leads";
         let leadsLocais = [];
 
         async function puxarLeads() {
             const tbody = document.getElementById("leadsDados");
             try {
                 const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("Erro de comunicação com a API.");
+                
                 const data = await response.json();
                 
-                if (data.leads && data.leads.length > 0) {
-                    leadsLocais = data.leads;
-                    document.getElementById("totalBadge").innerText = `Total: ${data.total_leads} Leads`;
+                // Mapeia tanto a resposta direta do Apps Script como a do fallback estruturado
+                const listaLeads = data.leads || [];
+                
+                if (listaLeads.length > 0) {
+                    leadsLocais = listaLeads;
+                    
+                    // Ajustado para ler o total vindo diretamente do tamanho do array
+                    document.getElementById("totalBadge").innerText = `Total: ${listaLeads.length} Leads`;
                     tbody.innerHTML = "";
                     
-                    // Renderiza as linhas de trás para a frente (mais recentes primeiro)
-                    data.leads.reverse().forEach(lead => {
+                    // Executamos uma cópia antes do reverse para não quebrar a ordem da lista global
+                    const listaInvertida = [...listaLeads].reverse();
+                    
+                    listaInvertida.forEach(lead => {
                         tbody.innerHTML += `
                             <tr>
-                                <td style="color: #8b949e; font-family: monospace;">${lead.data}</td>
-                                <td style="font-weight: bold; color: #fff;">${lead.nome}</td>
-                                <td><a href="mailto:${lead.email}" style="color: #00e5ff; text-decoration: none;">${lead.email}</a></td>
-                                <td style="font-family: monospace;">${lead.whatsapp}</td>
-                                <td><span class="tag-origem">${lead.origem}</span></td>
+                                <td style="color: #8b949e; font-family: monospace;">${lead.data || '---'}</td>
+                                <td style="font-weight: bold; color: #fff;">${lead.nome || '---'}</td>
+                                <td><a href="mailto:${lead.email}" style="color: #00e5ff; text-decoration: none;">${lead.email || '---'}</a></td>
+                                <td style="font-family: monospace;">${lead.whatsapp || 'Não informado'}</td>
+                                <td><span class="tag-origem">${lead.origem || 'Simulador'}</span></td>
                             </tr>
                         `;
                     });
                 } else {
                     tbody.innerHTML = `<tr><td colspan="5" class="loading-text">Nenhum contacto registado até ao momento.</td></tr>`;
+                    document.getElementById("totalBadge").innerText = `Total: 0 Leads`;
                 }
             } catch (error) {
+                console.error(error);
                 tbody.innerHTML = `<tr><td colspan="5" class="loading-text" style="color: #f87171;">Erro ao comunicar com o servidor do Render. Certifica-te de que a API está online.</td></tr>`;
             }
         }
 
-        // FUNÇÃO DE EXPORTAÇÃO AUTOMÁTICA EM UM CLIQUE
+        // FUNÇÃO DE EXPORTAÇÃO COMPATÍVEL COM EXCEL BRASILEIRO E EUROPEU
         function descarregarCSV() {
             if (leadsLocais.length === 0) {
                 alert("Não existem dados para exportar.");
                 return;
             }
 
-            let csvContent = "\uFEFF"; // Garante a acentuação correta no Excel brasileiro
-            csvContent += "Data,Nome,Email,WhatsApp,Origem\n";
+            let csvContent = "\uFEFF"; // Garante a acentuação correta no Excel brasileiro (BOM UTF-8)
+            csvContent += "Data;Nome;Email;WhatsApp;Origem\n"; // Ajustado para ponto e vírgula para abrir direto no Excel em colunas separadas
 
             leadsLocais.forEach(lead => {
-                csvContent += `"${lead.data}","${lead.nome}","${lead.email}","${lead.whatsapp}","${lead.origem}"\n`;
+                csvContent += `"${lead.data || ''}";"${lead.nome || ''}";"${lead.email || ''}";"${lead.whatsapp || 'Não informado'}";"${lead.origem || 'Simulador'}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -182,7 +194,7 @@
             document.body.removeChild(link);
         }
 
-        // Executa ao abrir
+        // Executa automaticamente ao carregar o ecrã
         puxarLeads();
     </script>
 </body>
