@@ -27,6 +27,9 @@ historico_conversas = {}
 class UserMessage(BaseModel):
     message: str
 
+class RegionRequest(BaseModel):
+    regiao: str
+
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
@@ -39,7 +42,7 @@ async def responder_chat(user_data: UserMessage):
                 "content": (
                     "PROVÍNCIA, IDENTIDADE E PERSONALIDADE:\n"
                     "- Tu és o IMIGRANTE AI, o assistente virtual oficial e conselheiro humano do Portal Imigrante PT.\n"
-                    "- A tua personalidade é acolhedora, practical, experiente e muito realista. Tu falas como um imigrante veterano que já passou por tudo e quer ajudar um recém-chegado.\n"
+                    "- A tua personalidade é acolhedora, prática, experiente e muito realista. Tu falas como um imigrante veterano que já passou por tudo e quer ajudar um recém-chegado.\n"
                     "- PROIBIÇÃO ABSOLUTA: Nunca menciones a palavra ou projeto 'MIRA'.\n\n"
                     
                     "ESCOPO DE ATUAÇÃO ABRANGENTE (SABER SOBRE TUDO):\n"
@@ -72,15 +75,63 @@ async def responder_chat(user_data: UserMessage):
 
     return {"response": resposta_final}
 
-# Função interna para varrer o site do jornal e capturar a imagem de destaque real
-def extrair_imagem_real(url_artigo, placeholder):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+# =====================================================================
+# NOVA ROTA: RADAR DE ANÁLISE REGIONAL (CONECTADO AO FRONTIER)
+# =====================================================================
+@app.post("/api/guias")
+async def gerar_analise_regional(data: RegionRequest):
+    regiao_selecionada = data.regiao
+    
+    prompt_sistema = (
+        "Atuas como um analista de dados especialista em demografia e custo de vida em Portugal.\n"
+        "Deves criar uma análise cirúrgica e curta sobre a região solicitada pelo utilizador.\n"
+        "É OBRIGATÓRIO estruturar a tua resposta usando exatamente os marcadores '###' para separar as secções, "
+        "sem adicionar qualquer texto introdutório, cabeçalhos ou conclusões fora do padrão.\n\n"
+        "Formato rígido esperado:\n"
+        "### [Texto curto sobre habitação, supermercado e custo geral sem usar títulos]\n"
+        "### [Texto curto sobre principais indústrias, empregabilidade e salários da zona]\n"
+        "### [Texto curto sobre as temperaturas, integração social e comunidade local]\n"
+        "### [Uma dica prática e direta de sobrevivência ou adaptação cultural para a região]"
+    )
+    
     try:
-        # Faz uma requisição rápida para não travar o carregamento do carrossel
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": prompt_sistema},
+                {"role": "user", "content": f"Gera a análise para a região: {regiao_selecionada}"}
+            ],
+            temperature=0.3
+        )
+        guia_texto = completion.choices[0].message.content
+    except Exception:
+        guia_texto = "### Erro ao extrair dados de custo. ### Serviço de empregabilidade temporariamente instável. ### Clima indisponível. ### Tente novamente dentro de instantes."
+
+    # Fontes e Leituras dinâmicas de apoio (Fallbacks com links oficiais úteis)
+    artigos_apoio = [
+        {
+            "titulo": f"Trabalhar em Portugal: Guia Completo sobre Emprego na Região",
+            "resumo": "Consulte as regras de contratação, salário mínimo nacional líquido e setores em expansão em solo português.",
+            "url": "https://www.iefp.pt"
+        },
+        {
+            "titulo": f"Custo de Vida e Habitação: Dados atualizados de Mercado",
+            "resumo": "Estatísticas reais sobre preços médios de arrendamento de quartos e apartamentos nas capitais de distrito.",
+            "url": "https://www.idealista.pt/news/"
+        }
+    ]
+
+    return {"guia_ia": guia_texto, "artigos": artigos_apoio}
+
+# =====================================================================
+# ROTA DE NOTÍCIAS AUTOMÁTICA (INTEGRAÇÃO COMPLETA GOOGLE NEWS + IMAGENS)
+# =====================================================================
+def extrair_imagem_real(url_artigo, placeholder):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    try:
         r = requests.get(url_artigo, headers=headers, timeout=2)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, 'html.parser')
-            # Captura a tag que guarda a imagem principal da notícia
             meta_img = soup.find("meta", property="og:image") or soup.find("meta", attrs={"name": "twitter:image"})
             if meta_img and meta_img.get("content"):
                 return meta_img["content"]
@@ -88,34 +139,24 @@ def extrair_imagem_real(url_artigo, placeholder):
         pass
     return placeholder
 
-# =====================================================================
-# ROTA DE NOTÍCIAS AUTOMÁTICA (INTEGRAÇÃO COMPLETA GOOGLE NEWS + IMAGENS)
-# =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    # Agregador configurado para colher atualizações da SIC e DN sem sofrer bloqueios de rede
     url_google_news = "https://news.google.com/rss/search?q=imigra%C3%A7%C3%A3o+portugal+site:sicnoticias.pt+OR+site:dn.pt&hl=pt-PT&gl=PT&ceid=PT:pt-pt"
-    
     noticias_final = []
     img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
 
     try:
         feed = feedparser.parse(url_google_news)
-        
-        # Filtra as 5 notícias mais recentes publicadas
         for entry in feed.entries[:5]:
             titulo = entry.get("title", "")
             if " - " in titulo:
-                titulo = titulo.split(" - ")[0] # Remove o nome do jornal anexado pelo Google no fim do título
-
+                titulo = titulo.split(" - ")[0]
             link_original = entry.get("link", "#")
             
-            # Identificação dinâmica da Tag do Card
             tag = "Portugal"
             if "sicnoticias" in link_original.lower(): tag = "SIC Notícias"
             elif "dn.pt" in link_original.lower(): tag = "DN Portugal"
 
-            # Executa a varredura em segundo plano para extrair a foto real da notícia
             imagem_capa = extrair_imagem_real(link_original, img_placeholder)
 
             noticias_final.append({
@@ -128,7 +169,6 @@ async def obtener_noticias_tempo_real():
     except Exception as e:
         print(f"Erro ao processar agregador: {e}")
 
-    # Injeta a estratégia do seu e-book de negócios digitais perfeitamente na 3ª posição
     noticias_final.insert(2, {
         "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
         "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
@@ -137,7 +177,6 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     })
 
-    # Backup caso o agregador falhe e o carrossel precise de dados mínimos
     if len(noticias_final) < 2:
         noticias_final.append({
             "titulo": "AIMA otimiza plataforma digital para atualização de processos",
