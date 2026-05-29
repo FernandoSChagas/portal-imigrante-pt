@@ -152,20 +152,38 @@ async def gerar_analise_regional(data: RegionRequest):
         {"titulo": "Trabalhar em Portugal: Guia Oficial IEFP", "resumo": "Consulte as vagas e regras de contratação.", "url": "https://www.iefp.pt"},
         {"titulo": "Habitação e Mercado Imobiliário", "resumo": "Estatísticas reais sobre arrendamento.", "url": "https://www.idealista.pt/news/"}
     ]
-    return {"guia_ia": guia_texto, "artigos": artigos_apoio}
+    return {"guia_ia": guia_texto, "artigos": articles_apoio}
 
 # =====================================================================
-# 4. ROTA: PLANTÃO DE NOTÍCIAS AUTOMÁTICO (SUPER FILTRO PT + BR)
+# 4. ROTA: PLANTÃO DE NOTÍCIAS AUTOMÁTICO (FUNÇÃO DE IMAGEM APERFEIÇOADA)
 # =====================================================================
 def extrair_imagem_real(url_artigo, placeholder):
-    headers = {"User-Agent": "Mozilla/5.0"}
+    # Cabeçalho robusto simulando um navegador Chrome real para evitar bloqueios anti-bot
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "pt-PT,pt;q=0.9,en;q=0.8"
+    }
     try:
-        r = requests.get(url_artigo, headers=headers, timeout=2)
+        r = requests.get(url_artigo, headers=headers, timeout=3)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, 'html.parser')
-            meta_img = soup.find("meta", property="og:image") or soup.find("meta", attrs={"name": "twitter:image"})
+            
+            # Tentativa 1: Meta tags padrões de imagem das redes sociais (OpenGraph/Twitter)
+            meta_img = (
+                soup.find("meta", property="og:image") or 
+                soup.find("meta", attrs={"name": "twitter:image"}) or
+                soup.find("meta", attrs={"name": "image"})
+            )
             if meta_img and meta_img.get("content"):
                 return meta_img["content"]
+            
+            # Tentativa 2: Fallback caso o jornal use estruturas de artigo modernas (Ex: Público/Observador)
+            artigo_img = soup.find("article")
+            if artigo_img:
+                img_tag = artigo_img.find("img")
+                if img_tag and img_tag.get("src"):
+                    return img_tag["src"]
     except:
         pass
     return placeholder
