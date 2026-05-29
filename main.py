@@ -123,8 +123,6 @@ async def processar_simulacao(data: SimulationRequest):
 @app.post("/api/guias")
 async def gerar_analise_regional(data: RegionRequest):
     regiao_selecionada = data.regiao
-    
-    # Texto de segurança caso a IA falhe
     guia_texto = "### O custo médio de habitação varia entre €600 e €1100 dependendo da proximidade aos centros urbanos. ### O mercado local apresenta forte demanda nos setores de tecnologia, serviços e turismo. ### O clima é caracterizado por estações bem definidas, com invernos amenos e verões ensolarados. ### Planeie a sua fixação com antecedência burocrática junto dos órgãos oficiais."
     
     try:
@@ -257,6 +255,45 @@ async def responder_chat(user_data: UserMessage):
     except Exception as e:
         resposta_final = f"[Erro de Conexão]: Motor inteligente instável. Detalhe: {str(e)}"
     return {"response": resposta_final}
+
+# =====================================================================
+# 6. ROTA NOVA: PAINEL DE VAGAS TOTALMENTE ISOLADO (SEM RISCO)
+# =====================================================================
+@app.get("/api/vagas")
+async def obter_vagas_emprego():
+    vagas_resultado = []
+    # Usando um feed RSS público padrão de vagas de tecnologia e suporte em Portugal
+    url_feed_empregos = "https://www.itjobs.pt/emprego/rss"
+    
+    try:
+        feed = feedparser.parse(url_feed_empregos)
+        for entry in feed.entries[:12]:
+            titulo = entry.get("title", "Vaga de Emprego")
+            link = entry.get("link", "#")
+            
+            # Limpa e extrai uma descrição curta amigável
+            descricao_crua = entry.get("summary", "")
+            if len(descricao_crua) > 130:
+                descricao_crua = BeautifulSoup(descricao_crua, "html.parser").get_text()[:130] + "..."
+            
+            vagas_resultado.append({
+                "titulo": titulo,
+                "local": "Portugal (Lisboa / Porto / Remoto)",
+                "descricao": descricao_crua if descricao_crua else "Consulte os requisitos completos e envie a sua candidatura diretamente no portal oficial.",
+                "url": link
+            })
+    except Exception as e:
+        print(f"Erro ao processar vagas: {e}")
+        
+    # Fallback estático inteligente caso o feed externo falhe para a tela nunca ficar vazia
+    if not vagas_resultado:
+        vagas_resultado = [
+            {"titulo": "Customer Support Representative (Língua Portuguesa)", "local": "Lisboa / Remoto", "descricao": "Apoio ao cliente internacional. Requisitos: Excelente comunicação e destreza digital.", "url": "https://www.net-empregos.com"},
+            {"titulo": "Assistente Administrativo e Logística", "local": "Porto / Presencial", "descricao": "Gestão de inventário, recepção de mercadorias e suporte documental a equipas de vendas.", "url": "https://www.net-empregos.com"},
+            {"titulo": "Operador de Atendimento e Vendas Digitais", "local": "Braga / Híbrido", "descricao": "Tratamento de leads online e suporte direto via canais de chat e e-mail corporativo.", "url": "https://www.net-empregos.com"}
+        ]
+        
+    return {"vagas": vagas_resultado}
 
 @app.get("/")
 def home():
