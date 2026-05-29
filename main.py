@@ -132,21 +132,21 @@ async def gerar_analise_regional(data: RegionRequest):
         }
     ]
 
-    return {"guia_ia": guia_texto, "artigos": articles_apoio}
+    return {"guia_ia": guia_texto, "artigos": artigos_apoio}
 
 # =====================================================================
 # 3. ROTA: SIMULADOR DE RESERVA DE SEGURANÇA (MATEMÁTICA + INSIGHT)
 # =====================================================================
 @app.post("/api/simulador")
 async def processar_simulacao(data: SimulationRequest):
-    # Base de cálculo matemática de custo mensal médio de vida por perfil familiar em 2026
+    # Base de cálculo matemática de custo mensal médio de vida por perfil familiar
     custo_base = 900  # Solteiro por padrão
     if data.perfil == "casal":
         custo_base = 1400
     elif data.perfil == "familia":
         custo_base = 1800
 
-    # Ajustadores por densidade regional de custo
+    # Ajustadores por densidade regional de custo de vida
     multiplicador_regiao = 1.0
     if "Lisboa" in data.regiao:
         multiplicador_regiao = 1.35
@@ -168,7 +168,7 @@ async def processar_simulacao(data: SimulationRequest):
     total_real = float(total_euro * cotacao_brl)
 
     prompt_ia = (
-        f"Analise o plano migratório de {data.nome} para Portugal em 2026.\n"
+        f"Analise o plano migratório de {data.nome} para Portugal.\n"
         f"- Perfil: {data.perfil.upper()}\n"
         f"- Destino: {data.regiao}\n"
         f"- Tempo de cobertura escolhido: {data.meses} meses\n"
