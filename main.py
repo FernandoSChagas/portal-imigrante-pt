@@ -24,12 +24,24 @@ client = Groq(api_key=GROQ_API_KEY)
 
 historico_conversas = {}
 
+# Modelos de dados (Pydantic) para validação das requisições
 class UserMessage(BaseModel):
     message: str
 
 class RegionRequest(BaseModel):
     regiao: str
 
+class SimulationRequest(BaseModel):
+    perfil: str
+    regiao: str
+    meses: int
+    nome: str
+    email: str
+    whatsapp: str = ""
+
+# =====================================================================
+# 1. ROTA: ASSISTENTE VIRTUAL (CHAT IA)
+# =====================================================================
 @app.post("/api/chat")
 async def responder_chat(user_data: UserMessage):
     mensagem_utilizador = user_data.message
@@ -76,7 +88,7 @@ async def responder_chat(user_data: UserMessage):
     return {"response": resposta_final}
 
 # =====================================================================
-# NOVA ROTA: RADAR DE ANÁLISE REGIONAL (CONECTADO AO FRONTIER)
+# 2. ROTA: RADAR DE ANÁLISE REGIONAL (GUIAS)
 # =====================================================================
 @app.post("/api/guias")
 async def gerar_analise_regional(data: RegionRequest):
@@ -107,24 +119,85 @@ async def gerar_analise_regional(data: RegionRequest):
     except Exception:
         guia_texto = "### Erro ao extrair dados de custo. ### Serviço de empregabilidade temporariamente instável. ### Clima indisponível. ### Tente novamente dentro de instantes."
 
-    # Fontes e Leituras dinâmicas de apoio (Fallbacks com links oficiais úteis)
     artigos_apoio = [
         {
-            "titulo": f"Trabalhar em Portugal: Guia Completo sobre Emprego na Região",
+            "titulo": "Trabalhar em Portugal: Guia Completo sobre Emprego na Região",
             "resumo": "Consulte as regras de contratação, salário mínimo nacional líquido e setores em expansão em solo português.",
             "url": "https://www.iefp.pt"
         },
         {
-            "titulo": f"Custo de Vida e Habitação: Dados atualizados de Mercado",
+            "titulo": "Custo de Vida e Habitação: Dados atualizados de Mercado",
             "resumo": "Estatísticas reais sobre preços médios de arrendamento de quartos e apartamentos nas capitais de distrito.",
             "url": "https://www.idealista.pt/news/"
         }
     ]
 
-    return {"guia_ia": guia_texto, "artigos": artigos_apoio}
+    return {"guia_ia": guia_texto, "artigos": articles_apoio}
 
 # =====================================================================
-# ROTA DE NOTÍCIAS AUTOMÁTICA (INTEGRAÇÃO COMPLETA GOOGLE NEWS + IMAGENS)
+# 3. ROTA: SIMULADOR DE RESERVA DE SEGURANÇA (MATEMÁTICA + INSIGHT)
+# =====================================================================
+@app.post("/api/simulador")
+async def processar_simulacao(data: SimulationRequest):
+    # Base de cálculo matemática de custo mensal médio de vida por perfil familiar em 2026
+    custo_base = 900  # Solteiro por padrão
+    if data.perfil == "casal":
+        custo_base = 1400
+    elif data.perfil == "familia":
+        custo_base = 1800
+
+    # Ajustadores por densidade regional de custo
+    multiplicador_regiao = 1.0
+    if "Lisboa" in data.regiao:
+        multiplicador_regiao = 1.35
+    elif "Algarve" in data.regiao or "Norte" in data.regiao:
+        multiplicador_regiao = 1.1
+
+    # Cálculo matemático final do Fundo de Segurança em Euro
+    total_euro = float(custo_base * multiplicador_regiao * data.meses)
+
+    # Busca a cotação real do Euro para converter para Real dinamicamente
+    cotacao_brl = 5.85
+    try:
+        res_cambio = requests.get("https://open.er-api.com/v6/latest/EUR", timeout=2)
+        if res_cambio.status_code == 200:
+            cotacao_brl = float(res_cambio.json()["rates"]["BRL"])
+    except:
+        pass
+
+    total_real = float(total_euro * cotacao_brl)
+
+    prompt_ia = (
+        f"Analise o plano migratório de {data.nome} para Portugal em 2026.\n"
+        f"- Perfil: {data.perfil.upper()}\n"
+        f"- Destino: {data.regiao}\n"
+        f"- Tempo de cobertura escolhido: {data.meses} meses\n"
+        f"- Fundo calculado: € {total_euro:.2f}\n\n"
+        f"Dê um parecer direto, realista e humano (máximo 3 parágrafos) avaliando se essa reserva garante estabilidade "
+        f"para cobrir o arrendamento e a inserção no mercado profissional local. Use hífens (-) para listas."
+    )
+
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "És um consultor financeiro e burocrático de imigração para Portugal. Dá orientações diretas, realistas e acolhedoras sobre o custo de vida."},
+                {"role": "user", "content": prompt_ia}
+            ],
+            temperature=0.3
+        )
+        insight_ia = completion.choices[0].message.content
+    except Exception as e:
+        insight_ia = f"Cálculo concluído com sucesso. A sua reserva de € {total_euro:.2f} é recomendada para cobrir despesas básicas de alojamento, alimentação e transportes durante o período de transição."
+
+    return {
+        "total_euro": total_euro,
+        "total_real": total_real,
+        "insight_ia": insight_ia
+    }
+
+# =====================================================================
+# 4. ROTA: PLANTÃO DE NOTÍCIAS AUTOMÁTICO (GOOGLE NEWS + BS4)
 # =====================================================================
 def extrair_imagem_real(url_artigo, placeholder):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -190,4 +263,4 @@ async def obtener_noticias_tempo_real():
 
 @app.get("/")
 def home():
-    return {"status": "Servidor com IA abrangente de viagens e sobrevivência humana online!"}
+    return {"status": "Servidor do Portal Imigrante PT 100% online e unificado!"}
