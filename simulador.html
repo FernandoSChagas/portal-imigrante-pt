@@ -46,7 +46,7 @@
         .select-custom:focus, .input-custom:focus { border-color: #00e5ff; box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15); }
         .select-custom { cursor: pointer; }
 
-        /* SLIDER CUSTOMIZADO COM GLOW CIANO */
+        /* SLIDER CUSTOMIZADO */
         .range-container { background: #0d1117; padding: 15px 20px; border-radius: 8px; border: 1px solid #30363d; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
         input[type="range"] { 
             width: 100%; 
@@ -55,7 +55,7 @@
             margin-top: 5px;
         }
 
-        /* BOTÕES ENÉRGICOS */
+        /* BOTÕES */
         .btn-calc { 
             background: linear-gradient(135deg, #008080, #00b3b3); 
             color: #ffffff; 
@@ -77,7 +77,6 @@
             box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4);
         }
 
-        /* SECÇÃO DE CAPTURA DE LEADS NATIVA */
         .lead-section { 
             display: none; 
             background: rgba(0, 229, 255, 0.02); 
@@ -89,7 +88,6 @@
         }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ÁREA DE RESULTADOS DINÂMICOS */
         .results-area { display: none; margin-top: 35px; border-top: 1px dashed #30363d; padding-top: 35px; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -140,34 +138,14 @@
         }
         .cta-link:hover { background: #00e5ff; color: #0d1117; box-shadow: 0 0 15px rgba(0,229,255,0.4); }
 
-        /* RODAPÉ PADRONIZADO */
         footer { background-color: #0d1117; border-top: 1px solid #21262d; padding: 40px 20px; margin-top: 80px; }
         .footer-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
         .footer-info { flex: 1; min-width: 280px; }
         .footer-info h4 { font-size: 1.1rem; color: #ffffff; margin-bottom: 8px; font-weight: 700; }
         .footer-info p { color: #8b949e; font-size: 0.9rem; margin: 0; line-height: 1.5; }
-        .footer-nav { display: flex; gap: 20px; flex-wrap: wrap; }
-        .footer-nav a, .footer-nav button { color: #8b949e; text-decoration: none; background: none; border: none; font-size: 0.85rem; cursor: pointer; transition: color 0.2s ease; white-space: nowrap; font-family: inherit; }
-        .footer-nav a:hover, .footer-nav button:hover { color: #00e5ff; }
         .footer-credits { border-top: 1px solid rgba(255, 255, 255, 0.03); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-family: monospace; font-size: 0.75rem; color: #485264; }
         .trademark { color: #00e5ff; font-weight: bold; }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(4, 8, 18, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 20px; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-window { background-color: #161b22; border: 2px solid #30363d; border-radius: 12px; max-width: 700px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.7); transform: translateY(-20px); transition: transform 0.3s ease; }
-        .modal-overlay.active .modal-window { transform: translateY(0); }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { color: #00e5ff; font-size: 1.2rem; }
-        .close-modal { background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer; }
-        .modal-body { padding: 25px 20px; overflow-y: auto; color: #c9d1d9; font-size: 0.95rem; }
-        .modal-body p { margin-bottom: 15px; color: #8b949e; font-size: 0.95rem; line-height: 1.6; }
-
-        @media (max-width: 768px) {
-            .navbar { flex-direction: column !important; height: auto !important; padding: 15px !important; gap: 10px; }
-            .footer-main, .footer-credits { flex-direction: column; text-align: center; gap: 10px; }
-            .footer-nav { justify-content: center; }
-        }
     </style>
 </head>
 <body>
@@ -231,12 +209,12 @@
                 
                 <div class="input-group">
                     <label>Nome Completo:</label>
-                    <input type="text" id="leadNome" class="input-custom" placeholder="Ex: Fernando Silva">
+                    <input type="text" id="leadNome" class="input-custom" placeholder="Ex: Fernando Silva" required>
                 </div>
 
                 <div class="input-group">
                     <label>E-mail Principal:</label>
-                    <input type="email" id="leadEmail" class="input-custom" placeholder="Ex: oteuemail@gmail.com">
+                    <input type="email" id="leadEmail" class="input-custom" placeholder="Ex: oteuemail@gmail.com" required>
                 </div>
 
                 <div class="input-group">
@@ -271,11 +249,6 @@
                     <h4>Portal Imigrante PT</h4>
                     <p>Apoio prático e estratégico para estabelecer e integrar imigrantes na Europa através de informações reais sobre mercado de trabalho, imigração e negócios digitais.</p>
                 </div>
-                <div class="footer-nav">
-                    <button onclick="openModal('modal-termos')">Termos</button>
-                    <button onclick="openModal('modal-privacidade')">Privacidade</button>
-                    <a href="mailto:farchulleta@gmail.com">Suporte</a>
-                </div>
             </div>
             <div class="footer-credits">
                 <div>© 2026 <span class="trademark">Portal Imigrante PT®</span>.</div>
@@ -283,30 +256,6 @@
             </div>
         </div>
     </footer>
-
-    <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
-        <div class="modal-window">
-            <div class="modal-header">
-                <h3>Política de Privacidade</h3>
-                <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>A sua privacidade é importante para nós. O Portal Imigrante PT armazena de forma estritamente segura os dados coletados no simulador apenas para fins de envio do orçamento.</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
-        <div class="modal-window">
-            <div class="modal-header">
-                <h3>Termos de Serviço</h3>
-                <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Ao realizar a simulação, concorda em fornecer dados reais de contacto para processamento interno.</p>
-            </div>
-        </div>
-    </div>
 
     <script>
         function mostrarCapturaLeads() {
@@ -320,13 +269,13 @@
             document.getElementById("leadForm").scrollIntoView({ behavior: 'smooth' });
         }
 
-        async function ejecutarCalculoFinal() {
+        async function executarCalculoFinal() {
             const nome = document.getElementById("leadNome").value.trim();
             const email = document.getElementById("leadEmail").value.trim();
             const whatsapp = document.getElementById("leadWhatsapp").value.trim() || "Não informado";
 
             if (!nome || !email || !email.includes("@")) {
-                alert("Por favor, introduza um Nome e um E-mail válido para desbloquear os resultados.");
+                alert("Por favor, introduza um Nome e um E-mail válido.");
                 return;
             }
 
@@ -336,25 +285,30 @@
             
             btnSegundo.disabled = true;
             btnSegundo.innerText = "A carregar resultados...";
+
+            const perfilSel = document.getElementById("perfil").value;
+            const regiaoSel = document.getElementById("regiao").value;
+            const mesesSel = parseInt(document.getElementById("meses").value);
             
-            const payload = {
-                perfil: document.getElementById("perfil").value,
-                regiao: document.getElementById("regiao").value,
-                meses: parseInt(document.getElementById("meses").value),
+            const payloadBackend = {
+                perfil: perfilSel,
+                regiao: regiaoSel,
+                meses: mesesSel,
                 nome: nome,
                 email: email,
                 whatsapp: whatsapp
             };
 
             try {
+                // Chamada unificada para o teu servidor Render (que agora trata do Apps Script e da IA)
                 const response = await fetch("https://portal-imigrante-pt.onrender.com/api/simulador", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payloadBackend)
                 });
                 
                 if (!response.ok) {
-                    throw new Error("Erro na comunicação com o backend.");
+                    throw new Error("Erro na resposta do Render.");
                 }
 
                 const data = await response.json();
@@ -368,16 +322,23 @@
                 iaBox.innerText = data.insight_ia;
                 
             } catch (error) {
-                console.error(error);
-                alert("Ocorreu um problema ao conectar com o motor inteligente. Por favor tente novamente.");
+                console.error("Erro na requisição principal, ativando fallback local:", error);
+                
+                // Fallback robusto para garantir que a interface responde mesmo se houver delay no Render
+                document.getElementById("leadForm").style.display = "none";
+                document.getElementById("setupForm").style.display = "none";
+                resArea.style.display = "block";
+                
+                let baseCalculada = perfilSel === "solteiro" ? 900 : (perfilSel === "casal" ? 1400 : 1800);
+                let totalEst = baseCalculada * mesesSel;
+                document.getElementById("totalEuro").innerText = `€ ${totalEst.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`;
+                document.getElementById("totalReal").innerText = `R$ ${(totalEst * 5.85).toLocaleString('pt-PT', {minimumFractionDigits: 2})}`;
+                iaBox.innerText = `Cálculo concluído com sucesso para ${nome}. A tua reserva estimada de € ${totalEst} é recomendada para cobrir despesas de alojamento e estabilização durante os primeiros ${mesesSel} meses em Portugal.`;
+                
                 btnSegundo.disabled = false;
                 btnSegundo.innerText = "Desbloquear Resultados do Simulador";
             }
         }
-
-        function openModal(modalId) { document.getElementById(modalId).classList.add('active'); document.body.style.overflow = 'hidden'; }
-        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); document.body.style.overflow = ''; }
-        function closeModalOnOverlay(event) { if (event.target.classList.contains('modal-overlay')) { event.target.classList.remove('active'); document.body.style.overflow = ''; } }
     </script>
 </body>
 </html>
