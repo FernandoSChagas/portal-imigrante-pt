@@ -261,11 +261,12 @@ async def responder_chat(user_data: UserMessage):
 # =====================================================================
 @app.get("/api/vagas")
 async def obter_vagas_emprego():
-    # URL de busca inteligente focada em anúncios de emprego recentes em Portugal
-    # Usamos o Google News para captar as publicações mais recentes dos portais (Sapo, Indeed, etc)
+    # URL focada estritamente em listagens de portais de emprego
+    # Removemos palavras genéricas como "imigrantes" que atraem notícias
     url_vagas_agregadas = (
-        "https://news.google.com/rss/search?q=vagas+emprego+Portugal+imigrantes+"
-        "(Sapo+OR+Indeed+OR+NetEmpregos+OR+ofertas)+after:2026-05-25"
+        "https://news.google.com/rss/search?q="
+        "\"oferta+de+emprego\"+OR+\"vaga+de+emprego\"+OR+\"recrutamento\"+Portugal+"
+        "(site:indeed.com+OR+site:net-empregos.com+OR+site:itjobs.pt+OR+site:sapo.pt)"
         "&hl=pt-PT&gl=PT&ceid=PT:pt-pt"
     )
     
@@ -273,23 +274,21 @@ async def obter_vagas_emprego():
     try:
         feed = feedparser.parse(url_vagas_agregadas)
         for entry in feed.entries[:12]:
-            titulo = entry.get("title", "Vaga Recente")
+            titulo = entry.get("title", "")
             link = entry.get("link", "#")
             
-            # Extrair a fonte do título ou link
-            fonte = "Portal de Empregos"
-            if "sapo" in link.lower(): fonte = "Sapo Emprego"
-            elif "indeed" in link.lower(): fonte = "Indeed"
-            elif "net-empregos" in link.lower(): fonte = "Net-Empregos"
-            
+            # Filtro de segurança: Se o título parecer uma notícia de jornal, ignoramos
+            if any(termo in titulo.lower() for termo in ["notícia", "opinião", "coluna", "análise"]):
+                continue
+                
             vagas_resultado.append({
                 "titulo": titulo,
-                "local": fonte,
-                "descricao": "Clique abaixo para verificar os requisitos atualizados e enviar a sua candidatura diretamente na plataforma oficial.",
+                "local": "Portugal",
+                "descricao": "Vaga detetada em canal de recrutamento oficial. Clique para ver detalhes.",
                 "url": link
             })
     except Exception as e:
-        print(f"Erro ao agregar vagas: {e}")
+        print(f"Erro ao filtrar vagas: {e}")
         
     return {"vagas": vagas_resultado}
 
