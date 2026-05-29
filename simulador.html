@@ -320,7 +320,7 @@
             document.getElementById("leadForm").scrollIntoView({ behavior: 'smooth' });
         }
 
-        async function executarCalculoFinal() {
+        async function ejecutarCalculoFinal() {
             const nome = document.getElementById("leadNome").value.trim();
             const email = document.getElementById("leadEmail").value.trim();
             const whatsapp = document.getElementById("leadWhatsapp").value.trim() || "Não informado";
@@ -337,7 +337,6 @@
             btnSegundo.disabled = true;
             btnSegundo.innerText = "A carregar resultados...";
             
-            // Cria exatamente as chaves em letras minúsculas correspondentes ao Pydantic
             const payload = {
                 perfil: document.getElementById("perfil").value,
                 regiao: document.getElementById("regiao").value,
@@ -355,14 +354,11 @@
                 });
                 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error("Erro do Servidor:", errorData);
                     throw new Error("Erro na comunicação com o backend.");
                 }
 
                 const data = await response.json();
                 
-                // Esconde as etapas de formulário e liberta o ecrã final limpo
                 document.getElementById("leadForm").style.display = "none";
                 document.getElementById("setupForm").style.display = "none";
                 
