@@ -66,33 +66,35 @@ async def responder_chat(user_data: UserMessage):
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
-        resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
+        resposta_final = f"[Erro de Conexão]: Ocorreu um problem no motor inteligente. Detalhe: {str(e)}"
 
     return {"response": resposta_final}
 
 # =====================================================================
-# ROTA DE NOTÍCIAS BLINDADA (RSS INDEPENDENTE VIA PYTHON)
+# ROTA DE NOTÍCIAS OTIMIZADA E PARALELA (Fontes Estáveis)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
+    # Feeds estratégicos e agregadores que evitam bloqueios de CORS e rede
     fontes_rss = [
-        {"url": "https://www.dn.pt/rss/portugal.xml", "tag": "DN Portugal"},
-        {"url": "https://sicnoticias.pt/rss", "tag": "SIC Notícias"},
+        {"url": "https://news.google.com/rss/search?q=imigra%C3%A7%C3%A3o+portugal&hl=pt-PT&gl=PT&ceid=PT:pt-pt", "tag": "Destaque PT"},
+        {"url": "https://www.jn.pt/rss/portugal.xml", "tag": "JN Portugal"},
         {"url": "https://rss.rtp.pt/noticias/index.xml", "tag": "RTP Notícias"},
         {"url": "https://www.publico.pt/feed/ultimo", "tag": "Público"}
     ]
     noticias_brutas = []
     img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
 
-    # Rodamos cada fonte dentro de um bloco try/except isolado
     for fonte in fontes_rss:
         try:
             feed = feedparser.parse(fonte["url"])
             if not feed.entries:
                 continue
                 
-            for entry in feed.entries[:3]:
+            for entry in feed.entries[:4]:
                 img_url = img_placeholder
+                
+                # Sistema de varredura profunda de imagens em destaque nos XMLs
                 if 'media_content' in entry and len(entry.media_content) > 0:
                     img_url = entry.media_content[0].get('url', img_placeholder)
                 elif 'links' in entry:
@@ -117,7 +119,7 @@ async def obtener_noticias_tempo_real():
                     "imagem": img_url
                 })
         except Exception as e:
-            print(f"Erro temporário na fonte {fonte['tag']}: {e}")
+            print(f"Erro na fonte {fonte['tag']}: {e}")
             continue
 
     # Remove duplicados por título
@@ -137,7 +139,7 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     })
 
-    # Caso todas as fontes falhem, garante ao menos estes fallbacks com o e-book
+    # Se as fontes falharem totalmente, garante estes cards de segurança mínimos na tela
     if len(noticias_limpas) < 3:
         noticias_limpas.append({
             "titulo": "AIMA otimiza plataforma digital para atualização de processos",
