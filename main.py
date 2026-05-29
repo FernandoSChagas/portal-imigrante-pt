@@ -71,7 +71,7 @@ async def responder_chat(user_data: UserMessage):
     return {"response": resposta_final}
 
 # =====================================================================
-# ROTA DE NOTÍCIAS (RSS INTEGRADO VIA PYTHON)
+# ROTA DE NOTÍCIAS BLINDADA (RSS INDEPENDENTE VIA PYTHON)
 # =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
@@ -84,9 +84,13 @@ async def obtener_noticias_tempo_real():
     noticias_brutas = []
     img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
 
-    try:
-        for fonte in fontes_rss:
+    # Rodamos cada fonte dentro de um bloco try/except isolado
+    for fonte in fontes_rss:
+        try:
             feed = feedparser.parse(fonte["url"])
+            if not feed.entries:
+                continue
+                
             for entry in feed.entries[:3]:
                 img_url = img_placeholder
                 if 'media_content' in entry and len(entry.media_content) > 0:
@@ -99,9 +103,12 @@ async def obtener_noticias_tempo_real():
                     img_url = entry.enclosure.get('url', img_placeholder)
 
                 resumo_limpo = entry.get("summary", "Acompanhe os detalhes da atualização no artigo completo.")
-                if "<" in resumo_limpo:
+                if resumo_limpo and "<" in resumo_limpo:
                     resumo_limpo = resumo_limpo.split("<")[0]
                 
+                if not resumo_limpo or len(resumo_limpo.strip()) < 10:
+                    resumo_limpo = "Clique para ler os detalhes completos da atualização oficial em Portugal."
+
                 noticias_brutas.append({
                     "titulo": entry.get("title", ""),
                     "resumo": resumo_limpo[:110] + "...",
@@ -109,25 +116,45 @@ async def obtener_noticias_tempo_real():
                     "tag": fonte["tag"],
                     "imagem": img_url
                 })
+        except Exception as e:
+            print(f"Erro temporário na fonte {fonte['tag']}: {e}")
+            continue
 
-        noticias_limpas = []
-        vistas = set()
-        for n in noticias_brutas:
-            if n["titulo"] not in vistas:
-                vistas.add(n["titulo"])
-                noticias_limpas.append(n)
+    # Remove duplicados por título
+    noticias_limpas = []
+    vistas = set()
+    for n in noticias_brutas:
+        if n["titulo"] not in vistas:
+            vistas.add(n["titulo"])
+            noticias_limpas.append(n)
 
-        # Injeta o teu e-book na 3ª posição (índice 2)
-        noticias_limpas.insert(2, {
-            "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
-            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
-            "url": "viver-do-digital.html",
-            "tag": "Tendência",
-            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
+    # Injeta o teu e-book SEMPRE na terceira posição (índice 2)
+    noticias_limpas.insert(2, {
+        "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
+        "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
+        "url": "viver-do-digital.html",
+        "tag": "Tendência",
+        "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
+    })
+
+    # Caso todas as fontes falhem, garante ao menos estes fallbacks com o e-book
+    if len(noticias_limpas) < 3:
+        noticias_limpas.append({
+            "titulo": "AIMA otimiza plataforma digital para atualização de processos",
+            "resumo": "Nova atualização pretende agilizar a validação de dados de manifestações de interesse antigas...",
+            "url": "https://aima.gov.pt",
+            "tag": "AIMA Oficial",
+            "imagem": "https://images.unsplash.com/photo-1450133064473-71024230f91b?q=80&w=600&auto=format&fit=crop"
         })
-        return {"noticias": noticias_limpas[:10]}
-    except Exception:
-        return {"noticias": []}
+        noticias_limpas.append({
+            "titulo": "Segurança Social adota novo sistema de agendamento para o NISS",
+            "resumo": "Medida visa reduzir as filas de espera e facilitar a atribuição do número para novos residentes estrangeiros...",
+            "url": "https://www.seg-social.pt",
+            "tag": "Segurança Social",
+            "imagem": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop"
+        })
+
+    return {"noticias": noticias_limpas[:10]}
 
 @app.get("/")
 def home():
