@@ -116,6 +116,45 @@
             line-height: 1.6;
             font-size: 0.95rem;
             white-space: pre-wrap;
+            margin-bottom: 25px;
+        }
+
+        /* Estilização dos Links de Apoio Oficiais */
+        .artigos-apoio-container {
+            border-top: 1px dashed #21262d;
+            padding-top: 20px;
+        }
+
+        .artigos-apoio-container h4 {
+            color: #ffffff;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .link-apoio-item {
+            display: block;
+            margin-bottom: 12px;
+            text-decoration: none;
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            padding: 12px;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+        }
+
+        .link-apoio-item:hover {
+            border-color: #00a3a3;
+        }
+
+        .link-apoio-item strong {
+            color: #00e5ff;
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .link-apoio-item span {
+            color: #8b949e;
+            font-size: 0.8rem;
         }
 
         /* =====================================================================
@@ -224,11 +263,11 @@
                 
                 <div class="form-group">
                     <select id="regiaoSelect" class="select-regiao">
-                        <option value="norte">Norte de Portugal</option>
-                        <option value="centro">Centro de Portugal</option>
-                        <option value="lisboa">Área Metropolitana de Lisboa</option>
-                        <option value="alentejo">Alentejo</option>
-                        <option value="algarve">Algarve</option>
+                        <option value="Norte de Portugal">Norte de Portugal</option>
+                        <option value="Centro de Portugal">Centro de Portugal</option>
+                        <option value="Lisboa e Vale do Tejo">Área Metropolitana de Lisboa</option>
+                        <option value="Alentejo">Alentejo</option>
+                        <option value="Algarve">Algarve</option>
                     </select>
                     <button class="btn-analise" id="btnGerar" onclick="gerarRelatorioRegional()">Gerar Análise</button>
                 </div>
@@ -240,6 +279,11 @@
                 <div id="resultadoContainer" class="resultado-container">
                     <h3 id="resultadoTitulo">Dossiê de Análise Territorial</h3>
                     <div id="resultadoTexto" class="resultado-content"></div>
+                    
+                    <div class="artigos-apoio-container" id="artigosContainer">
+                        <h4>📚 Documentação e Links de Apoio Oficiais:</h4>
+                        <div id="linksLista"></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -293,50 +337,69 @@
     <script>
         const SERVIDOR_URL = "https://portal-imigrante-pt.onrender.com/api";
 
-        // FUNÇÃO CORRIGIDA: Conecta com o endpoint correto do teu Render backend
         async function gerarRelatorioRegional() {
             const regiaoSelect = document.getElementById("regiaoSelect");
             const btnGerar = document.getElementById("btnGerar");
             const statusConexao = document.getElementById("statusConexao");
             const resultadoContainer = document.getElementById("resultadoContainer");
             const resultadoTexto = document.getElementById("resultadoTexto");
+            const linksLista = document.getElementById("linksLista");
             
-            const regiaoSelecionada = regiaoSelect.value;
-            const nomeRegiao = regiaoSelect.options[regiaoSelect.selectedIndex].text;
+            const nomeRegiao = regiaoSelect.value;
 
-            // Interface em modo de carregamento
+            // Interface em modo de carregamento profissional e limpo
             btnGerar.disabled = true;
             btnGerar.innerText = "A processar...";
             statusConexao.style.display = "block";
-            statusConexao.innerText = `A ligar ao Render... A extrair dados de mercado para: ${nomeRegiao}`;
+            statusConexao.innerText = `Cruzando dados demográficos e econômicos para: ${nomeRegiao}...`;
             resultadoContainer.style.display = "none";
 
             try {
-                // Faz a chamada exata para a tua API no Render passando a região escolhida
-                const resposta = await fetch(`${SERVIDOR_URL}/relatorio?regiao=${regiaoSelecionada}&nocache=${Date.now()}`);
+                // CORREÇÃO CRUCIAL: Aponta para /guias e envia via POST (JSON) como o teu Python exige
+                const resposta = await fetch(`${SERVIDOR_URL}/guias`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ regiao: nomeRegiao })
+                });
                 
                 if (!resposta.ok) {
-                    throw new Error("Erro na resposta do servidor");
+                    throw new Error("Erro na resposta da base de dados");
                 }
 
                 const dados = await resposta.json();
                 
-                // Oculta o status de carregamento
                 statusConexao.style.display = "none";
-                
-                // Exibe o contêiner com a resposta limpa vinda do teu main.py
                 resultadoContainer.style.display = "block";
                 document.getElementById("resultadoTitulo").innerText = `Dossiê Territorial: ${nomeRegiao}`;
                 
-                // Insere o relatório processado pelo teu Python
-                resultadoTexto.innerText = dados.relatorio || dados.analise || "Análise concluída com sucesso para a região selecionada.";
+                // Trata a estrutura tripla de '###' que criámos na Llama
+                let textoFormatado = dados.guia_ia || "";
+                if (textoFormatado.includes("###")) {
+                    textoFormatado = textoFormatado.split("###").map(p => p.trim()).filter(p => p).join("\n\n• ");
+                    textoFormatado = "• " + textoFormatado;
+                }
+                resultadoTexto.innerText = textoFormatado;
+
+                // Renderiza dinamicamente os artigos de apoio que vêm no JSON do main.py
+                linksLista.innerHTML = "";
+                if (dados.artigos && dados.artigos.length > 0) {
+                    dados.artigos.forEach(artigo => {
+                        linksLista.innerHTML += `
+                            <a href="${artigo.url}" target="_blank" class="link-apoio-item">
+                                <strong>${artigo.titulo}</strong>
+                                <span>${artigo.resumo}</span>
+                            </a>
+                        `;
+                    });
+                }
                 
             } catch (erro) {
                 console.error("Erro na geração do dossiê:", erro);
                 statusConexao.style.display = "none";
-                alert("Erro ao gerar dossier. Tente novamente.");
+                alert("Não foi possível gerar a análise da região neste momento. Por favor, tente novamente.");
             } finally {
-                // Restaura o botão
                 btnGerar.disabled = false;
                 btnGerar.innerText = "Gerar Análise";
             }
