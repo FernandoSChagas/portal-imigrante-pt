@@ -70,9 +70,9 @@ async def responder_chat(user_data: UserMessage):
 
     return {"response": resposta_final}
 
-# ==========================================
-# NOVA ROTA DE NOTÍCIAS COMPATÍVEL COM O HUB
-# ==========================================
+# =====================================================================
+# ROTA DE NOTÍCIAS (RSS INTEGRADO VIA PYTHON)
+# =====================================================================
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
     fontes_rss = [
@@ -117,7 +117,7 @@ async def obtener_noticias_tempo_real():
                 vistas.add(n["titulo"])
                 noticias_limpas.append(n)
 
-        # Injeta o teu e-book na terceira posição do carrossel
+        # Injeta o teu e-book na 3ª posição (índice 2)
         noticias_limpas.insert(2, {
             "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
             "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
