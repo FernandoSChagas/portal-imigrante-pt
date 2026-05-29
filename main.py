@@ -1,4 +1,5 @@
 import os
+import feedparser
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -60,14 +61,73 @@ async def responder_chat(user_data: UserMessage):
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=historico_conversas[sessao_id],
-            temperature=0.4 # Aumentado ligeiramente para dar mais naturalidade e fluidez humana
+            temperature=0.4
         )
         resposta_final = completion.choices[0].message.content
         historico_conversas[sessao_id].append({"role": "assistant", "content": resposta_final})
     except Exception as e:
         resposta_final = f"[Erro de Conexão]: Ocorreu um problema no motor inteligente. Detalhe: {str(e)}"
 
-    return {"response": reply_final} if 'reply_final' in locals() else {"response": resposta_final}
+    return {"response": resposta_final}
+
+# ==========================================
+# NOVA ROTA DE NOTÍCIAS COMPATÍVEL COM O HUB
+# ==========================================
+@app.get("/api/noticias")
+async def obtener_noticias_tempo_real():
+    fontes_rss = [
+        {"url": "https://www.dn.pt/rss/portugal.xml", "tag": "DN Portugal"},
+        {"url": "https://sicnoticias.pt/rss", "tag": "SIC Notícias"},
+        {"url": "https://rss.rtp.pt/noticias/index.xml", "tag": "RTP Notícias"},
+        {"url": "https://www.publico.pt/feed/ultimo", "tag": "Público"}
+    ]
+    noticias_brutas = []
+    img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
+
+    try:
+        for fonte in fontes_rss:
+            feed = feedparser.parse(fonte["url"])
+            for entry in feed.entries[:3]:
+                img_url = img_placeholder
+                if 'media_content' in entry and len(entry.media_content) > 0:
+                    img_url = entry.media_content[0].get('url', img_placeholder)
+                elif 'links' in entry:
+                    for link in entry.links:
+                        if 'image' in link.get('type', ''):
+                            img_url = link.get('href', img_placeholder)
+                elif 'enclosure' in entry:
+                    img_url = entry.enclosure.get('url', img_placeholder)
+
+                resumo_limpo = entry.get("summary", "Acompanhe os detalhes da atualização no artigo completo.")
+                if "<" in resumo_limpo:
+                    resumo_limpo = resumo_limpo.split("<")[0]
+                
+                noticias_brutas.append({
+                    "titulo": entry.get("title", ""),
+                    "resumo": resumo_limpo[:110] + "...",
+                    "url": entry.get("link", "#"),
+                    "tag": fonte["tag"],
+                    "imagem": img_url
+                })
+
+        noticias_limpas = []
+        vistas = set()
+        for n in noticias_brutas:
+            if n["titulo"] not in vistas:
+                vistas.add(n["titulo"])
+                noticias_limpas.append(n)
+
+        # Injeta o teu e-book na terceira posição do carrossel
+        noticias_limpas.insert(2, {
+            "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
+            "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
+            "url": "viver-do-digital.html",
+            "tag": "Tendência",
+            "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
+        })
+        return {"noticias": noticias_limpas[:10]}
+    except Exception:
+        return {"noticias": []}
 
 @app.get("/")
 def home():
