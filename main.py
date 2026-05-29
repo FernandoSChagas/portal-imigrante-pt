@@ -49,7 +49,7 @@ URL_GOOGLE_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbx-S0LKPb0z4-J
 # 1. ROTA DE SEGURANÇA: ÁREA RESTRITA / LEITURA VIA SCRIPT GOOGLE
 # =====================================================================
 @app.get("/api/leads")
-async def obter_leads_da_planilha():
+async def obtener_leads_da_planilha():
     try:
         # Faz a leitura em tempo real a partir do doGet do teu Script
         r = requests.get(URL_GOOGLE_APPS_SCRIPT, timeout=6)
@@ -155,7 +155,7 @@ async def gerar_analise_regional(data: RegionRequest):
     return {"guia_ia": guia_texto, "artigos": artigos_apoio}
 
 # =====================================================================
-# 4. ROTA: PLANTÃO DE NOTÍCIAS AUTOMÁTICO (GOOGLE NEWS + BS4)
+# 4. ROTA: PLANTÃO DE NOTÍCIAS AUTOMÁTICO (SUPER FILTRO PT + BR)
 # =====================================================================
 def extrair_imagem_real(url_artigo, placeholder):
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -172,22 +172,38 @@ def extrair_imagem_real(url_artigo, placeholder):
 
 @app.get("/api/noticias")
 async def obtener_noticias_tempo_real():
-    url_google_news = "https://news.google.com/rss/search?q=imigra%C3%A7%C3%A3o+portugal+site:sicnoticias.pt+OR+site:dn.pt&hl=pt-PT&gl=PT&ceid=PT:pt-pt"
+    # Linha de busca avançada unificando termos cruciais e os principais jornais PT e BR
+    url_google_news = (
+        "https://news.google.com/rss/search?q="
+        "(imigração+OR+imigrantes+OR+visto+OR+AIMA+OR+residência+OR+nacionalidade+OR+cidadania)+portugal+"
+        "(site:sicnoticias.pt+OR+site:dn.pt+OR+site:publico.pt+OR+site:jn.pt+OR+site:observador.pt+OR+"
+        "site:g1.globo.com+OR+site:folha.uol.com.br+OR+site:estadao.com.br+OR+site:cnnbrasil.com.br)"
+        "&hl=pt-PT&gl=PT&ceid=PT:pt-pt"
+    )
     noticias_final = []
     img_placeholder = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop"
 
     try:
         feed = feedparser.parse(url_google_news)
-        # 1. Puxa as 14 notícias mais recentes direto do feed organizado do Google
+        # 1. Puxa as 14 notícias mais recentes deste novo super filtro estruturado
         for entry in feed.entries[:14]:
             titulo = entry.get("title", "")
             if " - " in titulo:
                 titulo = titulo.split(" - ")[0]
             link_original = entry.get("link", "#")
             
+            # Identificação dinâmica das novas tags de jornais para o teu frontend
+            link_lower = link_original.lower()
             tag = "Portugal"
-            if "sicnoticias" in link_original.lower(): tag = "SIC Notícias"
-            elif "dn.pt" in link_original.lower(): tag = "DN Portugal"
+            if "sicnoticias" in link_lower: tag = "SIC Notícias"
+            elif "dn.pt" in link_lower: tag = "DN Portugal"
+            elif "publico.pt" in link_lower: tag = "Público"
+            elif "jn.pt" in link_lower: tag = "Jornal de Notícias"
+            elif "observador" in link_lower: tag = "Observador"
+            elif "g1.globo" in link_lower: tag = "G1 Globo"
+            elif "folha" in link_lower: tag = "Folha de S.Paulo"
+            elif "estadao" in link_lower: tag = "Estadão"
+            elif "cnnbrasil" in link_lower: tag = "CNN Brasil"
 
             imagem_capa = extrair_imagem_real(link_original, img_placeholder)
 
@@ -201,7 +217,7 @@ async def obtener_noticias_tempo_real():
     except:
         pass
 
-    # 2. Insere estritamente na 3ª posição (Índice 2) de forma fixa para manter o nobre espaço de conversão
+    # 2. Injeta o teu e-book fixo estrategicamente na 3ª posição (Índice 2)
     noticias_final.insert(2, {
         "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
         "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro para proteger a poupança inicial...",
@@ -210,7 +226,7 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     })
 
-    # 3. Garante a trava de teto limite estrito em 15 cards
+    # 3. Trava rigidamente o teto em 15 cards na tela
     return {"noticias": noticias_final[:15]}
 
 # =====================================================================
@@ -233,7 +249,7 @@ async def responder_chat(user_data: UserMessage):
                     "ESCOPO DE ATUAÇÃO ABRANGENTE (SABER SOBRE TUDO):\n"
                     "Tu deves responder com propriedade sobre três grandes pilares:\n"
                     "1. LOGÍSTICA DE VIAGEM E VOOS: Dicas sobre escolha de passagens, controlo de bagagem, conexões e escalas em aeroportos, direitos do passageiro e organização de documentos de viagem.\n"
-                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA: Como é o processo psicológico da mudança, como fazer as primeiras compras de supermercado, como funciona o arrendamento real (e a procura de quartos), o clima nas Different estações, e como se adaptar à cultura local.\n"
+                    "2. DICAS HUMANAS E REAIS DE SOBREVIVÊNCIA: Como é o processo psicológico da mudança, como fazer as primeiras compras de supermercado, como funciona o arrendamento real (e a procura de quartos), o clima nas diferentes estações, e como se adaptar à cultura local.\n"
                     "3. BUROCRACIA LEGAL: Mantém a regra dos 7 anos de residência legal para nacionalidade via CPLP/UE (Lei de 2026), NIF, NISS e papel da AIMA.\n\n"
                     "TONALIDADE E REGRAS DE RESPOSTA:\n"
                     "- Junta conselhos práticos às respostas burocráticas. Se te perguntarem sobre o Porto ou Guimarães, fala sobre os transportes locais ou o custo prático da zona.\n"
