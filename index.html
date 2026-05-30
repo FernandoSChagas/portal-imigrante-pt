@@ -455,6 +455,7 @@
 
         // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (Lógica dinâmica com leitura direta da Tag da API)
         // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (CORRIGIDO)
+        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA
         async function carregarNoticiasVivas() {
             const grid = document.getElementById("newsGrid");
             try {
@@ -464,15 +465,14 @@
                 if (data.noticias && data.noticias.length > 0) {
                     grid.innerHTML = ""; 
                     
-                    // A MUDANÇA ESTÁ AQUI: .slice().reverse() inverte a lista
-                    const noticiasExibicao = data.noticias.slice().reverse();
-                    
-                    noticiasExibicao.forEach((noticia) => {
+                    // REMOVIDO: .slice().reverse()
+                    // Usamos a lista exatamente na ordem que o servidor envia.
+                    data.noticias.forEach((noticia) => {
                         const fonte = noticia.tag || "Ao Vivo";
                         const targetAttr = noticia.url.includes("viver-do-digital") ? "" : 'target="_blank"';
                         const linkImagem = noticia.imagem || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop";
                         
-                        // Lógica fixa pela URL (independente da posição na lista)
+                        // O JavaScript agora identifica o card promocional pela URL
                         const ePromocional = noticia.url.includes("viver-do-digital");
                         const classeCard = ePromocional ? "news-card-carousel card-promocional" : "news-card-carousel";
                         const classeTag = ePromocional ? "news-tag tag-promocional" : "news-tag";
