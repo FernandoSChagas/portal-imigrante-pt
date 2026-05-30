@@ -6,150 +6,67 @@
     <title>Portal Imigrante PT - Notícias & Atualizações Portugal</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="css/hub.css">
-    Para restaurar o seu site ao visual Dark original (onde o rodapé, modais e o carrossel voltam a ser escuros) e manter apenas a estrutura que você já tem, substitua todo o seu bloco <style> atual por este abaixo.
-
-Este código elimina as cores "clean" e restaura as cores "dark" originais:
-
-HTML
-<style>
-    /* =====================================================================
-       ESTILO ORIGINAL (DARK THEME RESTAURADO)
-       ===================================================================== */
-    .carousel-container {
-        position: relative;
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-        overflow: hidden;
-        padding: 10px 40px;
-    }
-
-    .news-carousel-track {
-        display: flex;
-        gap: 20px;
-        transition: transform 0.4s ease-in-out;
-        width: 100%;
-    }
-
-    .news-card-carousel {
-        flex: 0 0 calc(33.333% - 14px);
-        background-color: #161b22;
-        border: 1px solid #21262d;
-        border-radius: 12px;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        min-height: 340px;
-        overflow: hidden;
-        transition: border-color 0.3s, transform 0.3s;
-    }
-
-    .news-card-carousel:hover {
-        border-color: #00a3a3;
-    }
-
-    .news-card-content {
-        padding: 15px 20px 20px 20px;
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-    }
-
-    .news-card-img {
-        width: 100%;
-        height: 140px;
-        object-fit: cover;
-        border-bottom: 1px solid #21262d;
-        opacity: 0.88;
-        transition: opacity 0.3s ease;
-    }
-
-    .news-card-carousel:hover .news-card-img {
-        opacity: 1;
-    }
-
-    .news-tag {
-        display: inline-block;
-        padding: 2px 8px;
-        font-size: 0.75rem;
-        font-weight: bold;
-        border-radius: 4px;
-        background-color: #21262d;
-        color: #8b949e;
-        margin-bottom: 5px;
-        text-transform: uppercase;
-    }
-
-    .carousel-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background-color: rgba(0, 128, 128, 0.7);
-        color: white;
-        border: none;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        cursor: pointer;
-        font-weight: bold;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-    }
-
-    .carousel-btn:hover { background-color: #00a3a3; }
-    .btn-left { left: 0; }
-    .btn-right { right: 0; }
-
-    /* RESPONSIVIDADE ORIGINAL */
-    @media (max-width: 768px) {
-        .navbar {
-            padding: 0 15px !important;
-            height: auto !important;
-            min-height: 70px;
-            flex-direction: column !important;
-            justify-content: center !important;
-            gap: 10px;
-            padding-top: 12px !important;
-            padding-bottom: 12px !important;
-        }
-        .logo { font-size: 1.1rem !important; text-align: center; }
-        .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; }
-        .nav-links a { margin-left: 0 !important; font-size: 0.8rem !important; }
-        .nav-links a.nav-btn-ia { padding: 6px 12px !important; }
-        .main-container { padding-top: 130px !important; }
+    <style>
+        /* =====================================================================
+           ESTILO ORIGINAL DARK (RESTAURADO)
+           ===================================================================== */
+        .carousel-container { position: relative; width: 100%; max-width: 1200px; margin: 0 auto; overflow: hidden; padding: 10px 40px; }
+        .news-carousel-track { display: flex; gap: 20px; transition: transform 0.4s ease-in-out; width: 100%; }
         
-        .news-card-carousel { flex: 0 0 100% !important; min-height: 320px; }
-        .carousel-container { padding: 10px 35px; }
+        .news-card-carousel { 
+            flex: 0 0 calc(33.333% - 14px); background-color: #161b22; border: 1px solid #21262d; 
+            border-radius: 12px; padding: 0; display: flex; flex-direction: column; justify-content: space-between; 
+            min-height: 340px; overflow: hidden; transition: border-color 0.3s;
+        }
+        .news-card-carousel:hover { border-color: #00a3a3; }
+        .news-card-content { padding: 15px 20px 20px 20px; display: flex; flex-direction: column; flex-grow: 1; }
+        .news-card-img { width: 100%; height: 140px; object-fit: cover; border-bottom: 1px solid #21262d; opacity: 0.88; transition: opacity 0.3s; }
+        .news-card-carousel:hover .news-card-img { opacity: 1; }
+        .news-tag { display: inline-block; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; background-color: #21262d; color: #8b949e; margin-bottom: 5px; text-transform: uppercase; }
 
-        .footer-main { flex-direction: column; text-align: center; }
-        .footer-nav { justify-content: center; gap: 15px; }
-        .footer-credits { flex-direction: column; text-align: center; gap: 8px; }
-    }
-</style>
+        .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(0, 128, 128, 0.7); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .carousel-btn:hover { background-color: #00a3a3; }
+        .btn-left { left: 0; } .btn-right { right: 0; }
+
+        /* Footer e Modais Restaurados */
+        footer { background-color: #0d1117; border-top: 1px solid #21262d; padding: 40px 20px; margin-top: 80px; }
+        .footer-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+        .footer-nav { display: flex; gap: 20px; flex-wrap: wrap; }
+        .footer-nav a, .footer-nav button { color: #8b949e; text-decoration: none; background: none; border: none; font-size: 0.85rem; cursor: pointer; transition: color 0.2s; }
+        .footer-nav a:hover, .footer-nav button:hover { color: #00e5ff; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(4, 8, 18, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 20px; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-window { background-color: #161b22; border: 2px solid #30363d; border-radius: 12px; max-width: 700px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.7); }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { color: #00e5ff; }
+        .modal-body { padding: 25px 20px; overflow-y: auto; color: #c9d1d9; }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 0 15px !important; min-height: 70px; flex-direction: column !important; justify-content: center !important; gap: 10px; }
+            .news-card-carousel { flex: 0 0 100% !important; }
+            .footer-main { flex-direction: column; text-align: center; }
+        }
+    </style>
 </head>
 <body>
-
-  <nav class="navbar">
-    <div class="logo" style="display: flex; align-items: center; gap: 10px;">
-        <img src="favicon.png" alt="Logo" style="height: 28px; width: auto; object-fit: contain;">
-        PORTAL<span class="logo-highlight">IMIGRANTE PT</span>
-    </div>
-    <div class="nav-links">
-        <a href="#" class="active">Notícias ao Vivo</a>
-        <a href="guias.html">Guias Regionais</a>
-        <a href="simulador.html">Simulador</a>
-        <a href="empregos.html">Vagas de Emprego </a>
-        <a href="viver-do-digital.html" style="color: #00e5ff; font-weight: bold; border: 1px dashed rgba(0, 229, 255, 0.4); padding: 5px 10px; border-radius: 4px;">Ganhar em Euro 💶</a>
-        <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
-    </div>
-</nav>
+    <nav class="navbar">
+        <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+            <img src="favicon.png" alt="Logo" style="height: 28px; width: auto; object-fit: contain;">
+            PORTAL<span class="logo-highlight">IMIGRANTE PT</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">Notícias ao Vivo</a>
+            <a href="guias.html">Guias Regionais</a>
+            <a href="simulador.html">Simulador</a>
+            <a href="empregos.html">Vagas de Emprego </a>
+            <a href="viver-do-digital.html" style="color: #00e5ff; font-weight: bold; border: 1px dashed rgba(0, 229, 255, 0.4); padding: 5px 10px; border-radius: 4px;">Ganhar em Euro 💶</a>
+            <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
+        </div>
+    </nav>
 
     <main class="main-container">
-        
         <section class="live-widgets">
             <div class="widget-card">
                 <span class="widget-icon">💶</span>
@@ -170,21 +87,18 @@ HTML
         <section class="news-section">
             <h2>📰 Plantão de Notícias do Dia</h2>
             <p class="section-subtitle">Destaques updated de hoje da SIC Notícias, DN e portais de ajuda ao imigrante.</p>
-            
             <div class="carousel-container">
                 <button class="carousel-btn btn-left" onclick="moverCarrossel(-1)">❮</button>
                 <div class="news-carousel-track" id="newsGrid">
                     <article class="news-card-carousel" style="flex: 0 0 100% !important;">
                         <div class="news-card-content" style="text-align: center; justify-content: center; min-height: 200px;">
                             <h3>A carregar notícias dinâmicas...</h3>
-                            <p>O sistema está a conectar-se ao servidor central para extrair as atualizações das últimas 24h em Portugal.</p>
                         </div>
                     </article>
                 </div>
                 <button class="carousel-btn btn-right" onclick="moverCarrossel(1)">❯</button>
             </div>
         </section>
-
     </main>
 
     <footer>
@@ -200,59 +114,19 @@ HTML
                     <a href="mailto:farchulleta@gmail.com">Suporte</a>
                 </div>
             </div>
-            
-            <div class="footer-credits">
-                <div>
-                    © 2026 <span class="trademark">Portal Imigrante PT®</span>.
-                </div>
-                <div>
-                    Apoio ao Imigrante Digital • 🍏
-                </div>
-            </div>
         </div>
     </footer>
 
     <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
         <div class="modal-window">
-            <div class="modal-header">
-                <h3>Política de Privacidade</h3>
-                <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>A sua privacidade é importante para nós. É política do Portal Imigrante PT respeitar a sua privacidade em relação a qualquer informação sua que possamos coletar no site Portal Imigrante PT, e outros sites que possuímos e operamos.</p>
-                <p>Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e consentimento. Também informamos por que estamos coletando e como será usado.</p>
-                <p>Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente aceitáveis ​​para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou modificação não autorizados.</p>
-                <p>Não compartilhamos informações de identificação pessoal publicamente ou com terceiros, exceto quando exigido por lei.</p>
-                <p>O nosso site pode tel links para sites externos que não são operados por nós. Esteja ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos aceitar responsabilidade por suas respectivas políticas de privacidade.</p>
-                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer some dos serviços desejados.</p>
-                <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
-                <h3>Compromisso do Usuário</h3>
-                <ul>
-                    <li>A) Não se envolver em atividades que sejam ilegais ou contrárias à boa fé e à ordem pública;</li>
-                    <li>B) Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de azar ou contra os direitos humanos;</li>
-                    <li>C) Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Portal Imigrante PT.</li>
-                </ul>
-                <p>Esta política é efetiva a partir de 27 May 2026 15:07.</p>
-            </div>
+            <div class="modal-header"><h3>Política de Privacidade</h3><button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button></div>
+            <div class="modal-body"><p>...</p></div>
         </div>
     </div>
-
     <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
         <div class="modal-window">
-            <div class="modal-header">
-                <h3>Termos de Serviço</h3>
-                <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <h3>1. Termos</h3>
-                <p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis e concorda que é responsável pelo cumprimento de todas as leis locais aplicáveis.</p>
-                <h3>2. Uso de Licença</h3>
-                <p>É concedida permission para baixar temporariamente uma cópia dos materiais (informações ou software) no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial. Sob esta licença, você não pode: modificar ou copiar os materiais; usar para fins comerciais; tentar descompilar o software ou remover notações de propriedade.</p>
-                <h3>3. Isenção de responsabilidade</h3>
-                <p>Os materiais no site da Portal Imigrante PT são fornecidos 'como estão'. Portal Imigrante PT não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias.</p>
-                <h3>4. Limitações</h3>
-                <p>Em nenhum caso o Portal Imigrante PT ou seus fornecedores serão responsáveis por quaisquer danos decorrentes do uso ou da incapacidade de usar os materiais contidos na plataforma.</p>
-            </div>
+            <div class="modal-header"><h3>Termos de Serviço</h3><button class="close-modal" onclick="closeModal('modal-termos')">&times;</button></div>
+            <div class="modal-body"><p>...</p></div>
         </div>
     </div>
 
