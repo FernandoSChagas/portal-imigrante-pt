@@ -226,8 +226,8 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     }
 
-    if len(noticias_final) >= 1:
-        noticias_final.insert(1, card_promocional)
+    if len(noticias_final) >= 3:
+        noticias_final.insert(3, card_promocional)
     else:
         noticias_final.append(card_promocional)
 
