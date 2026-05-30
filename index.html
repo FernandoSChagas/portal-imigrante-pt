@@ -454,6 +454,7 @@
         }
 
         // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (Lógica dinâmica com leitura direta da Tag da API)
+        // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (CORRIGIDO)
         async function carregarNoticiasVivas() {
             const grid = document.getElementById("newsGrid");
             try {
@@ -462,14 +463,17 @@
                 
                 if (data.noticias && data.noticias.length > 0) {
                     grid.innerHTML = ""; 
-                    data.noticias.forEach((noticia, index) => {
-                        // CAPTURA DIRETA DO BACKEND: Garante G1, Público, Observador, etc.
+                    
+                    // A MUDANÇA ESTÁ AQUI: .slice().reverse() inverte a lista
+                    const noticiasExibicao = data.noticias.slice().reverse();
+                    
+                    noticiasExibicao.forEach((noticia) => {
                         const fonte = noticia.tag || "Ao Vivo";
                         const targetAttr = noticia.url.includes("viver-do-digital") ? "" : 'target="_blank"';
                         const linkImagem = noticia.imagem || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop";
                         
-                        // Deteta se é o teu card promocional (Índice 2 = Posição 3)
-                        const ePromocional = index === 1;
+                        // Lógica fixa pela URL (independente da posição na lista)
+                        const ePromocional = noticia.url.includes("viver-do-digital");
                         const classeCard = ePromocional ? "news-card-carousel card-promocional" : "news-card-carousel";
                         const classeTag = ePromocional ? "news-tag tag-promocional" : "news-tag";
 
@@ -492,20 +496,7 @@
                     tentativasConexao = 0; 
                 }
             } catch (error) {
-                console.log("Servidor em Standby. A tentar acordar a API...");
-                tentativasConexao++;
-                
-                if (tentativasConexao === 1) {
-                    grid.innerHTML = `
-                        <article class="news-card-carousel" style="flex: 0 0 100% !important; min-height: 200px;">
-                            <div class="news-card-content" style="text-align: center; justify-content: center;">
-                                <div class="news-tag" style="background: #e1b12c; margin: 0 auto 10px auto; color: #000;">Servidor em Standby</div>
-                                <h3>A estabelecer ligação segura...</h3>
-                                <p>O servidor gratuito do Render está a iniciar os motores. Isto acontece após alguns minutos de inatividade e pode demorar cerca de 30 segundos. Atualização automática em curso...</p>
-                            </div>
-                        </article>
-                    `;
-                }
+                console.log("Servidor em Standby...");
                 setTimeout(carregarNoticiasVivas, 10000);
             }
         }
