@@ -6,9 +6,14 @@
     <title>Portal Imigrante PT - Notícias & Atualizações Portugal</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="css/hub.css">
-    <style>
+    Para restaurar o seu site ao visual Dark original (onde o rodapé, modais e o carrossel voltam a ser escuros) e manter apenas a estrutura que você já tem, substitua todo o seu bloco <style> atual por este abaixo.
+
+Este código elimina as cores "clean" e restaura as cores "dark" originais:
+
+HTML
+<style>
     /* =====================================================================
-       ESTILO PORTAL CLEAN (AZUL & BRANCO)
+       ESTILO ORIGINAL (DARK THEME RESTAURADO)
        ===================================================================== */
     .carousel-container {
         position: relative;
@@ -28,8 +33,8 @@
 
     .news-card-carousel {
         flex: 0 0 calc(33.333% - 14px);
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
+        background-color: #161b22;
+        border: 1px solid #21262d;
         border-radius: 12px;
         padding: 0;
         display: flex;
@@ -37,12 +42,11 @@
         justify-content: space-between;
         min-height: 340px;
         overflow: hidden;
-        transition: box-shadow 0.3s, border-color 0.3s;
+        transition: border-color 0.3s, transform 0.3s;
     }
 
     .news-card-carousel:hover {
-        border-color: var(--teal-primary);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        border-color: #00a3a3;
     }
 
     .news-card-content {
@@ -56,7 +60,13 @@
         width: 100%;
         height: 140px;
         object-fit: cover;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid #21262d;
+        opacity: 0.88;
+        transition: opacity 0.3s ease;
+    }
+
+    .news-card-carousel:hover .news-card-img {
+        opacity: 1;
     }
 
     .news-tag {
@@ -65,31 +75,36 @@
         font-size: 0.75rem;
         font-weight: bold;
         border-radius: 4px;
-        background-color: #e9ecef;
-        color: var(--text-muted);
+        background-color: #21262d;
+        color: #8b949e;
         margin-bottom: 5px;
         text-transform: uppercase;
     }
 
-    .news-card-content h3 { color: var(--text-main); font-size: 1.05rem; margin: 10px 0; line-height: 1.3; }
-    .news-card-content p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; margin-bottom: 10px; }
-    .read-more { color: var(--teal-primary); text-decoration: none; font-weight: bold; }
-
     .carousel-btn {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        background-color: var(--teal-primary); color: white;
-        border: none; width: 36px; height: 36px; border-radius: 50%;
-        cursor: pointer; font-weight: bold; z-index: 10;
-        display: flex; align-items: center; justify-content: center;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 128, 128, 0.7);
+        color: white;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-weight: bold;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
     }
-    
-    footer { background-color: #ffffff; border-top: 1px solid var(--border-color); padding: 40px 20px; margin-top: 80px; }
-    footer p, footer h4, .footer-nav a { color: var(--text-main) !important; }
-    .modal-window { background-color: white; border: 1px solid var(--border-color); }
-    .modal-body { color: var(--text-main); }
-    .modal-header h3 { color: var(--teal-primary); }
 
-    /* RESPONSIVIDADE (O SEU @MEDIA ORIGINAL) */
+    .carousel-btn:hover { background-color: #00a3a3; }
+    .btn-left { left: 0; }
+    .btn-right { right: 0; }
+
+    /* RESPONSIVIDADE ORIGINAL */
     @media (max-width: 768px) {
         .navbar {
             padding: 0 15px !important;
