@@ -1,325 +1,1157 @@
 <!DOCTYPE html>
+
 <html lang="pt">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Portal Imigrante PT - Notícias & Atualizações Portugal</title>
+
     <link rel="icon" type="image/png" href="favicon.png">
+
     <link rel="stylesheet" href="css/hub.css">
+
     <style>
+
         /* =====================================================================
-           ESTILO ORIGINAL DARK (RESTAURADO)
+
+           ESTILOS DO CARROSSEL DE NOTÍCIAS E RESPONSIVIDADE
+
            ===================================================================== */
-        .carousel-container { position: relative; width: 100%; max-width: 1200px; margin: 0 auto; overflow: hidden; padding: 10px 40px; }
-        .news-carousel-track { display: flex; gap: 20px; transition: transform 0.4s ease-in-out; width: 100%; }
-        
-        .news-card-carousel { 
-            flex: 0 0 calc(33.333% - 14px); background-color: #161b22; border: 1px solid #21262d; 
-            border-radius: 12px; padding: 0; display: flex; flex-direction: column; justify-content: space-between; 
-            min-height: 340px; overflow: hidden; transition: border-color 0.3s;
+
+        .carousel-container {
+
+            position: relative;
+
+            width: 100%;
+
+            max-width: 1200px;
+
+            margin: 0 auto;
+
+            overflow: hidden;
+
+            padding: 10px 40px;
+
         }
-        .news-card-carousel:hover { border-color: #00a3a3; }
-        .news-card-content { padding: 15px 20px 20px 20px; display: flex; flex-direction: column; flex-grow: 1; }
-        .news-card-img { width: 100%; height: 140px; object-fit: cover; border-bottom: 1px solid #21262d; opacity: 0.88; transition: opacity 0.3s; }
-        .news-card-carousel:hover .news-card-img { opacity: 1; }
-        .news-tag { display: inline-block; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; background-color: #21262d; color: #8b949e; margin-bottom: 5px; text-transform: uppercase; }
 
-        .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background-color: rgba(0, 128, 128, 0.7); color: white; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; display: flex; align-items: center; justify-content: center; }
+
+
+        .news-carousel-track {
+
+            display: flex;
+
+            gap: 20px;
+
+            transition: transform 0.4s ease-in-out;
+
+            width: 100%;
+
+        }
+
+
+
+        /* Ajuste de tamanho para abrigar a imagem com folga */
+
+        .news-card-carousel {
+
+            flex: 0 0 calc(33.333% - 14px);
+
+            background-color: #161b22;
+
+            border: 1px solid #21262d;
+
+            border-radius: 12px;
+
+            padding: 0; /* Remove padding total para a imagem colar nas bordas do topo */
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: space-between;
+
+            min-height: 340px; /* Aumentado para dar espaço à imagem */
+
+            overflow: hidden;
+
+            transition: border-color 0.3s, transform 0.3s;
+
+        }
+
+
+
+        .news-card-carousel:hover {
+
+            border-color: #00a3a3;
+
+        }
+
+
+
+        /* Destaque Estético para o teu Card do E-book (Card 3) */
+
+        .news-card-carousel.card-promocional {
+
+            border: 1px dashed #00a3a3;
+
+            box-shadow: 0 4px 20px rgba(0, 163, 163, 0.15);
+
+        }
+
+        
+
+        .news-card-carousel.card-promocional:hover {
+
+            border-color: #00e5ff;
+
+        }
+
+
+
+        /* Container do texto dentro do card */
+
+        .news-card-content {
+
+            padding: 15px 20px 20px 20px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            flex-grow: 1;
+
+        }
+
+
+
+        /* Estilização da Imagem de Capa do Card com Polimento Escuro */
+
+        .news-card-img {
+
+            width: 100%;
+
+            height: 140px;
+
+            object-fit: cover;
+
+            border-bottom: 1px solid #21262d;
+
+            opacity: 0.88; /* Suaviza logotipos claros ou imagens muito berrantes no tema dark */
+
+            transition: opacity 0.3s ease;
+
+        }
+
+
+
+        .news-card-carousel:hover .news-card-img {
+
+            opacity: 1; /* A imagem ganha brilho total quando o rato passa por cima */
+
+        }
+
+
+
+        /* Ajuste dinâmico para a tag de fontes */
+
+        .news-tag {
+
+            display: inline-block;
+
+            padding: 2px 8px;
+
+            font-size: 0.75rem;
+
+            font-weight: bold;
+
+            border-radius: 4px;
+
+            background-color: #21262d;
+
+            color: #8b949e;
+
+            margin-bottom: 5px;
+
+            text-transform: uppercase;
+
+        }
+
+
+
+        /* Cor diferenciada para o selo do teu E-book */
+
+        .tag-promocional {
+
+            background-color: rgba(0, 229, 255, 0.1) !important;
+
+            color: #00e5ff !important;
+
+            border: 1px solid rgba(0, 229, 255, 0.3);
+
+        }
+
+
+
+        .carousel-btn {
+
+            position: absolute;
+
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            background-color: rgba(0, 128, 128, 0.7);
+
+            color: white;
+
+            border: none;
+
+            width: 36px;
+
+            height: 36px;
+
+            border-radius: 50%;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+            z-index: 10;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            transition: background 0.2s;
+
+        }
+
+
+
         .carousel-btn:hover { background-color: #00a3a3; }
-        .btn-left { left: 0; } .btn-right { right: 0; }
 
-        /* Footer e Modais Restaurados */
-        footer { background-color: #0d1117; border-top: 1px solid #21262d; padding: 40px 20px; margin-top: 80px; }
-        .footer-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-        .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
-        .footer-nav { display: flex; gap: 20px; flex-wrap: wrap; }
-        .footer-nav a, .footer-nav button { color: #8b949e; text-decoration: none; background: none; border: none; font-size: 0.85rem; cursor: pointer; transition: color 0.2s; }
-        .footer-nav a:hover, .footer-nav button:hover { color: #00e5ff; }
+        .btn-left { left: 0; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(4, 8, 18, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 20px; }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-window { background-color: #161b22; border: 2px solid #30363d; border-radius: 12px; max-width: 700px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.7); }
-        .modal-header { padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { color: #00e5ff; }
-        .modal-body { padding: 25px 20px; overflow-y: auto; color: #c9d1d9; }
+        .btn-right { right: 0; }
+
+
+
+        /* =====================================================================
+
+           RODAPÉ MODULAR, COMPACTO E RESPONSIVO
+
+           ===================================================================== */
+
+        footer {
+
+            background-color: #0d1117;
+
+            border-top: 1px solid #21262d;
+
+            padding: 40px 20px;
+
+            margin-top: 80px;
+
+        }
+
+
+
+        .footer-container {
+
+            max-width: 1200px;
+
+            margin: 0 auto;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 20px;
+
+        }
+
+
+
+        .footer-main {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            gap: 20px;
+
+        }
+
+
+
+        .footer-info {
+
+            flex: 1;
+
+            min-width: 280px;
+
+        }
+
+
+
+        .footer-info h4 {
+
+            font-size: 1.1rem;
+
+            color: #ffffff;
+
+            margin-bottom: 8px;
+
+            font-weight: 700;
+
+        }
+
+
+
+        .footer-info p {
+
+            color: #8b949e;
+
+            font-size: 0.9rem;
+
+            margin: 0;
+
+            line-height: 1.5;
+
+        }
+
+
+
+        .footer-nav {
+
+            display: flex;
+
+            gap: 20px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+
+        .footer-nav a, .footer-nav button {
+
+            color: #8b949e;
+
+            text-decoration: none;
+
+            background: none;
+
+            border: none;
+
+            font-size: 0.85rem;
+
+            cursor: pointer;
+
+            transition: color 0.2s ease;
+
+            white-space: nowrap;
+
+            font-family: inherit;
+
+        }
+
+
+
+        .footer-nav a:hover, .footer-nav button:hover {
+
+            color: #00e5ff;
+
+        }
+
+
+
+        .footer-credits {
+
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+
+            padding-top: 20px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+            font-family: monospace;
+
+            font-size: 0.75rem;
+
+            color: #485264;
+
+        }
+
+
+
+        .trademark {
+
+            color: #00e5ff;
+
+            font-weight: bold;
+
+        }
+
+
+
+        /* =====================================================================
+
+           SISTEMA DE MODAIS REATIVOS (POP-UPS INTERNOS)
+
+           ===================================================================== */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            background-color: rgba(4, 8, 18, 0.85);
+
+            backdrop-filter: blur(5px);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            z-index: 1000;
+
+            opacity: 0;
+
+            pointer-events: none;
+
+            transition: opacity 0.3s ease;
+
+            padding: 20px;
+
+        }
+
+
+
+        .modal-overlay.active {
+
+            opacity: 1;
+
+            pointer-events: auto;
+
+        }
+
+
+
+        .modal-window {
+
+            background-color: #161b22;
+
+            border: 2px solid #30363d;
+
+            border-radius: 12px;
+
+            max-width: 700px;
+
+            width: 100%;
+
+            max-height: 80vh;
+
+            display: flex;
+
+            flex-direction: column;
+
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+
+            transform: translateY(-20px);
+
+            transition: transform 0.3s ease;
+
+        }
+
+
+
+        .modal-overlay.active .modal-window {
+
+            transform: translateY(0);
+
+        }
+
+
+
+        .modal-header {
+
+            padding: 15px 20px;
+
+            border-bottom: 1px solid #30363d;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+        }
+
+
+
+        .modal-header h3 {
+
+            color: #00e5ff;
+
+            font-size: 1.2rem;
+
+        }
+
+
+
+        .close-modal {
+
+            background: none;
+
+            border: none;
+
+            color: #8b949e;
+
+            font-size: 1.5rem;
+
+            cursor: pointer;
+
+        }
+
+
+
+        .close-modal:hover {
+
+            color: #ffffff;
+
+        }
+
+
+
+        .modal-body {
+
+            padding: 25px 20px;
+
+            overflow-y: auto;
+
+            color: #c9d1d9;
+
+            font-size: 0.95rem;
+
+        }
+
+
+
+        .modal-body h3 { color: #fff; margin: 20px 0 10px 0; font-size: 1.2rem; }
+
+        .modal-body p { margin-bottom: 15px; color: #8b949e; font-size: 0.95rem; line-height: 1.6; }
+
+        .modal-body ul { margin-left: 20px; margin-bottom: 15px; color: #8b949e; }
+
+        .modal-body li { margin-bottom: 5px; }
+
+
 
         @media (max-width: 768px) {
-            .navbar { padding: 0 15px !important; min-height: 70px; flex-direction: column !important; justify-content: center !important; gap: 10px; }
-            .news-card-carousel { flex: 0 0 100% !important; }
+
+            .navbar {
+
+                padding: 0 15px !important;
+
+                height: auto !important;
+
+                min-height: 70px;
+
+                flex-direction: column !important;
+
+                justify-content: center !important;
+
+                gap: 10px;
+
+                padding-top: 12px !important;
+
+                padding-bottom: 12px !important;
+
+            }
+
+            .logo { font-size: 1.1rem !important; text-align: center; }
+
+            .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; }
+
+            .nav-links a { margin-left: 0 !important; font-size: 0.8rem !important; }
+
+            .nav-links a.nav-btn-ia { padding: 6px 12px !important; }
+
+            .main-container { padding-top: 130px !important; }
+
+            
+
+            .news-card-carousel { flex: 0 0 100% !important; min-height: 320px; }
+
+            .carousel-container { padding: 10px 35px; }
+
+
+
             .footer-main { flex-direction: column; text-align: center; }
+
+            .footer-nav { justify-content: center; gap: 15px; }
+
+            .footer-credits { flex-direction: column; text-align: center; gap: 8px; }
+
         }
+
     </style>
+
 </head>
+
 <body>
-    <nav class="navbar">
-        <div class="logo" style="display: flex; align-items: center; gap: 10px;">
-            <img src="favicon.png" alt="Logo" style="height: 28px; width: auto; object-fit: contain;">
-            PORTAL<span class="logo-highlight">IMIGRANTE PT</span>
-        </div>
-        <div class="nav-links">
-            <a href="#" class="active">Notícias ao Vivo</a>
-            <a href="guias.html">Guias Regionais</a>
-            <a href="simulador.html">Simulador</a>
-            <a href="empregos.html">Vagas de Emprego </a>
-            <a href="viver-do-digital.html" style="color: #00e5ff; font-weight: bold; border: 1px dashed rgba(0, 229, 255, 0.4); padding: 5px 10px; border-radius: 4px;">Ganhar em Euro 💶</a>
-            <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
-        </div>
-    </nav>
+
+
+
+  <nav class="navbar">
+
+    <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+
+        <img src="favicon.png" alt="Logo" style="height: 28px; width: auto; object-fit: contain;">
+
+        PORTAL<span class="logo-highlight">IMIGRANTE PT</span>
+
+    </div>
+
+    <div class="nav-links">
+
+        <a href="#" class="active">Notícias ao Vivo</a>
+
+        <a href="guias.html">Guias Regionais</a>
+
+        <a href="simulador.html">Simulador</a>
+
+        <a href="empregos.html">Vagas de Emprego </a>
+
+        <a href="viver-do-digital.html" style="color: #00e5ff; font-weight: bold; border: 1px dashed rgba(0, 229, 255, 0.4); padding: 5px 10px; border-radius: 4px;">Ganhar em Euro 💶</a>
+
+        <a href="assistente.html" class="nav-btn-ia">Assistente IA 🤖</a>
+
+    </div>
+
+</nav>
+
+
 
     <main class="main-container">
+
+        
+
         <section class="live-widgets">
+
             <div class="widget-card">
+
                 <span class="widget-icon">💶</span>
+
                 <div>
+
                     <h4>Euro hoje</h4>
+
                     <p id="cotacao-euro">A carregar câmbio ao vivo...</p>
+
                 </div>
+
             </div>
+
             <div class="widget-card">
+
                 <span class="widget-icon">☀️</span>
+
                 <div>
+
                     <h4 id="titulo-clima">Clima Local</h4>
+
                     <p id="info-clima">A detetar localização...</p>
+
                 </div>
+
             </div>
+
         </section>
+
+
 
         <section class="news-section">
+
             <h2>📰 Plantão de Notícias do Dia</h2>
+
             <p class="section-subtitle">Destaques updated de hoje da SIC Notícias, DN e portais de ajuda ao imigrante.</p>
+
+            
+
             <div class="carousel-container">
+
                 <button class="carousel-btn btn-left" onclick="moverCarrossel(-1)">❮</button>
+
                 <div class="news-carousel-track" id="newsGrid">
+
                     <article class="news-card-carousel" style="flex: 0 0 100% !important;">
+
                         <div class="news-card-content" style="text-align: center; justify-content: center; min-height: 200px;">
+
                             <h3>A carregar notícias dinâmicas...</h3>
+
+                            <p>O sistema está a conectar-se ao servidor central para extrair as atualizações das últimas 24h em Portugal.</p>
+
                         </div>
+
                     </article>
+
                 </div>
+
                 <button class="carousel-btn btn-right" onclick="moverCarrossel(1)">❯</button>
+
             </div>
+
         </section>
+
+
+
     </main>
 
+
+
     <footer>
+
         <div class="footer-container">
+
             <div class="footer-main">
+
                 <div class="footer-info">
+
                     <h4>Portal Imigrante PT</h4>
+
                     <p>Apoio prático e estratégico para estabelecer e integrar imigrantes na Europa através de informações reais sobre mercado de trabalho, imigração e negócios digitais.</p>
+
                 </div>
+
                 <div class="footer-nav">
+
                     <button onclick="openModal('modal-termos')">Termos</button>
+
                     <button onclick="openModal('modal-privacidade')">Privacidade</button>
+
                     <a href="mailto:farchulleta@gmail.com">Suporte</a>
+
                 </div>
+
             </div>
+
             
+
             <div class="footer-credits">
+
                 <div>
+
                     © 2026 <span class="trademark">Portal Imigrante PT®</span>.
+
                 </div>
+
                 <div>
+
                     Apoio ao Imigrante Digital • 🍏
+
                 </div>
+
             </div>
+
         </div>
+
     </footer>
 
+
+
     <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
+
         <div class="modal-window">
+
             <div class="modal-header">
+
                 <h3>Política de Privacidade</h3>
+
                 <button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button>
+
             </div>
+
             <div class="modal-body">
+
                 <p>A sua privacidade é importante para nós. É política do Portal Imigrante PT respeitar a sua privacidade em relação a qualquer informação sua que possamos coletar no site Portal Imigrante PT, e outros sites que possuímos e operamos.</p>
+
                 <p>Solicitamos informações pessoais apenas quando realmente precisamos delas para lhe fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu conhecimento e consentimento. Também informamos por que estamos coletando e como será usado.</p>
+
                 <p>Apenas retemos as informações coletadas pelo tempo necessário para fornecer o serviço solicitado. Quando armazenamos dados, protegemos dentro de meios comercialmente aceitáveis ​​para evitar perdas e roubos, bem como acesso, divulgação, cópia, uso ou modificação não autorizados.</p>
+
                 <p>Não compartilhamos informações de identificação pessoal publicamente ou com terceiros, exceto quando exigido por lei.</p>
-                <p>O nosso site pode ter links para sites externos que não são operados por nós. Esteja ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos aceitar responsabilidade por suas respectivas políticas de privacidade.</p>
-                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer alguns dos serviços desejados.</p>
+
+                <p>O nosso site pode tel links para sites externos que não são operados por nós. Esteja ciente de que não temos controle sobre o conteúdo e práticas desses sites e não podemos aceitar responsabilidade por suas respectivas políticas de privacidade.</p>
+
+                <p>Você é livre para recusar a nossa solicitação de informações pessoais, entendendo que talvez não possamos fornecer some dos serviços desejados.</p>
+
                 <p>O uso continuado de nosso site será considerado como aceitação de nossas práticas em torno de privacidade e informações pessoais.</p>
+
                 <h3>Compromisso do Usuário</h3>
+
                 <ul>
+
                     <li>A) Não se envolver em atividades que sejam ilegais ou contrárias à boa fé e à ordem pública;</li>
+
                     <li>B) Não difundir propaganda ou conteúdo de natureza racista, xenofóbica, jogos de azar ou contra os direitos humanos;</li>
+
                     <li>C) Não causar danos aos sistemas físicos (hardwares) e lógicos (softwares) do Portal Imigrante PT.</li>
+
                 </ul>
+
                 <p>Esta política é efetiva a partir de 27 May 2026 15:07.</p>
+
             </div>
+
         </div>
+
     </div>
 
+
+
     <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
+
         <div class="modal-window">
+
             <div class="modal-header">
+
                 <h3>Termos de Serviço</h3>
+
                 <button class="close-modal" onclick="closeModal('modal-termos')">&times;</button>
+
             </div>
+
             <div class="modal-body">
+
                 <h3>1. Termos</h3>
+
                 <p>Ao acessar ao site Portal Imigrante PT, concorda em cumprir estes termos de serviço, todas as leis e regulamentos aplicáveis e concorda que é responsável pelo cumprimento de todas as leis locais aplicáveis.</p>
+
                 <h3>2. Uso de Licença</h3>
-                <p>É concedida permissão para baixar temporariamente uma cópia dos materiais (informações ou software) no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial. Sob esta licença, você não pode: modificar ou copiar os materiais; usar para fins comerciais; tentar descompilar o software ou remover notações de propriedade.</p>
+
+                <p>É concedida permission para baixar temporariamente uma cópia dos materiais (informações ou software) no site Portal Imigrante PT, apenas para visualização transitória pessoal e não comercial. Sob esta licença, você não pode: modificar ou copiar os materiais; usar para fins comerciais; tentar descompilar o software ou remover notações de propriedade.</p>
+
                 <h3>3. Isenção de responsabilidade</h3>
+
                 <p>Os materiais no site da Portal Imigrante PT são fornecidos 'como estão'. Portal Imigrante PT não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias.</p>
+
                 <h3>4. Limitações</h3>
+
                 <p>Em nenhum caso o Portal Imigrante PT ou seus fornecedores serão responsáveis por quaisquer danos decorrentes do uso ou da incapacidade de usar os materiais contidos na plataforma.</p>
+
             </div>
+
         </div>
+
     </div>
 
-    <div class="modal-overlay" id="modal-privacidade" onclick="closeModalOnOverlay(event)">
-        <div class="modal-window">
-            <div class="modal-header"><h3>Política de Privacidade</h3><button class="close-modal" onclick="closeModal('modal-privacidade')">&times;</button></div>
-            <div class="modal-body"><p>...</p></div>
-        </div>
-    </div>
-    <div class="modal-overlay" id="modal-termos" onclick="closeModalOnOverlay(event)">
-        <div class="modal-window">
-            <div class="modal-header"><h3>Termos de Serviço</h3><button class="close-modal" onclick="closeModal('modal-termos')">&times;</button></div>
-            <div class="modal-body"><p>...</p></div>
-        </div>
-    </div>
+
 
     <script>
+
         const SERVIDOR_URL = "https://portal-imigrante-pt.onrender.com/api";
+
         let posicaoAtual = 0;
+
         let tentativasConexao = 0;
 
+
+
         // 1. CÂMBIO DO EURO DO DIA
+
         async function buscarEuro() {
+
             try {
+
                 const res = await fetch("https://open.er-api.com/v6/latest/EUR");
+
                 const data = await res.json();
+
                 document.getElementById("cotacao-euro").innerText = `1 EUR = R$ ${data.rates.BRL.toFixed(2)}`;
+
             } catch (e) {
+
                 document.getElementById("cotacao-euro").innerText = "1 EUR = R$ 5.83";
+
             }
+
         }
+
+
 
         // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (Lógica dinâmica com leitura direta da Tag da API)
+
         // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA (CORRIGIDO)
+
         // 2. BUSCA AS NOTÍCIAS ATUALIZADAS DO DIA
+
         async function carregarNoticiasVivas() {
+
             const grid = document.getElementById("newsGrid");
+
             try {
+
                 const res = await fetch(`${SERVIDOR_URL}/noticias?nocache=${Date.now()}`);
+
                 const data = await res.json();
+
                 
+
                 if (data.noticias && data.noticias.length > 0) {
+
                     grid.innerHTML = ""; 
+
                     
+
                     // REMOVIDO: .slice().reverse()
+
                     // Usamos a lista exatamente na ordem que o servidor envia.
+
                     data.noticias.forEach((noticia) => {
+
                         const fonte = noticia.tag || "Ao Vivo";
+
                         const targetAttr = noticia.url.includes("viver-do-digital") ? "" : 'target="_blank"';
+
                         const linkImagem = noticia.imagem || "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop";
+
                         
+
                         // O JavaScript agora identifica o card promocional pela URL
+
                         const ePromocional = noticia.url.includes("viver-do-digital");
+
                         const classeCard = "news-card-carousel";
+
                         const classeTag = "news-tag";
 
+
+
                         grid.innerHTML += `
+
                             <article class="${classeCard}">
+
                                 <img src="${linkImagem}" class="news-card-img" alt="Capa da Notícia" onerror="this.src='https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop'">
+
                                 <div class="news-card-content">
+
                                     <div>
+
                                         <div class="${classeTag}">${fonte}</div>
+
                                         <h3 style="font-size:1.05rem; margin: 10px 0; color:#fff; line-height:1.3;">${noticia.titulo}</h3>
+
                                         <p style="font-size:0.85rem; color:#8b949e; line-height:1.4; margin-bottom:10px;">${noticia.resumo}</p>
+
                                     </div>
+
                                     <a href="${noticia.url}" ${targetAttr} class="read-more" style="margin-top:auto; display:inline-block; font-size:0.85rem; color:#00a3a3; text-decoration:none;">Ler artigo completo →</a>
+
                                 </div>
+
                             </article>
+
                         `;
+
                     });
+
                     posicaoAtual = 0;
+
                     grid.style.transform = `translateX(0px)`;
+
                     tentativasConexao = 0; 
+
                 }
+
             } catch (error) {
+
                 console.log("Servidor em Standby...");
+
                 setTimeout(carregarNoticiasVivas, 10000);
+
             }
+
         }
+
+
 
         // 3. CONTROLADOR DO CARROSSEL
+
         function moverCarrossel(direcao) {
+
             const track = document.getElementById("newsGrid");
+
             const cards = document.querySelectorAll(".news-card-carousel");
+
             if (cards.length <= 3 && window.innerWidth > 768) return; 
+
             
+
             const maxPos = cards.length - (window.innerWidth <= 768 ? 1 : 3);
+
             posicaoAtual += direcao;
+
             
+
             if (posicaoAtual < 0) posicaoAtual = 0;
+
             if (posicaoAtual > maxPos) posicaoAtual = maxPos;
+
             
+
             const larguraCard = cards[0].clientWidth + 20;
+
             track.style.transform = `translateX(-${posicaoAtual * larguraCard}px)`;
+
         }
+
+
 
         // 4. CLIMA DINÂMICO POR IP REAL
+
         async function carregarClimaDinamico() {
+
             const campoTexto = document.getElementById("info-clima");
+
             const campoTitulo = document.getElementById("titulo-clima");
+
             try {
+
                 const resIp = await fetch("https://ipapi.co/json/");
+
                 const dataIp = await resIp.json();
+
                 
+
                 if (dataIp && !dataIp.error && dataIp.latitude && dataIp.longitude) {
+
                     const cidade = dataIp.city || "Local Atual";
+
                     
+
                     const resWeather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${dataIp.latitude}&longitude=${dataIp.longitude}&current_weather=true&nocache=${Date.now()}`);
+
                     const dataWeather = await resWeather.json();
+
                     
+
                     if (dataWeather && dataWeather.current_weather) {
+
                         const temp = Math.round(dataWeather.current_weather.temperature);
+
                         const code = dataWeather.current_weather.weathercode;
+
                         
+
                         let estadoCeu = "Céu Limpo ☀️";
+
                         if (code >= 1 && code <= 3) estadoCeu = "Pouco Nublado 🌤️";
+
                         else if (code >= 45 && code <= 48) estadoCeu = "Nevoeiro 🌫️";
+
                         else if (code >= 51) estadoCeu = "Chuva 🌧️";
+
                         
+
                         campoTitulo.innerText = `Clima em ${cidade}`;
+
                         campoTexto.innerText = `${temp}°C (${estadoCeu})`;
+
                         return;
+
                     }
+
                 }
+
             } catch (error) {
+
                 console.log("Erro na API de clima, aplicando segurança regional.");
+
             }
+
             campoTitulo.innerText = "Clima em Guimarães";
+
             campoTexto.innerText = "22°C (Pouco Nublado 🌤️)";
+
         }
+
+
 
         // 5. FUNÇÕES DE CONTROLE DOS POP-UPS (MODAIS)
+
         function openModal(modalId) {
+
             document.getElementById(modalId).classList.add('active');
+
             document.body.style.overflow = 'hidden';
+
         }
+
+
 
         function closeModal(modalId) {
+
             document.getElementById(modalId).classList.remove('active');
+
             document.body.style.overflow = '';
+
         }
+
+
 
         function closeModalOnOverlay(event) {
+
             if (event.target.classList.contains('modal-overlay')) {
+
                 event.target.classList.remove('active');
+
                 document.body.style.overflow = '';
+
             }
+
         }
 
+
+
         // Inicialização ordenada do Hub
+
         buscarEuro();
+
         carregarNoticiasVivas();
+
         carregarClimaDinamico();
+
     </script>
+
 </body>
+
 </html>
