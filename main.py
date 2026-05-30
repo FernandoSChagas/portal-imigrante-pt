@@ -214,7 +214,10 @@ async def obtener_noticias_tempo_real():
     except:
         pass
 
-    # Lógica Dinâmica: Garante o card promocional na 2ª posição (índice 1)
+    # 1. INVERTE A LISTA: Notícias mais recentes ficam no início (índice 0)
+    noticias_final = noticias_final[::-1]
+
+    # 2. Lógica Dinâmica: Insere o card promocional na 2ª posição (índice 1)
     card_promocional = {
         "titulo": "MERCADO: Cresce o número de brasileiros que trabalham online a partir de Portugal",
         "resumo": "Preços altos do arrendamento levam novos residentes a procurar fontes de rendimento digitais em Euro.",
@@ -223,13 +226,12 @@ async def obtener_noticias_tempo_real():
         "imagem": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=600&auto=format&fit=crop"
     }
 
-    if len(noticias_final) > 0:
+    if len(noticias_final) >= 1:
         noticias_final.insert(1, card_promocional)
     else:
         noticias_final.append(card_promocional)
 
     return {"noticias": noticias_final[:15]}
-
 # =====================================================================
 # 5. ROTA: ASSISTENTE VIRTUAL (CHAT IA)
 # =====================================================================
