@@ -146,6 +146,35 @@
         .footer-info p { color: #8b949e; font-size: 0.9rem; margin: 0; line-height: 1.5; }
         .footer-credits { border-top: 1px solid rgba(255, 255, 255, 0.03); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-family: monospace; font-size: 0.75rem; color: #485264; }
         .trademark { color: #00e5ff; font-weight: bold; }
+
+        /* Correção para páginas sem Menu (Segurança) */
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden; /* Evita a barra de rolagem horizontal feia */
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Força qualquer container principal a respeitar o ecrã */
+    .main-container, .container, .content {
+        width: 90% !important;
+        margin: 0 auto !important;
+        padding: 20px 0 !important;
+    }
+
+    /* Se tiver tabelas na página de segurança, isto evita que quebrem o layout */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* Ajusta fontes para não ficarem gigantes no celular */
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.2rem !important; }
+    p { font-size: 0.9rem !important; line-height: 1.4 !important; }
+}
     </style>
 </head>
 <body>
