@@ -72,32 +72,13 @@
 
         /* Correção para páginas sem Menu (Segurança) */
 @media (max-width: 768px) {
-    body {
-        overflow-x: hidden; /* Evita a barra de rolagem horizontal feia */
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-
-    /* Força qualquer container principal a respeitar o ecrã */
-    .main-container, .container, .content {
-        width: 90% !important;
-        margin: 0 auto !important;
-        padding: 20px 0 !important;
-    }
-
-    /* Se tiver tabelas na página de segurança, isto evita que quebrem o layout */
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    /* Ajusta fontes para não ficarem gigantes no celular */
-    h1 { font-size: 1.5rem !important; }
-    h2 { font-size: 1.2rem !important; }
-    p { font-size: 0.9rem !important; line-height: 1.4 !important; }
-}
+            .navbar { padding: 12px 15px !important; height: auto !important; flex-direction: column !important; gap: 10px; }
+            .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; flex-wrap: wrap; }
+            .nav-links a { margin-left: 0 !important; font-size: 0.8rem !important; }
+            .main-container { padding-top: 140px !important; }
+            .radar-container { padding: 20px; }
+            .form-group { flex-direction: column; width: 100%; }
+            .select-regiao, .btn-analise { width: 100%; }
 
     </style>
 
