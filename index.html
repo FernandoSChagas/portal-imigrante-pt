@@ -575,13 +575,36 @@
 
 
        @media (max-width: 768px) {
-            .navbar { padding: 12px 15px !important; height: auto !important; flex-direction: column !important; gap: 10px; }
-            .nav-links { width: 100%; justify-content: center !important; gap: 12px !important; flex-wrap: wrap; }
-            .nav-links a { margin-left: 0 !important; font-size: 0.8rem !important; }
-            .main-container { padding-top: 140px !important; }
-            .radar-container { padding: 20px; }
-            .form-group { flex-direction: column; width: 100%; }
-            .select-regiao, .btn-analise { width: 100%; }
+    /* Ajustes da Navbar */
+    .navbar { 
+        padding: 12px 15px !important; 
+        height: auto !important; 
+        flex-direction: column !important; 
+        gap: 10px; 
+    }
+    .nav-links { 
+        width: 100%; 
+        justify-content: center !important; 
+        gap: 12px !important; 
+        flex-wrap: wrap; 
+    }
+    .nav-links a { 
+        margin-left: 0 !important; 
+        font-size: 0.8rem !important; 
+    }
+    .main-container { 
+        padding-top: 140px !important; 
+    }
+
+    /* Ajustes do Carrossel (O que estava a deixar tudo espremido) */
+    .news-card-carousel { 
+        flex: 0 0 90% !important; /* Cada card ocupa 90% da tela */
+        margin: 0 5%; /* Centraliza o card */
+    }
+    .carousel-container { 
+        padding: 10px 0 !important; 
+    }
+}
 
     </style>
 
