@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Auditoria de Segurança | Portal Imigrante PT</title>
+
+    <style>
+
+        :root { 
+
+            --bg: #0d1117; 
+
+            --card-bg: #161b22; 
+
+            --border: #21262d; 
+
+            --accent: #00a3a3; 
+
+            --text: #c9d1d9; 
+
+            --white: #ffffff; 
+
+            --alert: #dc2626;
+
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+
+        .top-bar { background: #000; color: var(--white); padding: 15px 40px; font-size: 0.8rem; border-bottom: 2px solid var(--accent); display: flex; justify-content: space-between; }
+
+        .container { max-width: 900px; margin: 40px auto; background: var(--card-bg); padding: 40px; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.3); }
+
+        h1 { color: var(--white); border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+
+        h2 { color: var(--white); }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 30px; }
+
+        .box { border: 1px solid var(--border); padding: 20px; border-radius: 8px; background: var(--bg); }
+
+        .btn-official { display: block; background: var(--border); color: var(--white); text-align: center; padding: 12px; margin-top: 15px; text-decoration: none; font-weight: bold; font-size: 0.9rem; border-radius: 6px; transition: 0.3s; }
+
+        .btn-official:hover { background: var(--accent); }
+
+        .cert-seal { display: inline-block; background: rgba(0, 163, 163, 0.1); color: var(--accent); padding: 4px 10px; font-weight: bold; font-size: 0.7rem; border-radius: 4px; margin-bottom: 10px; border: 1px solid var(--accent); }
+
+        
+
+        /* Rodapé Identico */
+
+        footer { background-color: #0d1117; border-top: 1px solid #21262d; padding: 40px 20px; margin-top: 80px; }
+
+        .footer-container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; color: #8b949e; }
+
+        .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+
+        .footer-info { flex: 1; min-width: 280px; }
+
+        .footer-info h4 { font-size: 1.1rem; color: #ffffff; margin-bottom: 8px; font-weight: 700; }
+
+        .footer-info p { color: #8b949e; font-size: 0.9rem; margin: 0; line-height: 1.5; }
+
+        .footer-credits { border-top: 1px solid rgba(255, 255, 255, 0.03); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; font-family: monospace; font-size: 0.75rem; color: #485264; }
+
+        .trademark { color: #00e5ff; font-weight: bold; }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+<div class="top-bar">
+
+    <span>🛡️ SISTEMA DE AUDITORIA IMIGRANTE v.2026.05</span>
+
+    <span id="data-atual"></span>
+
+</div>
+
+
+
+<div class="container">
+
+    <h1>Centro de Verificação de Integridade</h1>
+
+    <p>Esta plataforma não armazena dados, mas atua como um validador de conformidade com as normas da <strong>Polícia de Segurança Pública (PSP)</strong> e <strong>Autoridade Tributária (AT)</strong>.</p>
+
+
+
+    <div class="grid">
+
+        <div class="box">
+
+            <div class="cert-seal">CERTIFICAÇÃO LEGAL</div>
+
+            <h2>Auditoria de Contratos</h2>
+
+            <p>Verifique se o seu contrato atende às exigências do artigo 1069º do Código Civil Português.</p>
+
+            <a href="https://irn.justica.gov.pt/" target="_blank" class="btn-official">VALIDAR CONFORMIDADE JURÍDICA</a>
+
+        </div>
+
+        <div class="box">
+
+            <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+            <h2>Auditoria de Entidade</h2>
+
+            <p>Confirme se o NIF do senhorio ou empresa consta na base de dados ativa da AT.</p>
+
+            <a href="https://www.portaldasfinancas.gov.pt" target="_blank" class="btn-official">CONSULTAR NIF (PORTAL FINANÇAS)</a>
+
+        </div>
+
+    </div>
+
+
+
+    <div style="margin-top: 30px; padding: 20px; background: rgba(220, 38, 38, 0.1); border-left: 5px solid var(--alert);">
+
+        <strong style="color: var(--white);">PROTOCOLO DE EMERGÊNCIA (PSP):</strong> Caso identifique fraude documental, não entre em contato com o burlão. Registe a ocorrência diretamente no sistema de Queixas Eletrónicas oficial. 
+
+        <a href="https://queixaselectronicas.mai.gov.pt/" target="_blank" style="color: var(--alert); font-weight: bold; display: block; margin-top: 10px;">ACESSAR QUEIXAS ELETRÓNICAS</a>
+
+    </div>
+
+
+
+    <div style="margin-top: 30px;">
+
+        <h2>ORIENTAÇÕES TÉCNICAS ADICIONAIS</h2>
+
+        <div class="grid">
+
+            <div class="box">
+
+                <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+                <p><strong>Checklist de Visita:</strong></p>
+
+                <ul style="font-size: 0.85rem; padding-left: 20px;">
+
+                    <li>Confira se a pessoa que mostra o imóvel é o proprietário (peça o Cartão de Cidadão).</li>
+
+                    <li>Verifique se o número da porta/fração coincide com a Caderneta Predial.</li>
+
+                    <li>Nunca assine nada sem ler cada cláusula no local.</li>
+
+                </ul>
+
+            </div>
+
+            <div class="box">
+
+                <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+                <p><strong>Verificação de Empresa:</strong></p>
+
+                <p style="font-size: 0.85rem;">Se for alugar através de uma imobiliária, consulte o portal ePortugal para verificar o registo da empresa.</p>
+
+                <a href="https://eportugal.gov.pt/" target="_blank" class="btn-official">CONSULTAR REGISTO EMPRESARIAL</a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div style="margin-top: 30px;">
+
+        <h2>🔍 AUDITORIA AVANÇADA DE DOCUMENTAÇÃO</h2>
+
+        <div class="grid">
+
+            <div class="box">
+
+                <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+                <p><strong>Certidão Permanente:</strong></p>
+
+                <p style="font-size: 0.8rem;">O documento que comprova quem é o verdadeiro proprietário.</p>
+
+                <a href="https://www.predialonline.pt/" target="_blank" class="btn-official">SOLICITAR CERTIDÃO</a>
+
+            </div>
+
+            <div class="box">
+
+                <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+                <p><strong>Verificação de IBAN:</strong></p>
+
+                <p style="font-size: 0.8rem;">Verifique se a entidade financeira está registada em Portugal no Banco de Portugal.</p>
+
+                <a href="https://www.bportugal.pt/" target="_blank" class="btn-official">CONSULTAR ENTIDADE</a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div style="margin-top: 30px;">
+
+        <h2>🏛️ VERIFICAÇÃO DE LICENCIAMENTO OFICIAL</h2>
+
+        <div class="grid">
+
+            <div class="box">
+
+                <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+                <p><strong>Registo de Alojamento (RNAL):</strong></p>
+
+                <a href="https://rnt.turismodeportugal.pt/RNT/" target="_blank" class="btn-official">CONSULTAR RNAL</a>
+
+            </div>
+
+            <div class="box">
+
+                <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+                <p><strong>Licença de Mediador (IMPIC):</strong></p>
+
+                <a href="http://www.impic.pt/" target="_blank" class="btn-official">CONSULTAR IMPIC</a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="box" style="margin-top: 30px; border-color: #f59e0b;">
+
+        <h2>⚠️ PAINEL DE TRIAGEM DE RISCO</h2>
+
+        <div style="font-size: 0.9rem; line-height: 1.8;">
+
+            <p><strong>Indicadores que exigem atenção imediata:</strong></p>
+
+            <p>• <strong>Visita negada:</strong> "Não pode visitar, mas pode reservar". ➡ <strong>RISCO CRÍTICO</strong></p>
+
+            <p>• <strong>Urgência forçada:</strong> "Deposite o sinal agora". ➡ <strong>TÁTICA DE PRESSÃO</strong></p>
+
+            <p>• <strong>Documentação incompleta:</strong> Recusa de Caderneta Predial. ➡ <strong>RISCO DE FRAUDE</strong></p>
+
+        </div>
+
+    </div>
+
+
+
+    <div style="margin-top: 30px;">
+
+        <h2>DADOS COMPLEMENTARES DE SEGURANÇA</h2>
+
+        <div class="box">
+
+            <div class="cert-seal">VERIFICAÇÃO ATIVA</div>
+
+            <p><strong>Boletim de Alertas:</strong> Nunca realize pagamentos antes da visita física. Verifique sempre se o email termina em .pt.</p>
+
+            <p><strong>Glossário:</strong> <em>Caução</em> paga-se apenas no momento da entrega das chaves.</p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<footer>
+
+    <div class="footer-container">
+
+        <div class="footer-main">
+
+            <div class="footer-info">
+
+                <h4>Portal Imigrante PT</h4>
+
+                <p>Apoio prático e estratégico para estabelecer e integrar imigrantes em Portugal.</p>
+
+            </div>
+
+        </div>
+
+        <div class="footer-credits">
+
+            <div>© 2026 <span class="trademark">Portal Imigrante PT®</span>.</div>
+
+            <div>Apoio ao Imigrante Digital • 🍏</div>
+
+        </div>
+
+    </div>
+
+</footer>
+
+
+
+<script>
+
+    document.getElementById('data-atual').innerText = "STATUS: OPERACIONAL | DADOS ATUALIZADOS: " + new Date().toLocaleDateString('pt-PT');
+
+</script>
+
+
+
+</body>
+
+</html>
