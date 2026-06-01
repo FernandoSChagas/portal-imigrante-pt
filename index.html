@@ -1139,6 +1139,29 @@
 
         carregarClimaDinamico();
 
+        let touchStartX = 0;
+let touchEndX = 0;
+
+const carrossel = document.getElementById("newsGrid");
+
+carrossel.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+}, false);
+
+carrossel.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleGesture();
+}, false);
+
+function handleGesture() {
+    // Se o movimento for maior que 50 pixels, considera um deslize (swipe)
+    if (touchEndX < touchStartX - 50) {
+        moverCarrossel(1); // Desliza para a esquerda
+    }
+    if (touchEndX > touchStartX + 50) {
+        moverCarrossel(-1); // Desliza para a direita
+    }
+}
     </script>
 
 </body>
