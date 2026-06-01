@@ -596,13 +596,22 @@
         padding-top: 140px !important; 
     }
 
-    /* Ajustes do Carrossel (O que estava a deixar tudo espremido) */
-    .news-card-carousel { 
-        flex: 0 0 90% !important; /* Cada card ocupa 90% da tela */
-        margin: 0 5%; /* Centraliza o card */
-    }
+    /* Ajustes do Carrossel (Otimizados para Centralização) */
     .carousel-container { 
         padding: 10px 0 !important; 
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .news-carousel-track {
+        display: flex;
+        gap: 10px !important; 
+        padding: 0 5% !important; /* Cria o respiro para não colar nas bordas */
+    }
+
+    .news-card-carousel { 
+        flex: 0 0 90% !important; /* O card ocupa 90% da tela */
+        margin: 0 !important; /* Remove margem manual para evitar conflitos */
     }
 }
 
